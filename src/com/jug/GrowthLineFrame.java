@@ -23,6 +23,7 @@ import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 import segmentation.filteredcomponents.FilteredComponentTreeNode;
 
@@ -131,6 +132,29 @@ public class GrowthLineFrame {
 	 */
 	public ComponentTree< DoubleType, ? > getComponentTree() {
 		return componentTree;
+	}
+
+	/**
+	 * @return the x-offset of the GrowthLineFrame given the original micrograph
+	 */
+	public long getOffsetX() {
+//		return getAvgXpos();
+		return getPoint( 0 ).getLongPosition( 0 );
+	}
+
+	/**
+	 * @return the y-offset of the GrowthLineFrame given the original micrograph
+	 */
+	public long getOffsetY() {
+		return 0;
+	}
+
+	/**
+	 * @return the z-offset of the GrowthLineFrame given the original micrograph
+	 *         (stack)
+	 */
+	public long getOffsetZ() {
+		return parent.getFrames().indexOf( this );
 	}
 
 	// -------------------------------------------------------------------------------------
@@ -364,13 +388,38 @@ public class GrowthLineFrame {
 	/**
 	 * Draws the GrowthLine center line into the given annotation
 	 * <code>Img</code>.
+	 *
+	 * @param img
+	 *            the Img to draw into.
 	 */
-	public void draw( final Img< ARGBType > imgAnnotated, final long offsetX, final long offsetY ) {
-		final RandomAccess< ARGBType > raAnnotationImg = imgAnnotated.randomAccess();
+	public void draw( final Img< ARGBType > imgAnnotated ) {
+		draw( imgAnnotated, null );
+	}
+
+	/**
+	 * Draws the GrowthLine center line into the given annotation
+	 * <code>Img</code>.
+	 *
+	 * @param img
+	 *            the Img to draw into.
+	 * @param view
+	 *            the active view on that Img (in order to know the pixel
+	 *            offsets)
+	 */
+	public void draw( final Img< ARGBType > img, final IntervalView< DoubleType > view ) {
+		final RandomAccess< ARGBType > raAnnotationImg = img.randomAccess();
+
+		long offsetX = 0;
+		long offsetY = 0;
+		if ( view != null ) {
+			offsetX = view.min( 0 );
+			offsetY = view.min( 1 );
+		}
+
 		for ( final Point p : getMirroredImgLocations() ) { // imgLocations
 			final long[] pos = Util.pointLocation( p );
-			pos[ 0 ] -= offsetX;
-			pos[ 1 ] -= offsetY;
+			pos[ 0 ] += offsetX;
+			pos[ 1 ] += offsetY;
 			raAnnotationImg.setPosition( pos );
 			raAnnotationImg.get().set( new ARGBType( ARGBType.rgba( 0, 255, 0, 255 ) ) );
 		}
@@ -407,4 +456,5 @@ public class GrowthLineFrame {
 
 		return ret;
 	}
+
 }

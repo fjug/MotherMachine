@@ -43,6 +43,7 @@ import org.apache.commons.math3.stat.regression.SimpleRegression;
 
 import com.apple.eawt.Application;
 import com.jug.gui.MotherMachineGui;
+import com.jug.gui.MotherMachineModel;
 import com.jug.loops.Loops;
 import com.jug.ops.cursor.FindLocalMaxima;
 import com.jug.ops.cursor.FindLocationAboveThreshold;
@@ -147,7 +148,7 @@ public class MotherMachine {
 
 		main.processDataFromFolder( path );
 
-		final MotherMachineGui gui = new MotherMachineGui( main );
+		final MotherMachineGui gui = new MotherMachineGui( new MotherMachineModel( main ) );
 		gui.setVisible( true );
 
 		main.ij = new ImageJ();
@@ -232,6 +233,20 @@ public class MotherMachine {
 		this.imgAnnotated = imgRendered;
 	}
 
+	/**
+	 * @return the growthLines
+	 */
+	public List< GrowthLine > getGrowthLines() {
+		return growthLines;
+	}
+
+	/**
+	 * @param growthLines
+	 *            the growthLines to set
+	 */
+	public void setGrowthLines( final List< GrowthLine > growthLines ) {
+		this.growthLines = growthLines;
+	}
 	// -------------------------------------------------------------------------------------
 	// methods
 	// -------------------------------------------------------------------------------------
@@ -631,9 +646,9 @@ public class MotherMachine {
 	 */
 	private void subtractBackgroundInRaw() {
 
-		for ( int i = 0; i < growthLines.size(); i++ ) {
-			for ( int f = 0; f < growthLines.get( i ).size(); f++ ) {
-				final GrowthLineFrame glf = growthLines.get( i ).get( f );
+		for ( int i = 0; i < getGrowthLines().size(); i++ ) {
+			for ( int f = 0; f < getGrowthLines().get( i ).size(); f++ ) {
+				final GrowthLineFrame glf = getGrowthLines().get( i ).get( f );
 
 				final int glfX = glf.getAvgXpos();
 				if ( glfX == -1 ) continue; // do not do anything with empty GLFs
@@ -719,7 +734,7 @@ public class MotherMachine {
 	 */
 	private void findGrowthLines() {
 
-		this.growthLines = new ArrayList< GrowthLine >();
+		this.setGrowthLines( new ArrayList< GrowthLine >() );
 		this.glCenterPoints = new ArrayList< List<List<Point>>>();
 
 		List< List< Point > > frameWellCenters;
@@ -863,10 +878,10 @@ public class MotherMachine {
 			}
 		}
 		// copy the max-GLs frame into this.growthLines
-		this.growthLines = new ArrayList< GrowthLine >( maxGLsPerFrame );
+		this.setGrowthLines( new ArrayList< GrowthLine >( maxGLsPerFrame ) );
 		for ( int i = 0; i < maxGLsPerFrame; i++ ) {
-			growthLines.add( new GrowthLine() );
-			growthLines.get( i ).add( collectionOfFrames.get( maxGLsPerFrameIdx ).get( i ) );
+			getGrowthLines().add( new GrowthLine() );
+			getGrowthLines().get( i ).add( collectionOfFrames.get( maxGLsPerFrameIdx ).get( i ) );
 		}
 		// go backwards from there and prepand into GL
 		for ( int j = maxGLsPerFrameIdx - 1; j >= 0; j-- ) {
@@ -882,7 +897,7 @@ public class MotherMachine {
 				}
 			}
 			for ( int i = 0; i < collectionOfFrames.get( j ).size(); i++ ) {
-				growthLines.get( offset + i ).prepand( collectionOfFrames.get( j ).get( i ) );
+				getGrowthLines().get( offset + i ).prepand( collectionOfFrames.get( j ).get( i ) );
 			}
 		}
 		// go forwards and append into GL
@@ -899,7 +914,7 @@ public class MotherMachine {
 				}
 			}
 			for ( int i = 0; i < collectionOfFrames.get( j ).size(); i++ ) {
-				growthLines.get( offset + i ).add( collectionOfFrames.get( j ).get( i ) );
+				getGrowthLines().get( offset + i ).add( collectionOfFrames.get( j ).get( i ) );
 			}
 		}
 
@@ -910,9 +925,9 @@ public class MotherMachine {
 	 * the annotation layer, <code>imgAnnotated</code>.
 	 */
 	private void annotateDetectedWellCenters() {
-		for ( final GrowthLine gl : this.growthLines ) {
+		for ( final GrowthLine gl : this.getGrowthLines() ) {
 			for ( final GrowthLineFrame glf : gl.getFrames() ) {
-				glf.draw( imgAnnotated, 0, 0 );
+				glf.draw( imgAnnotated );
 			}
 		}
 	}
@@ -942,8 +957,9 @@ public class MotherMachine {
 
 		// ------ DETECTION --------------------------
 
-		for ( final GrowthLine gl : growthLines ) {
+		for ( final GrowthLine gl : getGrowthLines() ) {
 			gl.generateSegmentationHypotheses();
 		}
 	}
+
 }
