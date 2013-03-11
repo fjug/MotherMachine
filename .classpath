@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/net/imagej/ij/1.47d/ij-1.47d.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/loci/loci-common/4.4-SNAPSHOT/loci-common-4.4-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/loci/ome-xml/4.4-SNAPSHOT/ome-xml-4.4-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="/Users/jug/.m2/repository/loci/scifio/4.4-SNAPSHOT/scifio-4.4-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/loci/jai_imageio/4.4-SNAPSHOT/jai_imageio-4.4-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/loci/lwf-stubs/4.4-SNAPSHOT/lwf-stubs-4.4-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/log4j/log4j/1.2.14/log4j-1.2.14.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/org/slf4j/slf4j-api/1.5.10/slf4j-api-1.5.10.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/org/slf4j/slf4j-log4j12/1.5.10/slf4j-log4j12-1.5.10.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/mpicbg/mpicbg/20120621/mpicbg-20120621.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/edu/mines/mines-jtk/20100113/mines-jtk-20100113.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/com/jgoodies/forms/1.2.1/forms-1.2.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/xalan/serializer/2.7.1/serializer-2.7.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/xalan/xalan/2.7.1/xalan-2.7.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/xml-apis/xml-apis/1.3.04/xml-apis-1.3.04.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/jama/jama/1.0.2/jama-1.0.2.jar"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-algorithms"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-algorithms-gpl"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-algorithms-legacy"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-examples"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-ij"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-io"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-ops"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-realtransform"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-scripting"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-tests"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-ui"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/JavaLibraries/commons-math3-3.0/commons-math3-3.0.jar" sourcepath="/Users/jug/.m2/repository/org/apache/commons/commons-math3/3.0/commons-math3-3.0-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/JavaLibraries/jplot2d/jplot2d-core-0.7.0.jar" sourcepath="/jplot2d"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/JavaLibraries/jplot2d/jplot2d-swing-0.7.0-full.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/JavaLibraries/jplot2d/jplot2d-swt-0.7.0-full.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/JavaLibraries/jplot2d/externalForPDFandEPS/itext-2.1.7.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/JavaLibraries/jplot2d/externalForPDFandEPS/xmlgraphics-commons-1.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/JavaLibraries/jmathplot/jmathplot.jar"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/JGraphT"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/JGraph5"/>
+	<classpathentry kind="src" path="/ComponentGraphs"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
