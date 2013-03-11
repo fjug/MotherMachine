@@ -233,7 +233,7 @@ public class GrowthLineFrame {
 	 *
 	 * @param img
 	 */
-	public void findSegmentationHypotheses( final Img< DoubleType > img ) {
+	public void generateSegmentationHypotheses( final Img< DoubleType > img ) {
 
 		final double[] fkt = getGapSeparationValues( img );
 

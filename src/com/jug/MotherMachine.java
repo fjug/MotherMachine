@@ -45,6 +45,7 @@ import com.apple.eawt.Application;
 import com.jug.gui.MotherMachineGui;
 import com.jug.gui.MotherMachineModel;
 import com.jug.loops.Loops;
+import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.ops.cursor.FindLocalMaxima;
 import com.jug.ops.cursor.FindLocationAboveThreshold;
 import com.jug.ops.numerictype.VarOfRai;
@@ -153,7 +154,7 @@ public class MotherMachine {
 
 		main.ij = new ImageJ();
 		guiFrame.add( gui );
-		guiFrame.setSize( 1400, 700 );
+		guiFrame.setSize( 900, 550 );
 		guiFrame.setVisible( true );
 		System.out.println( " done!" );
 	}
@@ -183,7 +184,15 @@ public class MotherMachine {
 	 */
 	private List< List< List< Point >>> glCenterPoints;
 
+	/**
+	 * Contains all GrowthLines found in the given data.
+	 */
 	private List< GrowthLine > growthLines;
+
+	/**
+	 * All ILP-related structures are within mmILP.
+	 */
+	private GrowthLineTrackingILP mmILP;
 
 	// -------------------------------------------------------------------------------------
 	// setters and getters
@@ -430,10 +439,14 @@ public class MotherMachine {
 		System.out.println( " done!" );
 
 		System.out.print( "Generating ComponentTrees..." );
-		findSegmentationHypotheses();
+		generateSegmentationHypotheses();
 		System.out.println( " done!" );
 
-		System.out.println( "Generating Assignments..." );
+		System.out.println( "Generating Integer Linear Programs..." );
+		generateILPs();
+		System.out.println( " done!" );
+		System.out.println( "Running Integer Linear Programs..." );
+		runILPs();
 		System.out.println( " done!" );
 
 		System.out.print( "Solving convex optimization problem (ILP)..." );
@@ -937,7 +950,7 @@ public class MotherMachine {
 	 * GrowthLine.findGapHypotheses(Img).
 	 * Note that this function always uses the image data in 'imgTemp'.
 	 */
-	public void findSegmentationHypotheses() {
+	public void generateSegmentationHypotheses() {
 
 		// ------ GAUSS -----------------------------
 
@@ -958,7 +971,28 @@ public class MotherMachine {
 		// ------ DETECTION --------------------------
 
 		for ( final GrowthLine gl : getGrowthLines() ) {
-			gl.generateSegmentationHypotheses();
+			for ( final GrowthLineFrame glf : gl.getFrames() ) {
+				glf.generateSegmentationHypotheses( imgTemp );
+			}
+		}
+	}
+
+	/**
+	 * Creates and triggers filling of mmILP, containing all
+	 * optimization-related structures used to compute the optimal tracking.
+	 */
+	private void generateILPs() {
+		for ( final GrowthLine gl : getGrowthLines() ) {
+			gl.generateILP();
+		}
+	}
+
+	/**
+	 * Runs all the generated ILPs.
+	 */
+	private void runILPs() {
+		for ( final GrowthLine gl : getGrowthLines() ) {
+			gl.runILP();
 		}
 	}
 

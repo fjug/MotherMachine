@@ -202,8 +202,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 
 		// ----------------
 
-		final JLabel labelCurationView = new JLabel( "Segmentation and Tracking" );
-		panelCurationView.add( labelCurationView, BorderLayout.NORTH );
+//		final JLabel labelCurationView = new JLabel( "Segmentation and Tracking" );
+//		labelCurationView.setBorder( BorderFactory.createEmptyBorder( 10, 10, 10, 10 ) );
+//		panelCurationView.add( labelCurationView, BorderLayout.NORTH );
 
 		// ----------------
 
@@ -258,7 +259,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 		add( panelVerticalHelper, BorderLayout.WEST );
 
 		sliderTime = new JSlider( JSlider.HORIZONTAL, 0, model.getCurrentGL().size() - 1, 0 );
-		sliderTime.setValue( 0 );
+		sliderTime.setValue( 1 );
+		model.setCurrentGLF( sliderTime.getValue() );
 		sliderTime.addChangeListener( this );
 		sliderTime.setMajorTickSpacing( 5 );
 		sliderTime.setMinorTickSpacing( 1 );
