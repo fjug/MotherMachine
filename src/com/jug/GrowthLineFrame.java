@@ -245,8 +245,7 @@ public class GrowthLineFrame {
 				ra.get().set( fkt[ i ] );
 			}
 
-			// componentTree = FilteredComponentTree.buildComponentTree( raiFkt,
-			// new DoubleType(), 3, Long.MAX_VALUE, true);
+			// componentTree = FilteredComponentTree.buildComponentTree( raiFkt, new DoubleType(), 3, Long.MAX_VALUE, true);
 			componentTree = MserComponentTree.buildMserTree( raiFkt, MotherMachine.MIN_GAP_CONTRAST / 2.0, MotherMachine.MIN_CELL_LENGTH, Long.MAX_VALUE, 0.5, 0.33, true );
 		}
 	}

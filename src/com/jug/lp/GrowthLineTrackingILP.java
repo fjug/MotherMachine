@@ -10,7 +10,10 @@ import gurobi.GRBLinExpr;
 import gurobi.GRBModel;
 import gurobi.GRBVar;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import net.imglib2.algorithm.componenttree.ComponentTree;
 import net.imglib2.algorithm.componenttree.ComponentTreeNode;
@@ -25,11 +28,19 @@ import com.jug.util.SimpleFunctionAnalysis;
 /**
  * @author jug
  */
-public class GrowthLineTrackingILP {
+public class GrowthLineTrackingILP< H extends Hypothesis< ? >, A extends AbstractAssignment< H > > {
 
 	// -------------------------------------------------------------------------------------
 	// statics
 	// -------------------------------------------------------------------------------------
+	public static int OPTIMIZATION_NEVER_PERFORMED = 0;
+	public static int OPTIMAL = 1;
+	public static int INFEASIBLE = 2;
+	public static int UNBOUNDED = 3;
+	public static int SUBOPTIMAL = 4;
+	public static int NUMERIC = 5;
+	public static int LIMIT_REACHED = 6;
+
 	public static int ASSIGNMENT_EXIT = 0;
 	public static int ASSIGNMENT_MAPPING = 1;
 	public static int ASSIGNMENT_DIVISION = 2;
@@ -42,6 +53,7 @@ public class GrowthLineTrackingILP {
 	private final GrowthLine gl;
 
 	public GRBModel model;
+	private int status;
 
 	public final AssignmentsAndHypotheses<
 		AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > >,
@@ -80,6 +92,22 @@ public class GrowthLineTrackingILP {
 			System.out.println( "GrowthLineTrackingILP::model could not be initialized!" );
 			e.printStackTrace();
 		}
+	}
+
+	// -------------------------------------------------------------------------------------
+	// getters & setters
+	// -------------------------------------------------------------------------------------
+	/**
+	 * @return the status. This status returns one of the following values:
+	 *         OPTIMIZATION_NEVER_PERFORMED, OPTIMAL, INFEASABLE, UNBOUNDED,
+	 *         SUBOPTIMAL, NUMERIC, or LIMIT_REACHED. Values 2-6 correspond
+	 *         directly to the ones from gurobi, the last one is set when none
+	 *         of the others was actually returned by gurobi.
+	 *         OPTIMIZATION_NEVER_PERFORMED shows, that the optimizer was never
+	 *         started on this ILP setup.
+	 */
+	public int getStatus() {
+		return status;
 	}
 
 	// -------------------------------------------------------------------------------------
@@ -255,9 +283,6 @@ public class GrowthLineTrackingILP {
 	}
 
 	/**
-	 * Adds all hypothesis given by the nodes in the component tree to
-	 * <code>nodes</code>. Note: order is chosen such that the hypothesis are
-	 * ordered ascending by right interval end.
 	 *
 	 * @param ctRoot
 	 * @throws GRBException
@@ -272,6 +297,7 @@ public class GrowthLineTrackingILP {
 
 			final GRBLinExpr expr = new GRBLinExpr();
 			while ( runnerNode != null ) {
+				@SuppressWarnings( "unchecked" )
 				final Hypothesis< ComponentTreeNode< DoubleType, ? > > hypothesis = ( Hypothesis< ComponentTreeNode< DoubleType, ? >> ) nodes.findHypothesisContaining( runnerNode );
 				if ( edgeSets.getRightNeighborhood( hypothesis ) != null ) {
 					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a : edgeSets.getRightNeighborhood( hypothesis ) ) {
@@ -319,4 +345,119 @@ public class GrowthLineTrackingILP {
 			eccId++;
 		}
 	}
+
+	/**
+	 *
+	 */
+	public void run() {
+		try {
+			// RUN + return true if solution is feasible
+			// - - - - - - - - - - - - - - - - - - - - -
+			model.optimize();
+
+			// Read solution and extract interpretation
+			// - - - - - - - - - - - - - - - - - - - - -
+			if ( model.get( GRB.IntAttr.Status ) == GRB.Status.OPTIMAL ) {
+				status = OPTIMAL;
+			} else
+			if ( model.get( GRB.IntAttr.Status ) == GRB.Status.INFEASIBLE ) {
+				status = INFEASIBLE;
+			} else
+			if ( model.get( GRB.IntAttr.Status ) == GRB.Status.UNBOUNDED ) {
+				status = UNBOUNDED;
+			} else
+			if ( model.get( GRB.IntAttr.Status ) == GRB.Status.SUBOPTIMAL ) {
+				status = SUBOPTIMAL;
+			} else
+			if ( model.get( GRB.IntAttr.Status ) == GRB.Status.NUMERIC ) {
+				status = NUMERIC;
+			} else {
+				status = LIMIT_REACHED;
+			}
+		}
+		catch ( final GRBException e ) {
+			System.out.println( "Could not run the generated ILP!" );
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 *
+	 * @param t
+	 * @return
+	 */
+	public List< ComponentTreeNode< DoubleType, ? >> getOptimalSegmentation( final int t ) {
+		//TODO implement!
+		return null;
+	}
+
+	/**
+	 *
+	 * @param t
+	 * @return
+	 */
+	public List< H > getOptimalHypotheses( final int t ) {
+		final ArrayList< H > ret = new ArrayList< H >();
+
+		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = nodes.getHypothesesAt( t );
+		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : hyps ) {
+
+		}
+
+		return ret;
+	}
+
+	/**
+	 *
+	 * @param t
+	 * @return
+	 */
+	public HashMap< H, Set< A > > getOptimalLeftAssignments( final int t ) {
+		final HashMap< H, Set< A > > ret = new HashMap< H, Set< A > >();
+		// TODO implement
+		return ret;
+	}
+
+	/**
+	 *
+	 * @param t
+	 * @return
+	 */
+	private A getOptimalLeftAssignment( final int t, final H hypothesis ) {
+		return findActiveAssignment( edgeSets.getLeftNeighborhood( hypothesis ) ); // FIXME
+	}
+
+	/**
+	 *
+	 * @param t
+	 * @return
+	 */
+	public HashMap< H, Set< A > > getOptimalRightAssignments( final int t ) {
+		final HashMap< H, Set< A > > ret = new HashMap< H, Set< A > >();
+		// TODO implement
+		return ret;
+	}
+
+	/**
+	 *
+	 * @param t
+	 * @return
+	 */
+	private A getOptimalRightAssignment( final int t, final H hypothesis ) {
+		return findActiveAssignment( edgeSets.getRightNeighborhood( hypothesis ) ); // FIXME
+	}
+
+	/**
+	 *
+	 * @param t
+	 * @return
+	 * @throws GRBException
+	 */
+	private A findActiveAssignment( final Set< A > assignments ) throws GRBException {
+		for ( final A a : assignments ) {
+			if ( a.isChoosen() ) { return a; }
+		}
+		return null;
+	}
+
 }

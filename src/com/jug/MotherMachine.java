@@ -114,7 +114,7 @@ public class MotherMachine {
 	/**
 	 * Prior knowledge: minimal contrast of an gap (also used for MSERs)
 	 */
-	public static int MIN_GAP_CONTRAST = 15;
+	public static double MIN_GAP_CONTRAST = 0.015; // This is set to a very low value that will basically not filter anything...
 
 	/**
 	 * PROJECT MAIN
@@ -135,7 +135,7 @@ public class MotherMachine {
 		GL_OFFSET_TOP = Integer.parseInt( props.getProperty( "GL_OFFSET_TOP", Integer.toString( GL_OFFSET_TOP ) ) );
 		GL_OFFSET_LATERAL = Integer.parseInt( props.getProperty( "GL_OFFSET_LATERAL", Integer.toString( GL_OFFSET_LATERAL ) ) );
 		MIN_CELL_LENGTH = Integer.parseInt( props.getProperty( "MIN_CELL_LENGTH", Integer.toString( MIN_CELL_LENGTH ) ) );
-		MIN_GAP_CONTRAST = Integer.parseInt( props.getProperty( "MIN_GAP_CONTRAST", Integer.toString( MIN_GAP_CONTRAST ) ) );
+		MIN_GAP_CONTRAST = Double.parseDouble( props.getProperty( "MIN_GAP_CONTRAST", Double.toString( MIN_GAP_CONTRAST ) ) );
 		SIGMA_PRE_SEGMENTATION_X = Double.parseDouble( props.getProperty( "SIGMA_PRE_SEGMENTATION_X", Double.toString( SIGMA_PRE_SEGMENTATION_X ) ) );
 		SIGMA_PRE_SEGMENTATION_Y = Double.parseDouble( props.getProperty( "SIGMA_PRE_SEGMENTATION_Y", Double.toString( SIGMA_PRE_SEGMENTATION_Y ) ) );
 		SIGMA_GL_DETECTION_X = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION", Double.toString( SIGMA_GL_DETECTION_X ) ) );
@@ -375,7 +375,7 @@ public class MotherMachine {
 			props.setProperty( "GL_OFFSET_TOP", Integer.toString( GL_OFFSET_TOP ) );
 			props.setProperty( "GL_OFFSET_LATERAL", Integer.toString( GL_OFFSET_LATERAL ) );
 			props.setProperty( "MIN_CELL_LENGTH", Integer.toString( MIN_CELL_LENGTH ) );
-			props.setProperty( "MIN_GAP_CONTRAST", Integer.toString( MIN_GAP_CONTRAST ) );
+			props.setProperty( "MIN_GAP_CONTRAST", Double.toString( MIN_GAP_CONTRAST ) );
 			props.setProperty( "SIGMA_PRE_SEGMENTATION_X", Double.toString( SIGMA_PRE_SEGMENTATION_X ) );
 			props.setProperty( "SIGMA_PRE_SEGMENTATION_Y", Double.toString( SIGMA_PRE_SEGMENTATION_Y ) );
 			props.setProperty( "SIGMA_GL_DETECTION_X", Double.toString( SIGMA_GL_DETECTION_X ) );
@@ -445,11 +445,9 @@ public class MotherMachine {
 		System.out.println( "Generating Integer Linear Programs..." );
 		generateILPs();
 		System.out.println( " done!" );
+
 		System.out.println( "Running Integer Linear Programs..." );
 		runILPs();
-		System.out.println( " done!" );
-
-		System.out.print( "Solving convex optimization problem (ILP)..." );
 		System.out.println( " done!" );
 
 		System.out.print( "Build and show GUI..." );

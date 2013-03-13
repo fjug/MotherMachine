@@ -3,7 +3,6 @@
  */
 package com.jug;
 
-import gurobi.GRB;
 import gurobi.GRBException;
 
 import java.util.ArrayList;
@@ -25,7 +24,9 @@ public class GrowthLine {
 	// fields
 	// -------------------------------------------------------------------------------------
 	private final List< GrowthLineFrame > frames;
-	private GrowthLineTrackingILP ilp;
+	private GrowthLineTrackingILP<
+			Hypothesis< ComponentTreeNode< DoubleType, ? > >,
+			AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > ilp;
 
 	// -------------------------------------------------------------------------------------
 	// setters and getters
@@ -92,14 +93,14 @@ public class GrowthLine {
 	public void generateILP() {
 		try {
 
-			ilp = new GrowthLineTrackingILP( this );
+			ilp = new GrowthLineTrackingILP<
+					Hypothesis< ComponentTreeNode< DoubleType, ? > >,
+					AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > ( this );
 
 			// Feed all segmentation-hypotheses as nodes to the ILP
 			for ( int t = 0; t < this.size(); t++ ) {
 				final GrowthLineFrame glf = this.getFrames().get( t );
-				
->>>>>	glf's roots are empty!!! Damn it!
-				
+
 				for ( final ComponentTreeNode< DoubleType, ? > ctRoot : glf.getComponentTree().roots() ) {
 					ilp.recursivelyAddCTNsAsHypotheses( ctRoot, t );
 				}
@@ -156,23 +157,7 @@ public class GrowthLine {
 	 * Runs the ILP.
 	 */
 	public void runILP() {
-		try {
-			// RUN + return true if solution is feasible
-			// - - - - - - - - - - - - - - - - - - - - -
-			ilp.model.optimize();
-
-			// Read solution and extract interpretation
-			// - - - - - - - - - - - - - - - - - - - - -
-			if ( ilp.model.get( GRB.IntAttr.Status ) == GRB.Status.OPTIMAL ) {
-				System.out.println( "Yay!" );
-			} else {
-				System.out.println( "NAAAYYYYY!" );
-			}
-		}
-		catch ( final GRBException e ) {
-			System.out.println( "Could not run the generated ILP!" );
-			e.printStackTrace();
-		}
+		ilp.run();
 	}
 
 }

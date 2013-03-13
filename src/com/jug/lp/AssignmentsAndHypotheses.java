@@ -33,6 +33,9 @@ public class AssignmentsAndHypotheses< A extends AbstractAssignment< H >, H exte
 
 
 	public boolean addAssignment( final int t, final A a ) {
+		while ( t >= a_t.size() ) {
+			addTimeStep();
+		}
 		return a_t.get( t ).add( a );
 	}
 
@@ -46,6 +49,9 @@ public class AssignmentsAndHypotheses< A extends AbstractAssignment< H >, H exte
 
 
 	public boolean addHypothesis( final int t, final H h ) {
+		while ( t >= h_t.size() ) {
+			addTimeStep();
+		}
 		if ( h_t.get( t ).add( h ) ) {
 			hmap.put( h.getWrappedHypothesis(), h );
 			return true;
