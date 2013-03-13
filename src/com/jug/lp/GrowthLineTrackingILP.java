@@ -28,7 +28,9 @@ import com.jug.util.SimpleFunctionAnalysis;
 /**
  * @author jug
  */
-public class GrowthLineTrackingILP< H extends Hypothesis< ? >, A extends AbstractAssignment< H > > {
+public class GrowthLineTrackingILP {
+
+	// < H extends Hypothesis< ComponentTreeNode< DoubleType, ? > >, A extends AbstractAssignment< H > >
 
 	// -------------------------------------------------------------------------------------
 	// statics
@@ -116,22 +118,24 @@ public class GrowthLineTrackingILP< H extends Hypothesis< ? >, A extends Abstrac
 	/**
 	 * Adds all hypothesis given by the nodes in the component tree to
 	 * <code>nodes</code>. Note: order is chosen such that the hypothesis are
-	 * ordered ascending by right interval end.
+	 * ordered ascending by right (upper) interval end (JF: check if still the
+	 * case!).
 	 *
-	 * @param ctRoot
+	 * @param ctNode
+	 *            a node in a <code>ComponentTree</code>.
 	 * @param t
+	 *            the time-index the ctNode comes from.
 	 */
-	public void recursivelyAddCTNsAsHypotheses( final ComponentTreeNode< DoubleType, ? > ctNode, final int t ) {
+	public void recursivelyAddCTNsAsHypotheses( final int t, final ComponentTreeNode< DoubleType, ? > ctNode ) {
 		// do the same for all children
 		for ( final ComponentTreeNode< DoubleType, ? > ctChild : ctNode.getChildren() ) {
-			recursivelyAddCTNsAsHypotheses( ctChild, t );
+			recursivelyAddCTNsAsHypotheses( t, ctChild );
 		}
 		// add the current ctNode as Hypothesis (including corresponding costs)
 		final Pair< Integer, Integer > segInterval = ComponentTreeUtils.getTreeNodeInterval( ctNode );
 		final int a = segInterval.a.intValue();
 		final int b = segInterval.b.intValue();
-		// TODO complete redesign is really necessary... giving null does only
-		// work, because the gapsepvals are lazyly evaluated!
+		// TODO Here I have to still do some redesign... it is unacceptable the way it is right now...
 		final double[] gapSepFkt = gl.getFrames().get( t ).getGapSeparationValues( null );
 		final double max = SimpleFunctionAnalysis.getMax( gapSepFkt, a, b ).b.doubleValue();
 		final double sum = SimpleFunctionAnalysis.getSum( gapSepFkt, a, b );
@@ -141,8 +145,13 @@ public class GrowthLineTrackingILP< H extends Hypothesis< ? >, A extends Abstrac
 	}
 
 	/**
+	 * Add an exit-assignment at time t to a bunch of segmentation hypotheses.
+	 *
 	 * @param t
+	 *            the time-point.
 	 * @param hyps
+	 *            a list of hypothesis for which an <code>ExitAssignment</code>
+	 *            should be added.
 	 * @throws GRBException
 	 */
 	public void addExitAssignments( final int t, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps ) throws GRBException {
@@ -160,9 +169,16 @@ public class GrowthLineTrackingILP< H extends Hypothesis< ? >, A extends Abstrac
 	}
 
 	/**
+	 * Add a mapping-assignment to a bunch of segmentation hypotheses.
+	 *
 	 * @param t
+	 *            the time-point from which the <code>curHyps</code> originate.
 	 * @param curHyps
+	 *            a list of hypothesis for which a
+	 *            <code>MappingAssignment</code> should be added.
 	 * @param nxtHyps
+	 *            a list of hypothesis at the next time-point at which the newly
+	 *            added <code>MappingAssignments</code> should end at.
 	 * @throws GRBException
 	 */
 	public void addMappingAssignments( final int t, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> curHyps, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> nxtHyps ) throws GRBException {
@@ -188,9 +204,16 @@ public class GrowthLineTrackingILP< H extends Hypothesis< ? >, A extends Abstrac
 	}
 
 	/**
+	 * Computes the compatibility-mapping-costs between the two given
+	 * hypothesis.
+	 *
 	 * @param from
+	 *            the segmentation hypothesis from which the mapping originates.
 	 * @param to
-	 * @return
+	 *            the segmentation hypothesis towards which the
+	 *            mapping-assignment leads.
+	 * @return the cost we want to set for the given combination of segmentation
+	 *         hypothesis.
 	 */
 	private double compatibilityCostOfMapping( final Hypothesis< ComponentTreeNode< DoubleType, ? >> from, final Hypothesis< ComponentTreeNode< DoubleType, ? >> to ) {
 		final long sizeFrom = from.getWrappedHypothesis().getSize();
@@ -208,9 +231,18 @@ public class GrowthLineTrackingILP< H extends Hypothesis< ? >, A extends Abstrac
 	}
 
 	/**
+	 * Add a division-assignment to a bunch of segmentation hypotheses. Note
+	 * that this function also looks for suitable pairs of hypothesis in
+	 * nxtHyps, since division-assignments naturally need two right-neighbors.
+	 *
 	 * @param t
+	 *            the time-point from which the <code>curHyps</code> originate.
 	 * @param curHyps
+	 *            a list of hypothesis for which a
+	 *            <code>DivisionAssignment</code> should be added.
 	 * @param nxtHyps
+	 *            a list of hypothesis at the next time-point at which the newly
+	 *            added <code>DivisionAssignments</code> should end at.
 	 * @throws GRBException
 	 */
 	public void addDivisionAssignments( final int t, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> curHyps, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> nxtHyps ) throws GRBException {
@@ -244,10 +276,19 @@ public class GrowthLineTrackingILP< H extends Hypothesis< ? >, A extends Abstrac
 	}
 
 	/**
+	 * Computes the compatibility-mapping-costs between the two given
+	 * hypothesis.
+	 *
 	 * @param from
+	 *            the segmentation hypothesis from which the mapping originates.
 	 * @param to
+	 *            the upper (left) segmentation hypothesis towards which the
+	 *            mapping-assignment leads.
 	 * @param lowerNeighbor
-	 * @return
+	 *            the lower (right) segmentation hypothesis towards which the
+	 *            mapping-assignment leads.
+	 * @return the cost we want to set for the given combination of segmentation
+	 *         hypothesis.
 	 */
 	private double compatibilityCostOfDivision( final Hypothesis< ComponentTreeNode< DoubleType, ? >> from, final Hypothesis< ComponentTreeNode< DoubleType, ? >> toUpper, final Hypothesis< ComponentTreeNode< DoubleType, ? >> toLower ) {
 		final long sizeFrom = from.getWrappedHypothesis().getSize();
@@ -269,20 +310,37 @@ public class GrowthLineTrackingILP< H extends Hypothesis< ? >, A extends Abstrac
 	}
 
 	/**
+	 * This function traverses all time points of the growth-line
+	 * <code>gl</code>, retrieves the full component tree that has to be built
+	 * beforehand, and calls the private method
+	 * <code>recursivelyAddPathBlockingConstraints</code> on all those root
+	 * nodes. This function adds one constraint for each path starting at a leaf
+	 * node in the tree up to the root node itself.
+	 * Those path-blocking constraints ensure, that only 0 or 1 of the
+	 * segmentation hypothesis along such a path can be chosen during the convex
+	 * optimization.
+	 *
 	 * @throws GRBException
 	 *
 	 */
 	public void addPathBlockingConstraint() throws GRBException {
 		// For each time-point
 		for ( int t = 0; t < gl.size(); t++ ) {
+			// Get the full component tree
 			final ComponentTree< DoubleType, ? > ct = gl.get( t ).getComponentTree();
 			for ( final ComponentTreeNode< DoubleType, ? > ctRoot : ct.roots() ) {
+				// And call the function adding all the path-blocking-constraints...
 				recursivelyAddPathBlockingConstraints( ctRoot );
 			}
 		}
 	}
 
 	/**
+	 * Generates path-blocking constraints for each path from the given
+	 * <code>ctNode</code> to a leaf in the tree.
+	 * Those path-blocking constraints ensure, that only 0 or 1 of the
+	 * segmentation hypothesis along such a path can be chosen during the convex
+	 * optimization.
 	 *
 	 * @param ctRoot
 	 * @throws GRBException
@@ -317,7 +375,14 @@ public class GrowthLineTrackingILP< H extends Hypothesis< ? >, A extends Abstrac
 	}
 
 	/**
-	 *
+	 * This function generated and adds the explanation-continuity-constraints
+	 * to the ILP model.
+	 * Those constraints ensure that for each complete set of segmentation
+	 * hypotheses at all time-points t we have the same number of incoming and
+	 * outgoing edges from the left and to the right.
+	 * Intuitively speaking this means that each hypothesis that is chosen by an
+	 * assignment coming from t-1 we need to continue its interpretation by
+	 * finding an active assignment towards t+1.
 	 */
 	public void addExplainationContinuityConstraints() throws GRBException {
 		int eccId = 0;
@@ -347,7 +412,10 @@ public class GrowthLineTrackingILP< H extends Hypothesis< ? >, A extends Abstrac
 	}
 
 	/**
-	 *
+	 * This function takes the ILP (hopefully) built up in <code>model</code>
+	 * and starts the convex optimization procedure. This is actually the step
+	 * that will find the MAP in the given model and hence the solution to our
+	 * segmentation and tracking problem.
 	 */
 	public void run() {
 		try {
@@ -382,79 +450,206 @@ public class GrowthLineTrackingILP< H extends Hypothesis< ? >, A extends Abstrac
 	}
 
 	/**
+	 * Returns the optimal segmentation at time t, given by a list of non
+	 * conflicting component-tree-nodes.
+	 * Calling this function makes only sense if the <code>run</code>-method was
+	 * called and the convex optimizer could find a optimal feasible solution.
 	 *
 	 * @param t
-	 * @return
+	 *            the time-point at which to look for the optimal segmentation.
+	 * @return a list of <code>ComponentTreeNodes</code> that correspond to the
+	 *         active segmentation hypothesis (chosen by the optimization
+	 *         procedure).
 	 */
 	public List< ComponentTreeNode< DoubleType, ? >> getOptimalSegmentation( final int t ) {
-		//TODO implement!
-		return null;
-	}
+		final ArrayList< ComponentTreeNode< DoubleType, ? >> ret = new ArrayList< ComponentTreeNode< DoubleType, ? >>();
 
-	/**
-	 *
-	 * @param t
-	 * @return
-	 */
-	public List< H > getOptimalHypotheses( final int t ) {
-		final ArrayList< H > ret = new ArrayList< H >();
-
-		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = nodes.getHypothesesAt( t );
-		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : hyps ) {
-
+		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = getOptimalHypotheses( t );
+		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> h : hyps ) {
+			ret.add( h.getWrappedHypothesis() );
 		}
 
 		return ret;
 	}
 
 	/**
+	 * Returns the optimal segmentation at time t, given by a list of non
+	 * conflicting segmentation hypothesis.
+	 * Calling this function makes only sense if the <code>run</code>-method was
+	 * called and the convex optimizer could find a optimal feasible solution.
 	 *
 	 * @param t
-	 * @return
+	 *            the time-point at which to look for the optimal segmentation.
+	 * @return a list of
+	 *         <code>Hypothesis< ComponentTreeNode< DoubleType, ? > ></code>
+	 *         that correspond to the active segmentation hypothesis (chosen by
+	 *         the optimization procedure).
 	 */
-	public HashMap< H, Set< A > > getOptimalLeftAssignments( final int t ) {
-		final HashMap< H, Set< A > > ret = new HashMap< H, Set< A > >();
-		// TODO implement
+	public List< Hypothesis< ComponentTreeNode< DoubleType, ? > > > getOptimalHypotheses( final int t ) {
+		final ArrayList< Hypothesis< ComponentTreeNode< DoubleType, ? > > > ret =
+				new ArrayList< Hypothesis< ComponentTreeNode< DoubleType, ? > > >();
+
+		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = nodes.getHypothesesAt( t );
+
+		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : hyps ) {
+			Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > nh;
+			if ( t >= 0 ) {
+				nh = edgeSets.getLeftNeighborhood( hyp );
+			} else {
+				nh = edgeSets.getRightNeighborhood( hyp );
+			}
+
+			try {
+				final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> aa = findActiveAssignment( nh );
+				if ( aa != null ) {
+					ret.add( hyp );
+				}
+			}
+			catch ( final GRBException e ) {
+				System.err.println( "It could not be determined of a certain assignment was choosen during the convex optimization!" );
+				e.printStackTrace();
+			}
+		}
+
 		return ret;
 	}
 
 	/**
+	 * Finds and returns the optimal left (to t-1) assignments at time-point t.
+	 * For each segmentation hypothesis at t we collect all active assignments
+	 * coming in from the left (from t-1).
+	 * Calling this function makes only sense if the <code>run</code>-method was
+	 * called and the convex optimizer could find a optimal feasible solution.
 	 *
 	 * @param t
-	 * @return
+	 *            the time at which to look for active left-assignments.
+	 *            Values for t make only sense if <code>>=1</code> and
+	 *            <code>< nodes.getNumberOfTimeSteps().</code>
+	 * @return a hash-map that maps from segmentation hypothesis to assignments
+	 *         that (i) are active, and (i) come in from the left (from t-1).
+	 *         Note that segmentation hypothesis that are not active will NOT be
+	 *         included in the hash-map.
 	 */
-	private A getOptimalLeftAssignment( final int t, final H hypothesis ) {
-		return findActiveAssignment( edgeSets.getLeftNeighborhood( hypothesis ) ); // FIXME
-	}
+	public HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > getOptimalLeftAssignments( final int t ) {
+		assert ( t >= 1 );
+		assert ( t < nodes.getNumberOfTimeSteps() );
 
-	/**
-	 *
-	 * @param t
-	 * @return
-	 */
-	public HashMap< H, Set< A > > getOptimalRightAssignments( final int t ) {
-		final HashMap< H, Set< A > > ret = new HashMap< H, Set< A > >();
-		// TODO implement
+		final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >,
+					   AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > ret =
+				new HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >,
+						     AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > >();
+
+		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = nodes.getHypothesesAt( t );
+
+		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : hyps ) {
+			try {
+				final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> ola = getOptimalLeftAssignment( hyp );
+				if ( ola != null ) {
+					ret.put( hyp, ola );
+				}
+			}
+			catch ( final GRBException e ) {
+				System.err.println( "An optimal left assignment could not be determined!" );
+				e.printStackTrace();
+			}
+		}
+
 		return ret;
 	}
 
 	/**
+	 * Finds and returns the optimal left (to t-1) assignment given a
+	 * segmentation hypothesis.
+	 * For each segmentation hypothesis we know a set of outgoing edges
+	 * (assignments) that describe the interpretation (fate) of this segmented
+	 * cell. The ILP is set up such that only 1 such assignment can be chosen by
+	 * the convex optimizer during the computation of the optimal MAP
+	 * assignment.
 	 *
-	 * @param t
-	 * @return
-	 */
-	private A getOptimalRightAssignment( final int t, final H hypothesis ) {
-		return findActiveAssignment( edgeSets.getRightNeighborhood( hypothesis ) ); // FIXME
-	}
-
-	/**
-	 *
-	 * @param t
-	 * @return
+	 * @return the optimal (choosen by the convex optimizer) assignment
+	 *         describing the most likely data interpretation (MAP) towards the
+	 *         previous time-point.
 	 * @throws GRBException
 	 */
-	private A findActiveAssignment( final Set< A > assignments ) throws GRBException {
-		for ( final A a : assignments ) {
+	private AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > getOptimalLeftAssignment( final Hypothesis< ComponentTreeNode< DoubleType, ? > > hypothesis ) throws GRBException {
+		return findActiveAssignment( edgeSets.getLeftNeighborhood( hypothesis ) );
+	}
+
+	/**
+	 * Finds and returns the optimal right (to t+1) assignments at time-point t.
+	 * For each segmentation hypothesis at t we collect all active assignments
+	 * going towards the right (to t+1).
+	 * Calling this function makes only sense if the <code>run</code>-method was
+	 * called and the convex optimizer could find a optimal feasible solution.
+	 *
+	 * @param t
+	 *            the time at which to look for active right-assignments.
+	 *            Values for t make only sense if <code>>=0</code> and
+	 *            <code>< nodes.getNumberOfTimeSteps() - 1.</code>
+	 * @return a hash-map that maps from segmentation hypothesis to assignments
+	 *         that (i) are active, and (i) go towards the right (to t+1).
+	 *         Note that segmentation hypothesis that are not active will NOT be
+	 *         included in the hash-map.
+	 */
+	public HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > getOptimalRightAssignments( final int t ) {
+		assert ( t >= 0 );
+		assert ( t < nodes.getNumberOfTimeSteps() - 1 );
+
+		final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >,
+					   AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > ret =
+				new HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >,
+							 AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > >();
+
+		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = nodes.getHypothesesAt( t );
+
+		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : hyps ) {
+			try {
+				final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> ora = getOptimalRightAssignment( hyp );
+				if ( ora != null ) {
+					ret.put( hyp, ora );
+				}
+			}
+			catch ( final GRBException e ) {
+				System.err.println( "An optimal left assignment could not be determined!" );
+				e.printStackTrace();
+			}
+		}
+
+		return ret;
+	}
+
+	/**
+	 * Finds and returns the optimal right (to t+1) assignment given a
+	 * segmentation hypothesis.
+	 * For each segmentation hypothesis we know a set of outgoing edges
+	 * (assignments) that describe the interpretation (fate) of this segmented
+	 * cell. The ILP is set up such that only 1 such assignment can be chosen by
+	 * the convex optimizer during the computation of the optimal MAP
+	 * assignment.
+	 *
+	 * @return the optimal (choosen by the convex optimizer) assignment
+	 *         describing the most likely data interpretation (MAP) towards the
+	 *         next time-point.
+	 * @throws GRBException
+	 */
+	private AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > getOptimalRightAssignment( final Hypothesis< ComponentTreeNode< DoubleType, ? > > hypothesis ) throws GRBException {
+		return findActiveAssignment( edgeSets.getRightNeighborhood( hypothesis ) );
+	}
+
+	/**
+	 * Finds the active assignment in a set of assignments.
+	 * This method is thought to be called given a set that can only contain at
+	 * max 1 active assignment. (It will always and exclusively return the first
+	 * active assignment in the iteration order of the given set!)
+	 *
+	 * @return the one (first) active assignment in the given set of
+	 *         assignments. (An assignment is active iff the binary ILP variable
+	 *         associated with the assignment was set to 1 by the convex
+	 *         optimizer!)
+	 * @throws GRBException
+	 */
+	private AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > findActiveAssignment( final Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > set ) throws GRBException {
+		for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > a : set ) {
 			if ( a.isChoosen() ) { return a; }
 		}
 		return null;

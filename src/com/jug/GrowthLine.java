@@ -24,9 +24,9 @@ public class GrowthLine {
 	// fields
 	// -------------------------------------------------------------------------------------
 	private final List< GrowthLineFrame > frames;
-	private GrowthLineTrackingILP<
-			Hypothesis< ComponentTreeNode< DoubleType, ? > >,
-			AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > ilp;
+	private GrowthLineTrackingILP ilp; //<
+			// Hypothesis< ComponentTreeNode< DoubleType, ? > >,
+			// AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > ilp;
 
 	// -------------------------------------------------------------------------------------
 	// setters and getters
@@ -93,16 +93,14 @@ public class GrowthLine {
 	public void generateILP() {
 		try {
 
-			ilp = new GrowthLineTrackingILP<
-					Hypothesis< ComponentTreeNode< DoubleType, ? > >,
-					AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > ( this );
+			ilp = new GrowthLineTrackingILP( this );
 
 			// Feed all segmentation-hypotheses as nodes to the ILP
 			for ( int t = 0; t < this.size(); t++ ) {
 				final GrowthLineFrame glf = this.getFrames().get( t );
 
 				for ( final ComponentTreeNode< DoubleType, ? > ctRoot : glf.getComponentTree().roots() ) {
-					ilp.recursivelyAddCTNsAsHypotheses( ctRoot, t );
+					ilp.recursivelyAddCTNsAsHypotheses( t, ctRoot );
 				}
 			}
 
