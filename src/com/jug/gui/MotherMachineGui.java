@@ -4,6 +4,7 @@
 package com.jug.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
@@ -106,7 +107,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 			}
 			catch ( final NullPointerException e ) {
 				System.err.println( "View or glf not yet set in MotherMachineGui!" );
-				e.printStackTrace();
+				// e.printStackTrace();
 			}
 			g.drawImage( screenImage.image(), 0, 0, w, h, null );
 		}
@@ -176,6 +177,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 	private JSlider sliderGL;
 	private JSlider sliderTime;
 
+	private AssignmentViewer leftAssignmentViewer;
+	private AssignmentViewer rightAssignmentViewer;
+
 	// -------------------------------------------------------------------------------------
 	// construction & gui creation
 	// -------------------------------------------------------------------------------------
@@ -200,7 +204,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 	private void buildGui() {
 
 		final JPanel panelCurationView = new JPanel( new BorderLayout() );
-		final JPanel panelCurationViewHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 25, 10 ) );
+		final JPanel panelCurationViewHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 10 ) );
+		panelCurationViewHelper.setBorder( BorderFactory.createLoweredBevelBorder() );
 		JPanel panelVerticalHelper;
 		JPanel panelHorizontalHelper;
 		JLabel labelHelper;
@@ -211,7 +216,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 //		labelCurationView.setBorder( BorderFactory.createEmptyBorder( 10, 10, 10, 10 ) );
 //		panelCurationView.add( labelCurationView, BorderLayout.NORTH );
 
-		// ----------------
+		// --- Left data viewer (t-1) -------------
 
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 0 ) );
@@ -221,9 +226,21 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 		// - - - - - -
 		imgCanvasLeft = new Viewer2DCanvas( GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
 		panelVerticalHelper.add( imgCanvasLeft, BorderLayout.CENTER );
+		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 2, 2, 2, 2, Color.GRAY ) );
+		panelVerticalHelper.setBackground( Color.BLACK );
 		panelCurationViewHelper.add( panelVerticalHelper );
 
-		// ----------------
+		// --- Left assignment viewer (t-1 -> t) -------------
+		panelVerticalHelper = new JPanel( new BorderLayout() );
+		// - - - - - -
+		leftAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		//TODO NOT nice... do something against that, please!
+		int t = model.getCurrentGLF().getParent().getFrames().indexOf( model.getCurrentGLF() );
+		leftAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalLeftAssignments( t ) );
+		panelVerticalHelper.add( leftAssignmentViewer, BorderLayout.CENTER );
+		panelCurationViewHelper.add( panelVerticalHelper );
+
+		// --- Center data viewer (t) -------------
 
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 0 ) );
@@ -233,9 +250,21 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 		// - - - - - -
 		imgCanvasCenter = new Viewer2DCanvas( GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
 		panelVerticalHelper.add( imgCanvasCenter, BorderLayout.CENTER );
+		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 3, 3, 3, 3, Color.RED ) );
+		panelVerticalHelper.setBackground( Color.BLACK );
 		panelCurationViewHelper.add( panelVerticalHelper );
 
-		// ----------------
+		// --- Left assignment viewer (t -> t+1) -------------
+		panelVerticalHelper = new JPanel( new BorderLayout() );
+		// - - - - - -
+		rightAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		//TODO NOT nice... do something against that, please!
+		t = model.getCurrentGLF().getParent().getFrames().indexOf( model.getCurrentGLF() );
+		rightAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalRightAssignments( t ) );
+		panelVerticalHelper.add( rightAssignmentViewer, BorderLayout.CENTER );
+		panelCurationViewHelper.add( panelVerticalHelper );
+
+		// ---  Right data viewer (t+1) -------------
 
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 0 ) );
@@ -245,9 +274,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 		// - - - - - -
 		imgCanvasRight = new Viewer2DCanvas( GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
 		panelVerticalHelper.add( imgCanvasRight, BorderLayout.CENTER );
+		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 2, 2, 2, 2, Color.GRAY ) );
+		panelVerticalHelper.setBackground( Color.BLACK );
 		panelCurationViewHelper.add( panelVerticalHelper );
 
-		// ----------------
+		// --- Slider for time and GL -------------
 
 		sliderGL = new JSlider( JSlider.VERTICAL, 0, model.mm.getGrowthLines().size() - 1, 0 );
 		sliderGL.setValue( 0 );
@@ -278,15 +309,14 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 		panelHorizontalHelper.add( sliderTime, BorderLayout.CENTER );
 		add( panelHorizontalHelper, BorderLayout.SOUTH );
 
-		// ----------------
+		// --- Final adding and layout steps -------------
 
 		panelCurationView.add( panelCurationViewHelper, BorderLayout.CENTER );
 		add( panelCurationView, BorderLayout.CENTER );
 
-		// - - - - - - - - - - - -
-		// KEYSTROKE SETUP (using
-		// Input- and ActionMaps)
-		// - - - - - - - - - - - -
+		// - - - - - - - - - - - - - - - - - - - - - - - -
+		//  KEYSTROKE SETUP (usingInput- and ActionMaps)
+		// - - - - - - - - - - - - - - - - - - - - - - - -
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 't' ), "GLV_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'g' ), "GLV_bindings" );
 
@@ -348,6 +378,15 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 		final GrowthLineFrame glf = model.getCurrentGLF();
 		viewImgCenter = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
 		imgCanvasCenter.setScreenImage( glf, viewImgCenter );
+
+		// - -  assignment-views  - - - - - -
+
+		//TODO NOT nice... do something against that, please!
+		int t = model.getCurrentGLF().getParent().getFrames().indexOf( model.getCurrentGLF() );
+		leftAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalLeftAssignments( t ) );
+		//TODO NOT nice... do something against that, please!
+		t = model.getCurrentGLF().getParent().getFrames().indexOf( model.getCurrentGLF() );
+		rightAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalRightAssignments( t ) );
 
 	}
 

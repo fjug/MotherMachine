@@ -18,11 +18,8 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 	private final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > >, Hypothesis< ComponentTreeNode< DoubleType, ? > > > nodes;
 	@SuppressWarnings( "unused" )
 	private final HypothesisNeighborhoods< Hypothesis< ComponentTreeNode< DoubleType, ? > >, AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > edges;
-	@SuppressWarnings( "unused" )
 	private final Hypothesis< ComponentTreeNode< DoubleType, ? >> from;
-	@SuppressWarnings( "unused" )
 	private final Hypothesis< ComponentTreeNode< DoubleType, ? >> toUpper;
-	@SuppressWarnings( "unused" )
 	private final Hypothesis< ComponentTreeNode< DoubleType, ? >> toLower;
 
 	/**
@@ -64,6 +61,38 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 	public void addConstraintsToLP() throws GRBException {
 		// DIVISION assignments do not come with assignment specific
 		// constrains...
+	}
+
+	/**
+	 * Returns the segmentation hypothesis this division-assignment comes from
+	 * (the one at the earlier time-point t).
+	 *
+	 * @return the associated segmentation-hypothesis.
+	 */
+	public Hypothesis< ComponentTreeNode< DoubleType, ? >> getSourceHypothesis() {
+		return from;
+	}
+
+	/**
+	 * Returns the upper of the two segmentation hypothesis this
+	 * division-assignment links to (the upper of the two at the later
+	 * time-point t+1).
+	 *
+	 * @return the associated segmentation-hypothesis.
+	 */
+	public Hypothesis< ComponentTreeNode< DoubleType, ? >> getUpperDesinationHypothesis() {
+		return toUpper;
+	}
+
+	/**
+	 * Returns the upper of the two segmentation hypothesis this
+	 * division-assignment links to (the upper of the two at the later
+	 * time-point t+1).
+	 * 
+	 * @return the associated segmentation-hypothesis.
+	 */
+	public Hypothesis< ComponentTreeNode< DoubleType, ? >> getLowerDesinationHypothesis() {
+		return toLower;
 	}
 
 }

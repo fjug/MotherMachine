@@ -23,12 +23,11 @@ import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.real.DoubleType;
-import net.imglib2.util.Pair;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 import segmentation.filteredcomponents.FilteredComponentTreeNode;
 
-import com.jug.util.ComponentTreeUtils;
+import com.jug.util.ArgbDrawingUtils;
 import com.jug.util.SimpleFunctionAnalysis;
 import com.jug.util.Util;
 
@@ -466,28 +465,7 @@ public class GrowthLineFrame {
 		}
 
 		for ( final ComponentTreeNode< DoubleType, ? > ctn : optimalSegmentation ) {
-			final Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( ctn );
-
-			Point p = new Point( getAvgXpos(), limits.a.intValue() );
-			for ( int i = 0; i < 10; i++ ) {
-				final long[] pos = Util.pointLocation( p );
-				pos[ 0 ] += offsetX;
-				pos[ 1 ] += offsetY;
-				raAnnotationImg.setPosition( pos );
-				raAnnotationImg.get().set( new ARGBType( ARGBType.rgba( 255, 0, 0, 255 ) ) );
-				p.move( -1, 0 );
-			}
-
-			p = new Point( getAvgXpos(), limits.b.intValue() );
-			for ( int i = 0; i < 10; i++ ) {
-				long[] pos = Util.pointLocation( p );
-				pos = Util.pointLocation( p );
-				pos[ 0 ] += offsetX;
-				pos[ 1 ] += offsetY;
-				raAnnotationImg.setPosition( pos );
-				raAnnotationImg.get().set( new ARGBType( ARGBType.rgba( 255, 0, 0, 255 ) ) );
-				p.move( 1, 0 );
-			}
+			ArgbDrawingUtils.taintComponentTreeNode( ctn, raAnnotationImg, offsetX + getAvgXpos(), offsetY );
 		}
 	}
 

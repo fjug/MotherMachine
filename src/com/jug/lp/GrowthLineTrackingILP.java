@@ -610,7 +610,7 @@ public class GrowthLineTrackingILP {
 				}
 			}
 			catch ( final GRBException e ) {
-				System.err.println( "An optimal left assignment could not be determined!" );
+				System.err.println( "An optimal right assignment could not be determined!" );
 				e.printStackTrace();
 			}
 		}
@@ -649,6 +649,8 @@ public class GrowthLineTrackingILP {
 	 * @throws GRBException
 	 */
 	private AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > findActiveAssignment( final Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > set ) throws GRBException {
+		if ( set == null ) return null;
+
 		for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > a : set ) {
 			if ( a.isChoosen() ) { return a; }
 		}

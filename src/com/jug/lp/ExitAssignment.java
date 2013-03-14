@@ -40,7 +40,7 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< ComponentTre
 			final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > >, Hypothesis< ComponentTreeNode< DoubleType, ? > > > nodes,
 			final HypothesisNeighborhoods< Hypothesis< ComponentTreeNode< DoubleType, ? > >, AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > edges,
 			final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> Hup,
- final Hypothesis< ComponentTreeNode< DoubleType, ? >> who ) throws GRBException {
+			final Hypothesis< ComponentTreeNode< DoubleType, ? >> who ) throws GRBException {
 		super( GrowthLineTrackingILP.ASSIGNMENT_EXIT, ilpVariable, model );
 		this.Hup = Hup;
 		this.edges = edges;
@@ -72,4 +72,13 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< ComponentTre
 		dcId++;
 	}
 
+	/**
+	 * Returns the segmentation hypothesis this term-assignment is associated
+	 * with.
+	 *
+	 * @return the associated segmentation-hypothesis.
+	 */
+	public Hypothesis< ComponentTreeNode< DoubleType, ? >> getAssociatedHypothesis() {
+		return who;
+	}
 }

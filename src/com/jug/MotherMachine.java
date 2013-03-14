@@ -24,6 +24,7 @@ import java.util.Properties;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 
 import net.imglib2.Cursor;
@@ -35,7 +36,6 @@ import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.algorithm.stats.Normalize;
 import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.realtransform.AffineTransform2D;
 import net.imglib2.realtransform.RealViews;
@@ -163,7 +163,7 @@ public class MotherMachine {
 	 * Width (in pixels) of the main GUI-window. This value will be loaded from
 	 * and stored in the properties file!
 	 */
-	private static int GUI_HEIGHT = 550;
+	private static int GUI_HEIGHT = 585;
 
 	// ====================================================================================================================
 
@@ -215,17 +215,25 @@ public class MotherMachine {
 		}
 
 		String path = props.getProperty( "import_path", "/Users/jug/MPI/ProjectVanNimwegen/RealDatasets/" );
-		final File fPath = main.showFolderChooser( guiFrame, path );
+		final File fPath = main.showStartupDialog( guiFrame, path );
 		path = fPath.getAbsolutePath();
-		props.setProperty( "import_path", fPath.getParent() );
+		props.setProperty( "import_path", fPath.getAbsolutePath() );
 		//Now down on window-close: main.saveParams();
 
+		// ---------------------------------------------------
 		main.processDataFromFolder( path );
+		// ---------------------------------------------------
+
+		System.out.print( "Build and show GUI..." );
+		// show loaded and annotated data
+//		ImageJFunctions.show( getImgRaw(), "Rotated & cropped raw data" );
+//		ImageJFunctions.show( getImgTemp(), "Temporary" );
+//		ImageJFunctions.show( getImgAnnotated(), "Annotated ARGB data" );
 
 		final MotherMachineGui gui = new MotherMachineGui( new MotherMachineModel( main ) );
 		gui.setVisible( true );
 
-		main.ij = new ImageJ();
+//		main.ij = new ImageJ();
 		guiFrame.add( gui );
 		guiFrame.setSize( GUI_WIDTH, GUI_HEIGHT );
 		guiFrame.setLocation( GUI_POS_X, GUI_POS_Y );
@@ -358,6 +366,27 @@ public class MotherMachine {
 		}
 		if ( OSValidator.isMac() ) {
 			Application.getApplication().setDockIconImage( img );
+		}
+	}
+
+	/**
+	 *
+	 * @param guiFrame
+	 *            parent frame
+	 * @param path
+	 *            path to be suggested to open
+	 * @return
+	 */
+	private File showStartupDialog( final JFrame guiFrame, final String path ) {
+		final String parentFolder = path.substring( 0, path.lastIndexOf( File.separatorChar ) );
+
+		final String message = "Should the MotherMachine be opened with the data found in:\n" + path + "\n\nIn case you want to choose a folder please select 'No'...";
+		final String title = "MotherMachine Start Dialog";
+		final int decision = JOptionPane.showConfirmDialog( guiFrame, message, title, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE );
+		if (decision == JOptionPane.YES_OPTION) {
+			return new File( path );
+		} else {
+			return showFolderChooser( guiFrame, parentFolder );
 		}
 	}
 
@@ -541,13 +570,6 @@ public class MotherMachine {
 		System.out.println( "Running Integer Linear Programs..." );
 		runILPs();
 		System.out.println( " done!" );
-
-		System.out.print( "Build and show GUI..." );
-		// show loaded and annotated data
-		ImageJFunctions.show( getImgRaw(), "Rotated & cropped raw data" );
-		ImageJFunctions.show( getImgTemp(), "Temporary" );
-		ImageJFunctions.show( getImgAnnotated(), "Annotated ARGB data" );
-
 	}
 
 	/**
