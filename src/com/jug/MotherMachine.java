@@ -6,8 +6,13 @@ package com.jug;
 
 import ij.ImageJ;
 
+import java.awt.DisplayMode;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -116,18 +121,65 @@ public class MotherMachine {
 	 */
 	public static double MIN_GAP_CONTRAST = 0.015; // This is set to a very low value that will basically not filter anything...
 
+	// - - - - - - - - - - - - - -
+	// GUI-WINDOW RELATED STATICS
+	// - - - - - - - - - - - - - -
+	/**
+	 * The <code>JFrame</code> containing the main GUI.
+	 */
+	private static JFrame guiFrame;
+	/**
+	 * Properties to configure app (loaded and saved to properties file!).
+	 */
+	private static Properties props;
+	/**
+	 * Default x-position of the main GUI-window.
+	 * This value will be used if the values in the properties file are not
+	 * fitting on any of the currently attached screens.
+	 */
+	private static int DEFAULT_GUI_POS_X = 100;
+	/**
+	 * X-position of the main GUI-window. This value will be loaded from and
+	 * stored in the properties file!
+	 */
+	private static int GUI_POS_X;
+	/**
+	 * Default y-position of the main GUI-window.
+	 * This value will be used if the values in the properties file are not
+	 * fitting on any of the currently attached screens.
+	 */
+	private static int DEFAULT_GUI_POS_Y = 100;
+	/**
+	 * Y-position of the main GUI-window. This value will be loaded from and
+	 * stored in the properties file!
+	 */
+	private static int GUI_POS_Y;
+	/**
+	 * Width (in pixels) of the main GUI-window. This value will be loaded from
+	 * and stored in the properties file!
+	 */
+	private static int GUI_WIDTH = 900;
+	/**
+	 * Width (in pixels) of the main GUI-window. This value will be loaded from
+	 * and stored in the properties file!
+	 */
+	private static int GUI_HEIGHT = 550;
+
+	// ====================================================================================================================
+
 	/**
 	 * PROJECT MAIN
 	 * ============
 	 *
 	 * @param args
+	 *            muh!
 	 */
 	public static void main( final String[] args ) {
 		final MotherMachine main = new MotherMachine();
-		final JFrame guiFrame = new JFrame( "Interactive MotherMachine" );
+		guiFrame = new JFrame( "Interactive MotherMachine" );
 		main.initMainWindow( guiFrame );
 
-		final Properties props = main.loadParams();
+		props = main.loadParams();
 		BGREM_TEMPLATE_XMIN = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMIN", Integer.toString( BGREM_TEMPLATE_XMIN ) ) );
 		BGREM_TEMPLATE_XMAX = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMAX", Integer.toString( BGREM_TEMPLATE_XMAX ) ) );
 		BGREM_X_OFFSET = Integer.parseInt( props.getProperty( "BGREM_X_OFFSET", Integer.toString( BGREM_X_OFFSET ) ) );
@@ -141,11 +193,32 @@ public class MotherMachine {
 		SIGMA_GL_DETECTION_X = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION", Double.toString( SIGMA_GL_DETECTION_X ) ) );
 		SIGMA_GL_DETECTION_Y = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION", Double.toString( SIGMA_GL_DETECTION_Y ) ) );
 
+		GUI_POS_X = Integer.parseInt( props.getProperty( "GUI_POS_X", Integer.toString( DEFAULT_GUI_POS_X ) ) );
+		GUI_POS_Y = Integer.parseInt( props.getProperty( "GUI_POS_Y", Integer.toString( DEFAULT_GUI_POS_X ) ) );
+		GUI_WIDTH = Integer.parseInt( props.getProperty( "GUI_WIDTH", Integer.toString( GUI_WIDTH ) ) );
+		GUI_HEIGHT = Integer.parseInt( props.getProperty( "GUI_HEIGHT", Integer.toString( GUI_HEIGHT ) ) );
+		// Iterate over all currently attached monitors and check if sceen position is actually possible,
+		// otherwise fall back to the DEFAULT values and ignore the ones coming from the properties-file.
+		boolean pos_ok = false;
+		final GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+		final GraphicsDevice[] gs = ge.getScreenDevices();
+		for ( int i = 0; i < gs.length; i++ ) {
+			final DisplayMode dm = gs[ i ].getDisplayMode();
+			if ( gs[ i ].getDefaultConfiguration().getBounds().contains( new java.awt.Point( GUI_POS_X, GUI_POS_Y ) ) ) {
+				pos_ok = true;
+			}
+		}
+		// None of the screens contained the top-left window coordinates --> fall back onto default values...
+		if ( !pos_ok ) {
+			GUI_POS_X = DEFAULT_GUI_POS_X;
+			GUI_POS_Y = DEFAULT_GUI_POS_Y;
+		}
+
 		String path = props.getProperty( "import_path", "/Users/jug/MPI/ProjectVanNimwegen/RealDatasets/" );
 		final File fPath = main.showFolderChooser( guiFrame, path );
 		path = fPath.getAbsolutePath();
 		props.setProperty( "import_path", fPath.getParent() );
-		main.saveParams( props );
+		//Now down on window-close: main.saveParams();
 
 		main.processDataFromFolder( path );
 
@@ -154,7 +227,8 @@ public class MotherMachine {
 
 		main.ij = new ImageJ();
 		guiFrame.add( gui );
-		guiFrame.setSize( 900, 550 );
+		guiFrame.setSize( GUI_WIDTH, GUI_HEIGHT );
+		guiFrame.setLocation( GUI_POS_X, GUI_POS_Y );
 		guiFrame.setVisible( true );
 		System.out.println( " done!" );
 	}
@@ -268,7 +342,14 @@ public class MotherMachine {
 	 *            the JFrame containing the MotherMachine.
 	 */
 	private void initMainWindow( final JFrame guiFrame ) {
-		guiFrame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+		// guiFrame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+		guiFrame.addWindowListener(new WindowAdapter(){
+			@Override
+			public void windowClosing(final WindowEvent we) {
+				saveParams();
+				System.exit(0);
+			}
+		} );
 		final java.net.URL url = MotherMachine.class.getResource( "gui/media/IconMotherMachine128.png" );
 		final Toolkit kit = Toolkit.getDefaultToolkit();
 		final Image img = kit.createImage( url );
@@ -363,7 +444,7 @@ public class MotherMachine {
 	 *            an instance of {@link Properties} containing all key-value
 	 *            pairs used by the MotherMachine.
 	 */
-	public void saveParams( final Properties props ) {
+	public void saveParams() {
 		try {
 			final File f = new File( "mm.properties" );
 			final OutputStream out = new FileOutputStream( f );
@@ -380,6 +461,17 @@ public class MotherMachine {
 			props.setProperty( "SIGMA_PRE_SEGMENTATION_Y", Double.toString( SIGMA_PRE_SEGMENTATION_Y ) );
 			props.setProperty( "SIGMA_GL_DETECTION_X", Double.toString( SIGMA_GL_DETECTION_X ) );
 			props.setProperty( "SIGMA_GL_DETECTION_Y", Double.toString( SIGMA_GL_DETECTION_Y ) );
+
+			final java.awt.Point loc = guiFrame.getLocation();
+			GUI_POS_X = loc.x;
+			GUI_POS_Y = loc.y;
+			GUI_WIDTH = guiFrame.getWidth();
+			GUI_HEIGHT = guiFrame.getHeight();
+
+			props.setProperty( "GUI_POS_X", Integer.toString( GUI_POS_X ) );
+			props.setProperty( "GUI_POS_Y", Integer.toString( GUI_POS_Y ) );
+			props.setProperty( "GUI_WIDTH", Integer.toString( GUI_WIDTH ) );
+			props.setProperty( "GUI_HEIGHT", Integer.toString( GUI_HEIGHT ) );
 
 			props.store( out, "MotherMachine properties" );
 		}
@@ -938,7 +1030,7 @@ public class MotherMachine {
 	private void annotateDetectedWellCenters() {
 		for ( final GrowthLine gl : this.getGrowthLines() ) {
 			for ( final GrowthLineFrame glf : gl.getFrames() ) {
-				glf.draw( imgAnnotated );
+				glf.drawCenterLine( imgAnnotated );
 			}
 		}
 	}

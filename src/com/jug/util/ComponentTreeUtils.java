@@ -69,6 +69,19 @@ public class ComponentTreeUtils {
 		return candMinMax.a.intValue() > refMinMax.b.intValue();
 	}
 
+	/**
+	 * Returns the smallest and largest value on the x-axis that is spanned by
+	 * this component-tree-node.
+	 * Note that this function really only makes sense if the comp.-tree was
+	 * built on a one-dimensional image (as it is the case for my current
+	 * MotherMachine stuff...)
+	 * 
+	 * @param node
+	 *            the node in question.
+	 * @return a <code>Pair</code> or two <code>Integers</code> giving the
+	 *         leftmost and rightmost point on the x-axis that is covered by
+	 *         this component-tree-node respectively.
+	 */
 	public static Pair< Integer, Integer > getTreeNodeInterval( final ComponentTreeNode< DoubleType, ? > node ) {
 		int min = Integer.MAX_VALUE;
 		int max = Integer.MIN_VALUE;

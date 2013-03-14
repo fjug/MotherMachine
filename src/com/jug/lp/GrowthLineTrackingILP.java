@@ -493,7 +493,7 @@ public class GrowthLineTrackingILP {
 
 		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : hyps ) {
 			Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > nh;
-			if ( t >= 0 ) {
+			if ( t > 0 ) {
 				nh = edgeSets.getLeftNeighborhood( hyp );
 			} else {
 				nh = edgeSets.getRightNeighborhood( hyp );

@@ -86,8 +86,13 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 		@Override
 		public void paintComponent( final Graphics g ) {
 			try {
-				projector.map();
-				glf.draw( screenImage, view );
+				if ( projector != null ) {
+					projector.map();
+				}
+				glf.drawCenterLine( screenImage, view );
+				//TODO NOT nice... do something against that, please!
+				final int t = glf.getParent().getFrames().indexOf( glf );
+				glf.drawOptimalSegmentation( screenImage, view, glf.getParent().getIlp().getOptimalSegmentation( t ) );
 			}
 			catch ( final ArrayIndexOutOfBoundsException e ) {
 				// this can happen if a growth line, due to shift, exists in one
@@ -97,11 +102,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 				// throws a ArrayIndexOutOfBoundsException that I catch
 				// hereby... ;)
 				System.err.println( "ArrayIndexOutOfBoundsException in paintComponent of MMGUI!" );
-				//e.printStackTrace();
+				// e.printStackTrace();
 			}
 			catch ( final NullPointerException e ) {
-				System.err.println( "Projector, view, or glf not yet set in MotherMachineGui!" );
-				//e.printStackTrace();
+				System.err.println( "View or glf not yet set in MotherMachineGui!" );
+				e.printStackTrace();
 			}
 			g.drawImage( screenImage.image(), 0, 0, w, h, null );
 		}

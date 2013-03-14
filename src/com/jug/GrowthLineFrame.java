@@ -23,10 +23,12 @@ import net.imglib2.interpolation.randomaccess.NLinearInterpolatorFactory;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.util.Pair;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 import segmentation.filteredcomponents.FilteredComponentTreeNode;
 
+import com.jug.util.ComponentTreeUtils;
 import com.jug.util.SimpleFunctionAnalysis;
 import com.jug.util.Util;
 
@@ -391,8 +393,8 @@ public class GrowthLineFrame {
 	 * @param img
 	 *            the Img to draw into.
 	 */
-	public void draw( final Img< ARGBType > imgAnnotated ) {
-		draw( imgAnnotated, null );
+	public void drawCenterLine( final Img< ARGBType > imgAnnotated ) {
+		drawCenterLine( imgAnnotated, null );
 	}
 
 	/**
@@ -405,7 +407,7 @@ public class GrowthLineFrame {
 	 *            the active view on that Img (in order to know the pixel
 	 *            offsets)
 	 */
-	public void draw( final Img< ARGBType > img, final IntervalView< DoubleType > view ) {
+	public void drawCenterLine( final Img< ARGBType > img, final IntervalView< DoubleType > view ) {
 		final RandomAccess< ARGBType > raAnnotationImg = img.randomAccess();
 
 		long offsetX = 0;
@@ -421,6 +423,71 @@ public class GrowthLineFrame {
 			pos[ 1 ] += offsetY;
 			raAnnotationImg.setPosition( pos );
 			raAnnotationImg.get().set( new ARGBType( ARGBType.rgba( 0, 255, 0, 255 ) ) );
+		}
+	}
+
+	/**
+	 * Draws the optimal segmentation (determined by the solved ILP) into the
+	 * given <code>Img</code>.
+	 *
+	 * @param img
+	 *            the Img to draw into.
+	 * @param optimalSegmentation
+	 *            a <code>List</code> of the component-tree-nodes that represent
+	 *            the optimal segmentation (the one returned by the solution to
+	 *            the ILP).
+	 */
+	public void drawOptimalSegmentation( final Img< ARGBType > img, final List< ComponentTreeNode< DoubleType, ? >> optimalSegmentation ) {
+		drawOptimalSegmentation( img, null, optimalSegmentation );
+	}
+
+	/**
+	 * Draws the optimal segmentation (determined by the solved ILP) into the
+	 * given <code>Img</code>.
+	 *
+	 * @param img
+	 *            the Img to draw into.
+	 * @param view
+	 *            the active view on that Img (in order to know the pixel
+	 *            offsets)
+	 * @param optimalSegmentation
+	 *            a <code>List</code> of the component-tree-nodes that represent
+	 *            the optimal segmentation (the one returned by the solution to
+	 *            the ILP).
+	 */
+	public void drawOptimalSegmentation( final Img< ARGBType > img, final IntervalView< DoubleType > view, final List< ComponentTreeNode< DoubleType, ? >> optimalSegmentation ) {
+		final RandomAccess< ARGBType > raAnnotationImg = img.randomAccess();
+
+		long offsetX = 0;
+		long offsetY = 0;
+		if ( view != null ) {
+			offsetX = view.min( 0 );
+			offsetY = view.min( 1 );
+		}
+
+		for ( final ComponentTreeNode< DoubleType, ? > ctn : optimalSegmentation ) {
+			final Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( ctn );
+
+			Point p = new Point( getAvgXpos(), limits.a.intValue() );
+			for ( int i = 0; i < 10; i++ ) {
+				final long[] pos = Util.pointLocation( p );
+				pos[ 0 ] += offsetX;
+				pos[ 1 ] += offsetY;
+				raAnnotationImg.setPosition( pos );
+				raAnnotationImg.get().set( new ARGBType( ARGBType.rgba( 255, 0, 0, 255 ) ) );
+				p.move( -1, 0 );
+			}
+
+			p = new Point( getAvgXpos(), limits.b.intValue() );
+			for ( int i = 0; i < 10; i++ ) {
+				long[] pos = Util.pointLocation( p );
+				pos = Util.pointLocation( p );
+				pos[ 0 ] += offsetX;
+				pos[ 1 ] += offsetY;
+				raAnnotationImg.setPosition( pos );
+				raAnnotationImg.get().set( new ARGBType( ARGBType.rgba( 255, 0, 0, 255 ) ) );
+				p.move( 1, 0 );
+			}
 		}
 	}
 
