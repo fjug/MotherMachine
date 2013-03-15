@@ -97,7 +97,7 @@ public class HypothesisNeighborhoods< H extends Hypothesis< ? >, A extends Abstr
 	}
 
 	// -------------------------------------------------------------------------------------
-	// metho
+	// methods
 	// -------------------------------------------------------------------------------------
 	/**
 	 * Returns whether or not a given segmentation hypothesis has a

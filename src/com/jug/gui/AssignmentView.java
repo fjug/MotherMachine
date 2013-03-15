@@ -160,8 +160,9 @@ public class AssignmentView extends Component {
 		polygon.closePath();
 
 		g2.setPaint( Color.BLUE );
-		g2.fill( polygon );
 		g2.draw( polygon );
+		g2.setPaint( Color.BLUE.brighter().brighter() );
+		g2.fill( polygon );
 //		System.out.println( "just drew a mapping!" );
 	}
 
@@ -194,8 +195,9 @@ public class AssignmentView extends Component {
 		polygon.closePath();
 
 		g2.setPaint( Color.GREEN );
-		g2.fill( polygon );
 		g2.draw( polygon );
+		g2.setPaint( Color.GREEN.brighter().brighter() );
+		g2.fill( polygon );
 //		System.out.println( "just drew a mapping!" );
 	}
 
@@ -213,7 +215,9 @@ public class AssignmentView extends Component {
 		final Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( hyp.getWrappedHypothesis() );
 
 		g2.setPaint( Color.RED );
-		g2.drawRect( 0, limits.a.intValue(), this.getWidth() / 2, limits.b.intValue() );
+		g2.drawRect( 0, limits.a.intValue(), this.getWidth() / 5, limits.b.intValue() );
+		g2.setPaint( Color.RED.brighter().brighter() );
+		g2.fillRect( 0, limits.a.intValue(), this.getWidth() / 5, limits.b.intValue() );
 //		System.out.println( "just drew a term!" );
 	}
 

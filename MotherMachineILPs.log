@@ -14206,3 +14206,478 @@ Thread count was 8 (of 8 available processors)
 
 Optimal solution found (tolerance 1.00e-04)
 Best objective -2.937742821557e+01, best bound -2.937742821557e+01, gap 0.0%
+
+Gurobi 5.1.0 (mac64) logging started Thu Mar 14 18:56:58 2013
+
+Optimize a model with 65 rows, 1743 columns and 13067 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 47 rows and 1714 columns
+Presolve time: 0.01s
+Presolved: 18 rows, 29 columns, 87 nonzeros
+Variable types: 0 continuous, 29 integer (29 binary)
+
+Root relaxation: objective -3.079560e+01, 3 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0     -30.7955951  -30.79560  0.00%     -    0s
+
+Explored 0 nodes (3 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -3.079559505424e+01, best bound -3.079559505424e+01, gap 0.0%
+Optimize a model with 58 rows, 1321 columns and 9320 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 48 rows and 1288 columns
+Presolve time: 0.00s
+Presolved: 10 rows, 33 columns, 56 nonzeros
+Variable types: 0 continuous, 33 integer (33 binary)
+
+Root relaxation: objective -4.927752e+01, 1 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0     -49.2775209  -49.27752  0.00%     -    0s
+
+Explored 0 nodes (1 simplex iterations) in 0.00 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -4.927752092202e+01, best bound -4.927752092202e+01, gap 0.0%
+Optimize a model with 18 rows, 107 columns and 214 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 18 rows and 107 columns
+Presolve time: 0.00s
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 0.000000000000e+00, best bound 0.000000000000e+00, gap 0.0%
+Optimize a model with 58 rows, 1124 columns and 9019 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 51 rows and 1106 columns
+Presolve time: 0.00s
+Presolved: 7 rows, 18 columns, 30 nonzeros
+Variable types: 0 continuous, 18 integer (18 binary)
+
+Root relaxation: objective -1.109694e+02, 1 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0    -110.9694486 -110.96945  0.00%     -    0s
+
+Explored 0 nodes (1 simplex iterations) in 0.00 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -1.109694485831e+02, best bound -1.109694485831e+02, gap 0.0%
+Optimize a model with 63 rows, 1798 columns and 11636 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 54 rows and 1727 columns
+Presolve time: 0.01s
+Presolved: 9 rows, 71 columns, 121 nonzeros
+Variable types: 0 continuous, 71 integer (71 binary)
+
+Root relaxation: objective -1.527641e+02, 0 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0    -152.7641175 -152.76412  0.00%     -    0s
+
+Explored 0 nodes (0 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -1.527641175367e+02, best bound -1.527641175367e+02, gap 0.0%
+Optimize a model with 75 rows, 2031 columns and 18292 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 59 rows and 1929 columns
+Presolve time: 0.01s
+Presolved: 16 rows, 102 columns, 246 nonzeros
+Variable types: 0 continuous, 102 integer (102 binary)
+
+Root relaxation: objective -2.920535e+02, 1 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0    -292.0534961 -292.05350  0.00%     -    0s
+
+Explored 0 nodes (1 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -2.920534961303e+02, best bound -2.920534961303e+02, gap 0.0%
+Optimize a model with 71 rows, 1704 columns and 12557 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 38 rows and 1638 columns
+Presolve time: 0.01s
+Presolved: 33 rows, 66 columns, 341 nonzeros
+Variable types: 0 continuous, 66 integer (65 binary)
+
+Root relaxation: objective -1.634595e+01, 10 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0  -16.34595    0    2    0.00000  -16.34595     -      -    0s
+H    0     0                     -14.2408181  -16.34595  14.8%     -    0s
+H    0     0                     -16.0284084  -16.34595  1.98%     -    0s
+
+Explored 0 nodes (20 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -1.602840838774e+01, best bound -1.602840838774e+01, gap 0.0%
+Optimize a model with 66 rows, 1796 columns and 12454 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 55 rows and 1737 columns
+Presolve time: 0.01s
+Presolved: 11 rows, 59 columns, 132 nonzeros
+Variable types: 0 continuous, 59 integer (59 binary)
+
+Root relaxation: objective -8.669141e+01, 5 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0     -86.6914065  -86.69141  0.00%     -    0s
+
+Explored 0 nodes (5 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -8.669140652609e+01, best bound -8.669140652609e+01, gap 0.0%
+Optimize a model with 66 rows, 1144 columns and 11930 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 33 rows and 1045 columns
+Presolve time: 0.01s
+Presolved: 33 rows, 99 columns, 906 nonzeros
+Variable types: 0 continuous, 99 integer (99 binary)
+
+Explored 0 nodes (0 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 0.000000000000e+00, best bound 0.000000000000e+00, gap 0.0%
+Optimize a model with 72 rows, 1591 columns and 13416 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 53 rows and 1523 columns
+Presolve time: 0.01s
+Presolved: 19 rows, 68 columns, 343 nonzeros
+Variable types: 0 continuous, 68 integer (68 binary)
+
+Root relaxation: objective -5.906888e+01, 1 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0     -59.0688807  -59.06888  0.00%     -    0s
+
+Explored 0 nodes (1 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -5.906888066986e+01, best bound -5.906888066986e+01, gap 0.0%
+Optimize a model with 72 rows, 2676 columns and 24137 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 61 rows and 2624 columns
+Presolve time: 0.01s
+Presolved: 11 rows, 52 columns, 100 nonzeros
+Variable types: 0 continuous, 52 integer (52 binary)
+
+Root relaxation: objective -6.976415e+01, 0 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0     -69.7641501  -69.76415  0.00%     -    0s
+
+Explored 0 nodes (0 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -6.976415010863e+01, best bound -6.976415010863e+01, gap 0.0%
+Optimize a model with 64 rows, 1429 columns and 13701 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 54 rows and 1362 columns
+Presolve time: 0.01s
+Presolved: 10 rows, 67 columns, 121 nonzeros
+Variable types: 0 continuous, 67 integer (67 binary)
+
+Root relaxation: objective -3.014351e+02, 8 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0    -301.4351032 -301.43510  0.00%     -    0s
+
+Explored 0 nodes (8 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -3.014351032077e+02, best bound -3.014351032077e+02, gap 0.0%
+Optimize a model with 67 rows, 1099 columns and 7567 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 51 rows and 1056 columns
+Presolve time: 0.00s
+Presolved: 16 rows, 43 columns, 237 nonzeros
+Variable types: 0 continuous, 43 integer (43 binary)
+
+Root relaxation: objective -2.904858e+01, 2 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0     -29.0485776  -29.04858  0.00%     -    0s
+
+Explored 0 nodes (2 simplex iterations) in 0.00 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -2.904857761379e+01, best bound -2.904857761379e+01, gap 0.0%
+
+Gurobi 5.1.0 (mac64) logging started Fri Mar 15 10:59:19 2013
+
+Optimize a model with 65 rows, 1743 columns and 13067 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 47 rows and 1714 columns
+Presolve time: 0.01s
+Presolved: 18 rows, 29 columns, 87 nonzeros
+Variable types: 0 continuous, 29 integer (29 binary)
+
+Root relaxation: objective -3.079560e+01, 3 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0     -30.7955951  -30.79560  0.00%     -    0s
+
+Explored 0 nodes (3 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -3.079559505424e+01, best bound -3.079559505424e+01, gap 0.0%
+Optimize a model with 58 rows, 1321 columns and 9320 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 48 rows and 1288 columns
+Presolve time: 0.00s
+Presolved: 10 rows, 33 columns, 56 nonzeros
+Variable types: 0 continuous, 33 integer (33 binary)
+
+Root relaxation: objective -4.927752e+01, 1 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0     -49.2775209  -49.27752  0.00%     -    0s
+
+Explored 0 nodes (1 simplex iterations) in 0.00 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -4.927752092202e+01, best bound -4.927752092202e+01, gap 0.0%
+Optimize a model with 18 rows, 107 columns and 214 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 18 rows and 107 columns
+Presolve time: 0.00s
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 0.000000000000e+00, best bound 0.000000000000e+00, gap 0.0%
+Optimize a model with 58 rows, 1124 columns and 9019 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 51 rows and 1106 columns
+Presolve time: 0.00s
+Presolved: 7 rows, 18 columns, 30 nonzeros
+Variable types: 0 continuous, 18 integer (18 binary)
+
+Root relaxation: objective -1.109694e+02, 1 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0    -110.9694486 -110.96945  0.00%     -    0s
+
+Explored 0 nodes (1 simplex iterations) in 0.00 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -1.109694485831e+02, best bound -1.109694485831e+02, gap 0.0%
+Optimize a model with 63 rows, 1798 columns and 11636 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 54 rows and 1727 columns
+Presolve time: 0.01s
+Presolved: 9 rows, 71 columns, 121 nonzeros
+Variable types: 0 continuous, 71 integer (71 binary)
+
+Root relaxation: objective -1.527641e+02, 0 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0    -152.7641175 -152.76412  0.00%     -    0s
+
+Explored 0 nodes (0 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -1.527641175367e+02, best bound -1.527641175367e+02, gap 0.0%
+Optimize a model with 75 rows, 2031 columns and 18292 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 58 rows and 1929 columns
+Presolve time: 0.01s
+Presolved: 17 rows, 102 columns, 269 nonzeros
+Variable types: 0 continuous, 102 integer (102 binary)
+
+Root relaxation: objective -2.920535e+02, 1 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0    -292.0534961 -292.05350  0.00%     -    0s
+
+Explored 0 nodes (1 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -2.920534961303e+02, best bound -2.920534961303e+02, gap 0.0%
+Optimize a model with 71 rows, 1704 columns and 12557 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 38 rows and 1638 columns
+Presolve time: 0.01s
+Presolved: 33 rows, 66 columns, 341 nonzeros
+Variable types: 0 continuous, 66 integer (65 binary)
+
+Root relaxation: objective -1.634595e+01, 10 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+     0     0  -16.34595    0    2    0.00000  -16.34595     -      -    0s
+H    0     0                     -14.2408181  -16.34595  14.8%     -    0s
+H    0     0                     -16.0284084  -16.34595  1.98%     -    0s
+
+Explored 0 nodes (18 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -1.602840838774e+01, best bound -1.602840838774e+01, gap 0.0%
+Optimize a model with 66 rows, 1796 columns and 12454 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 55 rows and 1737 columns
+Presolve time: 0.01s
+Presolved: 11 rows, 59 columns, 132 nonzeros
+Variable types: 0 continuous, 59 integer (59 binary)
+
+Root relaxation: objective -8.669141e+01, 5 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0     -86.6914065  -86.69141  0.00%     -    0s
+
+Explored 0 nodes (5 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -8.669140652609e+01, best bound -8.669140652609e+01, gap 0.0%
+Optimize a model with 66 rows, 1144 columns and 11930 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 33 rows and 1045 columns
+Presolve time: 0.01s
+Presolved: 33 rows, 99 columns, 906 nonzeros
+Variable types: 0 continuous, 99 integer (99 binary)
+
+Explored 0 nodes (0 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 0.000000000000e+00, best bound 0.000000000000e+00, gap 0.0%
+Optimize a model with 72 rows, 1591 columns and 13416 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 53 rows and 1523 columns
+Presolve time: 0.01s
+Presolved: 19 rows, 68 columns, 343 nonzeros
+Variable types: 0 continuous, 68 integer (68 binary)
+
+Root relaxation: objective -5.906888e+01, 1 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0     -59.0688807  -59.06888  0.00%     -    0s
+
+Explored 0 nodes (1 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -5.906888066986e+01, best bound -5.906888066986e+01, gap 0.0%
+Optimize a model with 72 rows, 2676 columns and 24137 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 61 rows and 2624 columns
+Presolve time: 0.01s
+Presolved: 11 rows, 52 columns, 100 nonzeros
+Variable types: 0 continuous, 52 integer (52 binary)
+
+Root relaxation: objective -6.976415e+01, 0 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0     -69.7641501  -69.76415  0.00%     -    0s
+
+Explored 0 nodes (0 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -6.976415010863e+01, best bound -6.976415010863e+01, gap 0.0%
+Optimize a model with 64 rows, 1429 columns and 13701 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 54 rows and 1362 columns
+Presolve time: 0.01s
+Presolved: 10 rows, 67 columns, 121 nonzeros
+Variable types: 0 continuous, 67 integer (67 binary)
+
+Root relaxation: objective -3.014351e+02, 8 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0    -301.4351032 -301.43510  0.00%     -    0s
+
+Explored 0 nodes (8 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -3.014351032077e+02, best bound -3.014351032077e+02, gap 0.0%
+Optimize a model with 67 rows, 1099 columns and 7567 nonzeros
+Found heuristic solution: objective 0
+Presolve removed 51 rows and 1056 columns
+Presolve time: 0.00s
+Presolved: 16 rows, 43 columns, 237 nonzeros
+Variable types: 0 continuous, 43 integer (43 binary)
+
+Root relaxation: objective -2.904858e+01, 2 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0     -29.0485776  -29.04858  0.00%     -    0s
+
+Explored 0 nodes (2 simplex iterations) in 0.00 seconds
+Thread count was 8 (of 8 available processors)
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -2.904857761379e+01, best bound -2.904857761379e+01, gap 0.0%
+
+Gurobi 5.1.0 (mac64) logging started Fri Mar 15 11:05:57 2013
+

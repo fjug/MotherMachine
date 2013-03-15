@@ -377,9 +377,9 @@ public class GrowthLineTrackingILP {
 	/**
 	 * This function generated and adds the explanation-continuity-constraints
 	 * to the ILP model.
-	 * Those constraints ensure that for each complete set of segmentation
-	 * hypotheses at all time-points t we have the same number of incoming and
-	 * outgoing edges from the left and to the right.
+	 * Those constraints ensure that for each segmentation hypotheses at all
+	 * time-points t we have the same number of active incoming and active
+	 * outgoing edges from/to assignments.
 	 * Intuitively speaking this means that each hypothesis that is chosen by an
 	 * assignment coming from t-1 we need to continue its interpretation by
 	 * finding an active assignment towards t+1.
@@ -388,19 +388,17 @@ public class GrowthLineTrackingILP {
 		int eccId = 0;
 
 		// For each time-point
-		for ( int t = 1; t < gl.size() - 1; t++ ) { // !!! starting from 1 !!!
+		for ( int t = 1; t < gl.size() - 1; t++ ) { // !!! sparing out the border !!!
 			final GRBLinExpr expr = new GRBLinExpr();
 
-			for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> leftHyp : nodes.getHypothesesAt( t ) ) {
-				if ( edgeSets.getRightNeighborhood( leftHyp ) != null ) {
-					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a_i : edgeSets.getRightNeighborhood( leftHyp ) ) {
-						expr.addTerm( 1.0, a_i.getGRBVar() );
+			for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : nodes.getHypothesesAt( t ) ) {
+				if ( edgeSets.getLeftNeighborhood( hyp ) != null ) {
+					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a_j : edgeSets.getLeftNeighborhood( hyp ) ) {
+						expr.addTerm( 1.0, a_j.getGRBVar() );
 					}
 				}
-			}
-			for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> rightHyp : nodes.getHypothesesAt( t + 1 ) ) {
-				if ( edgeSets.getLeftNeighborhood( rightHyp ) != null ) {
-					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a_j : edgeSets.getLeftNeighborhood( rightHyp ) ) {
+				if ( edgeSets.getRightNeighborhood( hyp ) != null ) {
+					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a_j : edgeSets.getRightNeighborhood( hyp ) ) {
 						expr.addTerm( -1.0, a_j.getGRBVar() );
 					}
 				}
