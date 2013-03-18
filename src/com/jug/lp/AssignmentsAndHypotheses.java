@@ -150,9 +150,13 @@ public class AssignmentsAndHypotheses< A extends AbstractAssignment< H >, H exte
 	 * @return <code>h_t.get(t);</code>
 	 */
 	public List< H > getHypothesesAt( final int t ) {
-		assert ( t >= 0 );
 		assert ( t < h_t.size() );
-		return h_t.get( t );
+		if ( t >= 0 ) {
+			return h_t.get( t );
+		} else {
+			return null;
+		}
+
 	}
 
 	/**

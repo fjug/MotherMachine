@@ -1094,18 +1094,23 @@ public class MotherMachine {
 	 * optimization-related structures used to compute the optimal tracking.
 	 */
 	private void generateILPs() {
-		for ( final GrowthLine gl : getGrowthLines() ) {
-			gl.generateILP();
-		}
+//		for ( final GrowthLine gl : getGrowthLines() ) {
+//			gl.generateILP();
+//		}
+		getGrowthLines().get( 0 ).generateILP();
 	}
 
 	/**
 	 * Runs all the generated ILPs.
 	 */
 	private void runILPs() {
-		for ( final GrowthLine gl : getGrowthLines() ) {
-			gl.runILP();
-		}
+//		int i = 0;
+//		for ( final GrowthLine gl : getGrowthLines() ) {
+//			System.out.println(" > > > > > Starting LP for GL# " + i + " < < < < < ");
+//			gl.runILP();
+//			i++;
+//		}
+		getGrowthLines().get( 0 ).runILP();
 	}
 
 }

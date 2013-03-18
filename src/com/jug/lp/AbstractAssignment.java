@@ -93,12 +93,11 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	}
 
 	/**
-	 * @return true, if the ilpVar of this Assignment is >0.5. This seems crude,
-	 *         but given we solved an ILP I guess its fine...
+	 * @return true, if the ilpVar of this Assignment is equal to 1.0.
 	 * @throws GRBException
 	 */
 	public boolean isChoosen() throws GRBException {
-		return ( getGRBVar().get( GRB.DoubleAttr.X ) > 0.5 );
+		return ( getGRBVar().get( GRB.DoubleAttr.X ) == 1.0 );
 	}
 
 	/**

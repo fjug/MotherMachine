@@ -21,6 +21,7 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.util.Pair;
 
 import com.jug.GrowthLine;
+import com.jug.GrowthLineFrame;
 import com.jug.util.ComponentTreeUtils;
 import com.jug.util.SimpleFunctionAnalysis;
 
@@ -69,6 +70,8 @@ public class GrowthLineTrackingILP {
 				new HypothesisNeighborhoods< Hypothesis< ComponentTreeNode< DoubleType, ? > >,
 					AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > >();
 
+	private int pbcId = 0;
+
 
 	// -------------------------------------------------------------------------------------
 	// construction
@@ -94,6 +97,8 @@ public class GrowthLineTrackingILP {
 			System.out.println( "GrowthLineTrackingILP::model could not be initialized!" );
 			e.printStackTrace();
 		}
+
+		buildILP();
 	}
 
 	// -------------------------------------------------------------------------------------
@@ -115,37 +120,131 @@ public class GrowthLineTrackingILP {
 	// -------------------------------------------------------------------------------------
 	// methods
 	// -------------------------------------------------------------------------------------
+	private void buildILP() {
+		try {
+			// add Hypothesis
+			createSegmentationHypotheses();
+
+			// add Assignments
+			enumerateAndAddAssignments();
+
+			// UPDATE GUROBI-MODEL
+			// - - - - - - - - - -
+			model.update();
+
+			// Iterate over all assignments and ask them to add their
+			// constraints to the model
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			int numHyp = 0;
+			for ( final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> innerList : nodes.getAllHypotheses() ) {
+				for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hypothesis : innerList ) {
+					numHyp++;
+				}
+			}
+			int numAss = 0;
+			for ( final List< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > innerList : nodes.getAllAssignments() ) {
+				for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> assignment : innerList ) {
+					assignment.addConstraintsToLP();
+					numAss++;
+				}
+			}
+			System.out.println( "Hypothesis count: " + numHyp );
+			System.out.println( "Assignment count: " + numAss );
+
+			// Add the remaining ILP constraints
+			// (those would be (i) and (ii) of 'Default Solution')
+			// - - - - - - - - - - - - - - - - - - - - - - - - - -
+			addPathBlockingConstraint();
+			addExplainationContinuityConstraints();
+
+			// UPDATE GUROBI-MODEL
+			// - - - - - - - - - -
+			model.update();
+//			System.out.println( "Constraints added: " + model.getConstrs().length );
+
+		}
+		catch ( final GRBException e ) {
+			System.out.println( "Could not fill data into GrowthLineTrackingILP!" );
+			e.printStackTrace();
+		}
+
+	}
+
+	/**
+	 * Traverses all GL-frames in the given GL and adds all
+	 * component-tree-nodes, wrapped in instances of <code>Hypothesis</code>, to
+	 * the ILP.
+	 * This method calls <code>recursivelyAddCTNsAsHypotheses(...)</code>.
+	 */
+	private void createSegmentationHypotheses() {
+		for ( int t = 0; t < gl.size(); t++ ) {
+			final GrowthLineFrame glf = gl.getFrames().get( t );
+
+			for ( final ComponentTreeNode< DoubleType, ? > ctRoot : glf.getComponentTree().roots() ) {
+				recursivelyAddCTNsAsHypotheses( t, ctRoot );
+			}
+		}
+	}
+
 	/**
 	 * Adds all hypothesis given by the nodes in the component tree to
-	 * <code>nodes</code>. Note: order is chosen such that the hypothesis are
-	 * ordered ascending by right (upper) interval end (JF: check if still the
-	 * case!).
+	 * <code>nodes</code>.
 	 *
 	 * @param ctNode
 	 *            a node in a <code>ComponentTree</code>.
 	 * @param t
 	 *            the time-index the ctNode comes from.
 	 */
-	public void recursivelyAddCTNsAsHypotheses( final int t, final ComponentTreeNode< DoubleType, ? > ctNode ) {
-		// do the same for all children
-		for ( final ComponentTreeNode< DoubleType, ? > ctChild : ctNode.getChildren() ) {
-			recursivelyAddCTNsAsHypotheses( t, ctChild );
-		}
+	private void recursivelyAddCTNsAsHypotheses( final int t, final ComponentTreeNode< DoubleType, ? > ctNode ) {
 		// add the current ctNode as Hypothesis (including corresponding costs)
 		final Pair< Integer, Integer > segInterval = ComponentTreeUtils.getTreeNodeInterval( ctNode );
 		final int a = segInterval.a.intValue();
 		final int b = segInterval.b.intValue();
+
 		// TODO Here I have to still do some redesign... it is unacceptable the way it is right now...
 		final double[] gapSepFkt = gl.getFrames().get( t ).getGapSeparationValues( null );
 		final double max = SimpleFunctionAnalysis.getMax( gapSepFkt, a, b ).b.doubleValue();
-		final double sum = SimpleFunctionAnalysis.getSum( gapSepFkt, a, b );
+		final double min = SimpleFunctionAnalysis.getMin( gapSepFkt, a, b ).b.doubleValue();
+		double integral = SimpleFunctionAnalysis.getSum( gapSepFkt, a, b );
+		integral -= ( b - a ) * min; //subtract baseline
+		final double area = ( b - a ) * ( max - min );
 
-		final double cost = -1 * 0.5 * ( ( b - a ) * max - sum );
+		final double cost = -1 * ( area - integral );
+
 		nodes.addHypothesis( t, new Hypothesis< ComponentTreeNode< DoubleType, ? > >( ctNode, cost ) );
+
+		// do the same for all children
+		for ( final ComponentTreeNode< DoubleType, ? > ctChild : ctNode.getChildren() ) {
+			recursivelyAddCTNsAsHypotheses( t, ctChild );
+		}
+	}
+
+	/**
+	 * Takes all pairs of neighboring time-points, asks them for all the
+	 * available segmentation-hypothesis, and enumerates all potentially
+	 * interesting assignments using the <code>addXXXAsignment(...)</code>
+	 * methods.
+	 *
+	 * @throws GRBException
+	 */
+	private void enumerateAndAddAssignments() throws GRBException {
+		for ( int t = 0; t < gl.size() - 1; t++ ) {
+			final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> curHyps = nodes.getHypothesesAt( t );
+			final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> nxtHyps = nodes.getHypothesesAt( t + 1 );
+
+			addExitAssignments( t, curHyps );
+			addMappingAssignments( t, curHyps, nxtHyps );
+			addDivisionAssignments( t, curHyps, nxtHyps );
+		}
 	}
 
 	/**
 	 * Add an exit-assignment at time t to a bunch of segmentation hypotheses.
+	 * Note: exit-assignments cost <code>0</code>, but they come with a
+	 * non-trivial construction to enforce, that an exit-assignment can only be
+	 * assigned by the solver iff all active segmentation hypotheses above one
+	 * that has an active exit-assignment are also assigned with an
+	 * exit-assignment.
 	 *
 	 * @param t
 	 *            the time-point.
@@ -154,7 +253,7 @@ public class GrowthLineTrackingILP {
 	 *            should be added.
 	 * @throws GRBException
 	 */
-	public void addExitAssignments( final int t, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps ) throws GRBException {
+	private void addExitAssignments( final int t, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps ) throws GRBException {
 		final double cost = 0.0;
 
 		int i = 0;
@@ -181,21 +280,28 @@ public class GrowthLineTrackingILP {
 	 *            added <code>MappingAssignments</code> should end at.
 	 * @throws GRBException
 	 */
-	public void addMappingAssignments( final int t, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> curHyps, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> nxtHyps ) throws GRBException {
+	private void addMappingAssignments( final int t, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> curHyps, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> nxtHyps ) throws GRBException {
 		double cost;
 
 		int i = 0;
 		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> from : curHyps ) {
 			int j = 0;
+			final double fromCost = from.getCosts();
+
 			for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> to : nxtHyps ) {
 				if ( !( ComponentTreeUtils.isBelow( to.getWrappedHypothesis(), from.getWrappedHypothesis() ) ) ) {
-					cost = from.getCosts() + to.getCosts() + compatibilityCostOfMapping( from, to );
-//					System.out.println( String.format( "a_%d^MAPPING--(%d,%d)  ==> %f", t, i, j, cost ) );
-					final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, String.format( "a_%d^MAPPING--(%d,%d)", t, i, j ) );
+					cost = fromCost + compatibilityCostOfMapping( from, to );
+					final String name = String.format( "a_%d^MAPPING--(%d,%d)", t, i, j );
+//					System.out.println( "Added mapping variable '" + name + "'" );
+					final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, name );
 					final MappingAssignment ma = new MappingAssignment( t, newLPVar, model, nodes, edgeSets, from, to );
 					nodes.addAssignment( t, ma );
-					edgeSets.addToRightNeighborhood( from, ma );
-					edgeSets.addToLeftNeighborhood( to, ma );
+					if ( edgeSets.addToRightNeighborhood( from, ma ) == false ) {
+						System.err.println( "ERROR: Mapping-assignment could not be added to right neighborhood!" );
+					}
+					if ( edgeSets.addToLeftNeighborhood( to, ma ) == false ) {
+						System.err.println( "ERROR: Mapping-assignment could not be added to left neighborhood!" );
+					}
 					j++;
 				}
 			}
@@ -223,9 +329,26 @@ public class GrowthLineTrackingILP {
 		final Pair< Integer, Integer > intervalFrom = ComponentTreeUtils.getTreeNodeInterval( from.getWrappedHypothesis() );
 		final Pair< Integer, Integer > intervalTo = ComponentTreeUtils.getTreeNodeInterval( from.getWrappedHypothesis() );
 
-		final double costDeltaL = Math.max( sizeFrom - sizeTo, 0 );
-		final double costDeltaV = Math.abs( valueFrom - valueTo );
-		final double costDeltaH = 0.5 * Math.max( intervalFrom.b.intValue() - intervalFrom.a.intValue(), 0 ) + 0.5 * Math.max( intervalTo.b.intValue() - intervalTo.a.intValue(), 0 );
+		double deltaL = sizeTo - sizeFrom;
+		double costDeltaL = 0.0;
+		if (deltaL > 0) {
+			deltaL -= Math.max( 0, deltaL-10 ); // growing up to 10 pixels is cost-free...
+			costDeltaL = Math.pow( deltaL, 2.0 );
+		} else {
+			costDeltaL = Math.pow( deltaL, 3.0 );
+		}
+
+		final double deltaV = Math.abs( valueFrom - valueTo ); // change in intensity value of the two CTNs.
+		final double costDeltaV = 1.0 * deltaV;
+
+		final double deltaH = 0.5 * ( intervalFrom.b.intValue() + intervalFrom.a.intValue() ) - 0.5 * ( intervalTo.b.intValue() + intervalTo.a.intValue() );
+		double costDeltaH = 0.0;
+		if ( deltaH > 0 ) {
+			deltaL -= Math.max( 0, deltaH - 10 ); // going upwards for up to 10 pixels is for free...
+			costDeltaH = Math.pow( deltaH, 2.0 );
+		} else {
+			costDeltaH = Math.pow( deltaH, 3.0 );
+		}
 
 		return costDeltaL + costDeltaV + costDeltaH;
 	}
@@ -245,7 +368,7 @@ public class GrowthLineTrackingILP {
 	 *            added <code>DivisionAssignments</code> should end at.
 	 * @throws GRBException
 	 */
-	public void addDivisionAssignments( final int t, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> curHyps, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> nxtHyps ) throws GRBException {
+	private void addDivisionAssignments( final int t, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> curHyps, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> nxtHyps ) throws GRBException {
 		double cost;
 
 		int i = 0;
@@ -259,7 +382,7 @@ public class GrowthLineTrackingILP {
 						if ( lowerNeighbor == null ) {
 							System.out.println( "CRITICAL BUG!!!! Check GrowthLineTimeSeris::adDivisionAssignment(...)" );
 						} else {
-							cost = from.getCosts() + to.getCosts() + lowerNeighbor.getCosts() + compatibilityCostOfDivision( from, to, lowerNeighbor );
+							cost = from.getCosts() + lowerNeighbor.getCosts() + compatibilityCostOfDivision( from, to, lowerNeighbor );
 							final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, String.format( "a_%d^DIVISION--(%d,%d)", t, i, j ) );
 							final DivisionAssignment da = new DivisionAssignment( t, newLPVar, model, nodes, edgeSets, from, to, lowerNeighbor );
 							nodes.addAssignment( t, da );
@@ -326,12 +449,14 @@ public class GrowthLineTrackingILP {
 	public void addPathBlockingConstraint() throws GRBException {
 		// For each time-point
 		for ( int t = 0; t < gl.size(); t++ ) {
+			System.out.print( ">>> Adding PBCs for t=" + t );
 			// Get the full component tree
 			final ComponentTree< DoubleType, ? > ct = gl.get( t ).getComponentTree();
 			for ( final ComponentTreeNode< DoubleType, ? > ctRoot : ct.roots() ) {
 				// And call the function adding all the path-blocking-constraints...
-				recursivelyAddPathBlockingConstraints( ctRoot );
+				recursivelyAddPathBlockingConstraints( ctRoot, t );
 			}
+			System.out.println( "  >>> added " + pbcId + " PBCs!" );
 		}
 	}
 
@@ -343,33 +468,50 @@ public class GrowthLineTrackingILP {
 	 * optimization.
 	 *
 	 * @param ctRoot
+	 * @param pbcId
+	 * @param t
 	 * @throws GRBException
 	 */
-	private void recursivelyAddPathBlockingConstraints( final ComponentTreeNode< DoubleType, ? > ctNode ) throws GRBException {
-		int pbcId = 0;
+	private void recursivelyAddPathBlockingConstraints( final ComponentTreeNode< DoubleType, ? > ctNode, final int t ) throws GRBException {
 
 		// if ctNode is a leave node -> add constraint (by going up the list of
 		// parents and building up the constraint)
 		if ( ctNode.getChildren().size() == 0 ) {
 			ComponentTreeNode< DoubleType, ? > runnerNode = ctNode;
 
-			final GRBLinExpr expr = new GRBLinExpr();
+			final GRBLinExpr exprR = new GRBLinExpr();
+//			final GRBLinExpr exprL = new GRBLinExpr();
 			while ( runnerNode != null ) {
 				@SuppressWarnings( "unchecked" )
 				final Hypothesis< ComponentTreeNode< DoubleType, ? > > hypothesis = ( Hypothesis< ComponentTreeNode< DoubleType, ? >> ) nodes.findHypothesisContaining( runnerNode );
+				if ( hypothesis == null ) {
+					System.err.println( "WARNING: Hypothesis for a CTN was not found in GrowthLineTrackingILP -- this is an indication for some design problem of the system!" );
+				}
+
 				if ( edgeSets.getRightNeighborhood( hypothesis ) != null ) {
 					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a : edgeSets.getRightNeighborhood( hypothesis ) ) {
-						expr.addTerm( 1.0, a.getGRBVar() );
+						exprR.addTerm( 1.0, a.getGRBVar() );
+//						System.out.print( "." );
 					}
 				}
+//				if ( edgeSets.getLeftNeighborhood( hypothesis ) != null ) {
+//					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a : edgeSets.getLeftNeighborhood( hypothesis ) ) {
+//						exprL.addTerm( 1.0, a.getGRBVar() );
+//					}
+//				}
 				runnerNode = runnerNode.getParent();
+				if ( runnerNode != null ) System.out.print( "." );
 			}
-			model.addConstr( expr, GRB.LESS_EQUAL, 1.0, "pbc_" + pbcId );
 			pbcId++;
+			final String name = "pbc_r_t_" + t + "_" + pbcId;
+			System.out.println( ">>> one path added: " + name );
+			model.addConstr( exprR, GRB.LESS_EQUAL, 1.0, name );
+//			final String name2 = "pbc_l_t_" + t + "_" + pbcId;
+//			model.addConstr( exprL, GRB.LESS_EQUAL, 1.0, name2 );
 		} else {
 			// if ctNode is a inner node -> recursion
 			for ( final ComponentTreeNode< DoubleType, ? > ctChild : ctNode.getChildren() ) {
-				recursivelyAddPathBlockingConstraints( ctChild );
+				recursivelyAddPathBlockingConstraints( ctChild, t );
 			}
 		}
 	}
@@ -389,9 +531,11 @@ public class GrowthLineTrackingILP {
 
 		// For each time-point
 		for ( int t = 1; t < gl.size() - 1; t++ ) { // !!! sparing out the border !!!
-			final GRBLinExpr expr = new GRBLinExpr();
+			System.out.print( "==> Adding ECCs for t=" + t );
 
 			for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : nodes.getHypothesesAt( t ) ) {
+				final GRBLinExpr expr = new GRBLinExpr();
+
 				if ( edgeSets.getLeftNeighborhood( hyp ) != null ) {
 					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a_j : edgeSets.getLeftNeighborhood( hyp ) ) {
 						expr.addTerm( 1.0, a_j.getGRBVar() );
@@ -402,10 +546,12 @@ public class GrowthLineTrackingILP {
 						expr.addTerm( -1.0, a_j.getGRBVar() );
 					}
 				}
-			}
 
-			model.addConstr( expr, GRB.EQUAL, 0.0, "ecc_" + eccId );
-			eccId++;
+				// add the constraint for this hypothesis
+				model.addConstr( expr, GRB.EQUAL, 0.0, "ecc_" + eccId );
+				eccId++;
+			}
+			System.out.println( "  >>> added " + eccId + " ECCs!" );
 		}
 	}
 
@@ -599,6 +745,8 @@ public class GrowthLineTrackingILP {
 							 AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > >();
 
 		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = nodes.getHypothesesAt( t );
+
+		if ( hyps == null ) return ret;
 
 		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : hyps ) {
 			try {

@@ -204,7 +204,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 	private void buildGui() {
 
 		final JPanel panelCurationView = new JPanel( new BorderLayout() );
-		final JPanel panelCurationViewHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 10 ) );
+		final JPanel panelCurationViewHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 0, 10 ) );
 		panelCurationViewHelper.setBorder( BorderFactory.createLoweredBevelBorder() );
 		JPanel panelVerticalHelper;
 		JPanel panelHorizontalHelper;
@@ -382,10 +382,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 		// - -  assignment-views  - - - - - -
 
 		//TODO NOT nice... do something against that, please!
-		int t = model.getCurrentGLF().getParent().getFrames().indexOf( model.getCurrentGLF() );
-		leftAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalLeftAssignments( t ) );
-		//TODO NOT nice... do something against that, please!
-		t = model.getCurrentGLF().getParent().getFrames().indexOf( model.getCurrentGLF() );
+		final int t = model.getCurrentGLF().getParent().getFrames().indexOf( model.getCurrentGLF() );
+		leftAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalRightAssignments( t - 1 ) );
 		rightAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalRightAssignments( t ) );
 
 	}

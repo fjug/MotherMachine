@@ -60,9 +60,13 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< ComponentTre
 
 		expr.addTerm( Hup.size(), this.getGRBVar() );
 
-		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> rightHyp : Hup ) {
-			if ( edges.getLeftNeighborhood( rightHyp ) != null ) {
-				for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a_j : edges.getLeftNeighborhood( rightHyp ) ) {
+		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> upperHyp : Hup ) {
+			if ( edges.getRightNeighborhood( upperHyp ) != null ) {
+				for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a_j : edges.getRightNeighborhood( upperHyp ) ) {
+					if ( a_j.getType() == GrowthLineTrackingILP.ASSIGNMENT_EXIT ) {
+						continue;
+					}
+					// add term if assignment is NOT another exit-assignment
 					expr.addTerm( 1.0, a_j.getGRBVar() );
 				}
 			}
@@ -73,9 +77,9 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< ComponentTre
 	}
 
 	/**
-	 * Returns the segmentation hypothesis this term-assignment is associated
+	 * Returns the segmentation hypothesis this exit-assignment is associated
 	 * with.
-	 *
+	 * 
 	 * @return the associated segmentation-hypothesis.
 	 */
 	public Hypothesis< ComponentTreeNode< DoubleType, ? >> getAssociatedHypothesis() {

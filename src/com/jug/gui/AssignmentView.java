@@ -49,9 +49,9 @@ public class AssignmentView extends Component {
 	// construction
 	// -------------------------------------------------------------------------------------
 	public AssignmentView( final int height ) {
-		this.width = 150;
+		this.width = 100;
 		this.height = height;
-		this.setPreferredSize( new Dimension( width, height - 40 ) );
+		this.setPreferredSize( new Dimension( width, height - 60 ) );
 	}
 
 	// -------------------------------------------------------------------------------------
@@ -159,10 +159,10 @@ public class AssignmentView extends Component {
 		polygon.lineTo( this.width, limitsRight.a.intValue() );
 		polygon.closePath();
 
+		g2.setPaint( Color.BLUE.darker() );
+		g2.fill( polygon );
 		g2.setPaint( Color.BLUE );
 		g2.draw( polygon );
-		g2.setPaint( Color.BLUE.brighter().brighter() );
-		g2.fill( polygon );
 //		System.out.println( "just drew a mapping!" );
 	}
 
@@ -189,15 +189,16 @@ public class AssignmentView extends Component {
 		polygon.lineTo( 0, limitsLeft.b.intValue() );
 		polygon.lineTo( this.width, limitsRightLower.b.intValue() );
 		polygon.lineTo( this.width, limitsRightLower.a.intValue() );
-		polygon.lineTo( 0, ( limitsLeft.b.intValue() - limitsLeft.a.intValue() ) / 2 );
+		polygon.lineTo( this.width / 3, ( 2 * ( limitsLeft.a.intValue() + limitsLeft.b.intValue() ) / 2 +
+										  1 * ( limitsRightUpper.b.intValue() + limitsRightLower.a.intValue() ) / 2 ) / 3 );
 		polygon.lineTo( this.width, limitsRightUpper.b.intValue() );
 		polygon.lineTo( this.width, limitsRightUpper.a.intValue() );
 		polygon.closePath();
 
+		g2.setPaint( Color.GREEN.darker() );
+		g2.fill( polygon );
 		g2.setPaint( Color.GREEN );
 		g2.draw( polygon );
-		g2.setPaint( Color.GREEN.brighter().brighter() );
-		g2.fill( polygon );
 //		System.out.println( "just drew a mapping!" );
 	}
 
@@ -214,11 +215,12 @@ public class AssignmentView extends Component {
 		final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp = ea.getAssociatedHypothesis();
 		final Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( hyp.getWrappedHypothesis() );
 
+		final int d = 2;
 		g2.setPaint( Color.RED );
-		g2.drawRect( 0, limits.a.intValue(), this.getWidth() / 5, limits.b.intValue() );
-		g2.setPaint( Color.RED.brighter().brighter() );
 		g2.fillRect( 0, limits.a.intValue(), this.getWidth() / 5, limits.b.intValue() );
-//		System.out.println( "just drew a term!" );
+		g2.setPaint( new Color( Color.RED.getRGB() ).darker() );
+		g2.fillRect( 0 + d, limits.a.intValue() + d, this.getWidth() / 5 - 2 * d, limits.b.intValue() - 2 * d );
+		System.out.println( "just drew a term!" );
 	}
 
 	/**
