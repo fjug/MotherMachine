@@ -23,7 +23,6 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< ComponentTre
 	@SuppressWarnings( "unused" )
 	private final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > >, Hypothesis< ComponentTreeNode< DoubleType, ? > > > nodes;
 	private final HypothesisNeighborhoods< Hypothesis< ComponentTreeNode< DoubleType, ? > >, AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > edges;
-	@SuppressWarnings( "unused" )
 	private final Hypothesis< ComponentTreeNode< DoubleType, ? >> who;
 
 	private static int dcId = 0;

@@ -9,6 +9,8 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -16,10 +18,14 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import net.imglib2.Localizable;
+import net.imglib2.algorithm.componenttree.ComponentTree;
+import net.imglib2.algorithm.componenttree.ComponentTreeNode;
 import net.imglib2.display.ARGBScreenImage;
 import net.imglib2.display.RealARGBConverter;
 import net.imglib2.display.XYProjector;
@@ -28,7 +34,11 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
+import org.math.plot.Plot2DPanel;
+
 import com.jug.GrowthLineFrame;
+import com.jug.util.ComponentTreeUtils;
+import com.jug.util.SimpleFunctionAnalysis;
 
 /**
  * @author jug
@@ -128,57 +138,62 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 	public MotherMachineModel model;
 
 	/**
-	 * The XYProjector for the left Viewer2DCanvas
+	 * The view onto <code>imgRaw</code> that is supposed to be shown on screen
+	 * (left one in active assignments view).
 	 */
-	@SuppressWarnings( "rawtypes" )
-	protected XYProjector projectorLeft;
-
+	IntervalView< DoubleType > viewImgLeftActive;
 	/**
-	 * The XYProjector for the central Viewer2DCanvas
+	 * The view onto <code>imgRaw</code> that is supposed to be shown on screen
+	 * (center one in active assignments view).
 	 */
-	@SuppressWarnings( "rawtypes" )
-	protected XYProjector projectorCenter;
-
+	IntervalView< DoubleType > viewImgCenterActive;
 	/**
-	 * The XYProjector for the right Viewer2DCanvas
+	 * The view onto <code>imgRaw</code> that is supposed to be shown on screen
+	 * (right one in active assignments view).
 	 */
-	@SuppressWarnings( "rawtypes" )
-	protected XYProjector projectorRight;
-
-	/**
-	 * The pixel offset in z-direction to the part of the raw image data that is
-	 * supposed to be shown in the central ScreenImage.
-	 */
-	private long screenImageOffsetZ;
+	IntervalView< DoubleType > viewImgRightActive;
 
 	/**
 	 * The view onto <code>imgRaw</code> that is supposed to be shown on screen
-	 * (left one).
+	 * (left one in inactive assignments view).
 	 */
-	IntervalView< DoubleType > viewImgLeft;
+	IntervalView< DoubleType > viewImgLeftInactive;
 	/**
 	 * The view onto <code>imgRaw</code> that is supposed to be shown on screen
-	 * (center one).
+	 * (center one in inactive assignments view).
 	 */
-	IntervalView< DoubleType > viewImgCenter;
+	IntervalView< DoubleType > viewImgCenterInactive;
 	/**
 	 * The view onto <code>imgRaw</code> that is supposed to be shown on screen
-	 * (right one).
+	 * (right one in inactive assignments view).
 	 */
-	IntervalView< DoubleType > viewImgRight;
+	IntervalView< DoubleType > viewImgRightInactive;
 
 	// -------------------------------------------------------------------------------------
 	// gui-fields
 	// -------------------------------------------------------------------------------------
-	private Viewer2DCanvas imgCanvasLeft;
-	private Viewer2DCanvas imgCanvasCenter;
-	private Viewer2DCanvas imgCanvasRight;
+	private Viewer2DCanvas imgCanvasActiveLeft;
+	private Viewer2DCanvas imgCanvasActiveCenter;
+	private Viewer2DCanvas imgCanvasActiveRight;
+
+	private Viewer2DCanvas imgCanvasInactiveLeft;
+	private Viewer2DCanvas imgCanvasInactiveCenter;
+	private Viewer2DCanvas imgCanvasInactiveRight;
 
 	private JSlider sliderGL;
 	private JSlider sliderTime;
 
-	private AssignmentViewer leftAssignmentViewer;
-	private AssignmentViewer rightAssignmentViewer;
+	private JTabbedPane tabsViews;
+	private JPanel panelInactiveAssignmentsView;
+	private JPanel panelSegmentationAndAssignmentView;
+	private JPanel panelDetailedDataView;
+	private Plot2DPanel plot;
+
+	private AssignmentViewer leftActiveAssignmentViewer;
+	private AssignmentViewer rightActiveAssignmentViewer;
+
+	private AssignmentViewer leftInactiveAssignmentViewer;
+	private AssignmentViewer rightInactiveAssignmentViewer;
 
 	// -------------------------------------------------------------------------------------
 	// construction & gui creation
@@ -203,80 +218,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 	 */
 	private void buildGui() {
 
-		final JPanel panelCurationView = new JPanel( new BorderLayout() );
-		final JPanel panelCurationViewHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 0, 10 ) );
-		panelCurationViewHelper.setBorder( BorderFactory.createLoweredBevelBorder() );
+		final JPanel panelContent = new JPanel( new BorderLayout() );
 		JPanel panelVerticalHelper;
 		JPanel panelHorizontalHelper;
-		JLabel labelHelper;
-
-		// ----------------
-
-//		final JLabel labelCurationView = new JLabel( "Segmentation and Tracking" );
-//		labelCurationView.setBorder( BorderFactory.createEmptyBorder( 10, 10, 10, 10 ) );
-//		panelCurationView.add( labelCurationView, BorderLayout.NORTH );
-
-		// --- Left data viewer (t-1) -------------
-
-		panelVerticalHelper = new JPanel( new BorderLayout() );
-		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 0 ) );
-		labelHelper = new JLabel( "t-1" );
-		panelHorizontalHelper.add( labelHelper );
-		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
-		// - - - - - -
-		imgCanvasLeft = new Viewer2DCanvas( GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
-		panelVerticalHelper.add( imgCanvasLeft, BorderLayout.CENTER );
-		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 2, 2, 2, 2, Color.GRAY ) );
-		panelVerticalHelper.setBackground( Color.BLACK );
-		panelCurationViewHelper.add( panelVerticalHelper );
-
-		// --- Left assignment viewer (t-1 -> t) -------------
-		panelVerticalHelper = new JPanel( new BorderLayout() );
-		// - - - - - -
-		leftAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ) );
-		//TODO NOT nice... do something against that, please!
-		int t = model.getCurrentGLF().getParent().getFrames().indexOf( model.getCurrentGLF() );
-		leftAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalLeftAssignments( t ) );
-		panelVerticalHelper.add( leftAssignmentViewer, BorderLayout.CENTER );
-		panelCurationViewHelper.add( panelVerticalHelper );
-
-		// --- Center data viewer (t) -------------
-
-		panelVerticalHelper = new JPanel( new BorderLayout() );
-		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 0 ) );
-		labelHelper = new JLabel( "t" );
-		panelHorizontalHelper.add( labelHelper );
-		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
-		// - - - - - -
-		imgCanvasCenter = new Viewer2DCanvas( GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
-		panelVerticalHelper.add( imgCanvasCenter, BorderLayout.CENTER );
-		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 3, 3, 3, 3, Color.RED ) );
-		panelVerticalHelper.setBackground( Color.BLACK );
-		panelCurationViewHelper.add( panelVerticalHelper );
-
-		// --- Left assignment viewer (t -> t+1) -------------
-		panelVerticalHelper = new JPanel( new BorderLayout() );
-		// - - - - - -
-		rightAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ) );
-		//TODO NOT nice... do something against that, please!
-		t = model.getCurrentGLF().getParent().getFrames().indexOf( model.getCurrentGLF() );
-		rightAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalRightAssignments( t ) );
-		panelVerticalHelper.add( rightAssignmentViewer, BorderLayout.CENTER );
-		panelCurationViewHelper.add( panelVerticalHelper );
-
-		// ---  Right data viewer (t+1) -------------
-
-		panelVerticalHelper = new JPanel( new BorderLayout() );
-		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 0 ) );
-		labelHelper = new JLabel( "t+1" );
-		panelHorizontalHelper.add( labelHelper );
-		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
-		// - - - - - -
-		imgCanvasRight = new Viewer2DCanvas( GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
-		panelVerticalHelper.add( imgCanvasRight, BorderLayout.CENTER );
-		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 2, 2, 2, 2, Color.GRAY ) );
-		panelVerticalHelper.setBackground( Color.BLACK );
-		panelCurationViewHelper.add( panelVerticalHelper );
+		final JLabel labelHelper;
 
 		// --- Slider for time and GL -------------
 
@@ -309,16 +254,33 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 		panelHorizontalHelper.add( sliderTime, BorderLayout.CENTER );
 		add( panelHorizontalHelper, BorderLayout.SOUTH );
 
+		// --- All the TABs -------------
+
+		tabsViews = new JTabbedPane();
+
+		panelInactiveAssignmentsView = buildInactiveAssignmentsView();
+		panelSegmentationAndAssignmentView = buildSegmentationAndAssignmentView();
+		panelDetailedDataView = buildDetailedDataView();
+
+		tabsViews.add( "Inactive Assignments", panelInactiveAssignmentsView );
+		tabsViews.add( "Segm. & Assingments", panelSegmentationAndAssignmentView );
+		tabsViews.add( "Detailed Data View", panelDetailedDataView );
+
+		tabsViews.setSelectedComponent( panelSegmentationAndAssignmentView );
+
 		// --- Final adding and layout steps -------------
 
-		panelCurationView.add( panelCurationViewHelper, BorderLayout.CENTER );
-		add( panelCurationView, BorderLayout.CENTER );
+		panelContent.add( tabsViews, BorderLayout.CENTER );
+		add( panelContent, BorderLayout.CENTER );
 
 		// - - - - - - - - - - - - - - - - - - - - - - - -
 		//  KEYSTROKE SETUP (usingInput- and ActionMaps)
 		// - - - - - - - - - - - - - - - - - - - - - - - -
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 't' ), "GLV_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'g' ), "GLV_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'a' ), "GLV_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 's' ), "GLV_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'd' ), "GLV_bindings" );
 
 		this.getActionMap().put( "GLV_bindings", new AbstractAction() {
 
@@ -332,8 +294,270 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 				if ( e.getActionCommand().equals( "g" ) ) {
 					sliderGL.requestFocus();
 				}
+				if ( e.getActionCommand().equals( "a" ) ) {
+					if ( !tabsViews.getComponent( tabsViews.getSelectedIndex() ).equals( panelInactiveAssignmentsView ) ) {
+						tabsViews.setSelectedComponent( panelInactiveAssignmentsView );
+					}
+					dataToDisplayChanged();
+				}
+				if ( e.getActionCommand().equals( "s" ) ) {
+					if ( !tabsViews.getComponent( tabsViews.getSelectedIndex() ).equals( panelSegmentationAndAssignmentView ) ) {
+						tabsViews.setSelectedComponent( panelSegmentationAndAssignmentView );
+					}
+					dataToDisplayChanged();
+				}
+				if ( e.getActionCommand().equals( "d" ) ) {
+					if ( !tabsViews.getComponent( tabsViews.getSelectedIndex() ).equals( panelDetailedDataView ) ) {
+						tabsViews.setSelectedComponent( panelDetailedDataView );
+					}
+					dataToDisplayChanged();
+				}
 			}
 		} );
+	}
+
+	/**
+	 * @return
+	 */
+	private JPanel buildInactiveAssignmentsView() {
+		final JPanel panelContent = new JPanel( new FlowLayout( FlowLayout.CENTER, 0, 10 ) );
+
+		JPanel panelVerticalHelper;
+		JPanel panelHorizontalHelper;
+		JLabel labelHelper;
+		// --- Left data viewer (t-1) -------------
+
+		panelVerticalHelper = new JPanel( new BorderLayout() );
+		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 0 ) );
+		labelHelper = new JLabel( "t-1" );
+		panelHorizontalHelper.add( labelHelper );
+		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
+		// - - - - - -
+		imgCanvasInactiveLeft = new Viewer2DCanvas( GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		panelVerticalHelper.add( imgCanvasInactiveLeft, BorderLayout.CENTER );
+		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 2, 2, 2, 2, Color.GRAY ) );
+		panelVerticalHelper.setBackground( Color.BLACK );
+		panelContent.add( panelVerticalHelper );
+
+		// --- Left assignment viewer (t-1 -> t) -------------
+		panelVerticalHelper = new JPanel( new BorderLayout() );
+		// - - - - - -
+		leftInactiveAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		//TODO NOT nice... do something against that, please!
+		int t = model.getCurrentGLF().getParent().getFrames().indexOf( model.getCurrentGLF() );
+		leftInactiveAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getInactiveRightAssignments( t - 1 ) );
+		panelVerticalHelper.add( leftInactiveAssignmentViewer, BorderLayout.CENTER );
+		panelContent.add( panelVerticalHelper );
+
+		// --- Center data viewer (t) -------------
+
+		panelVerticalHelper = new JPanel( new BorderLayout() );
+		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 0 ) );
+		labelHelper = new JLabel( "t" );
+		panelHorizontalHelper.add( labelHelper );
+		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
+		// - - - - - -
+		imgCanvasInactiveCenter = new Viewer2DCanvas( GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		panelVerticalHelper.add( imgCanvasInactiveCenter, BorderLayout.CENTER );
+		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 3, 3, 3, 3, Color.RED ) );
+		panelVerticalHelper.setBackground( Color.BLACK );
+		panelContent.add( panelVerticalHelper );
+
+		// --- Left assignment viewer (t -> t+1) -------------
+		panelVerticalHelper = new JPanel( new BorderLayout() );
+		// - - - - - -
+		rightInactiveAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		//TODO NOT nice... do something against that, please!
+		t = model.getCurrentGLF().getParent().getFrames().indexOf( model.getCurrentGLF() );
+		rightInactiveAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getInactiveRightAssignments( t ) );
+		panelVerticalHelper.add( rightInactiveAssignmentViewer, BorderLayout.CENTER );
+		panelContent.add( panelVerticalHelper );
+
+		// ---  Right data viewer (t+1) -------------
+
+		panelVerticalHelper = new JPanel( new BorderLayout() );
+		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 0 ) );
+		labelHelper = new JLabel( "t+1" );
+		panelHorizontalHelper.add( labelHelper );
+		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
+		// - - - - - -
+		imgCanvasInactiveRight = new Viewer2DCanvas( GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		panelVerticalHelper.add( imgCanvasInactiveRight, BorderLayout.CENTER );
+		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 2, 2, 2, 2, Color.GRAY ) );
+		panelVerticalHelper.setBackground( Color.BLACK );
+		panelContent.add( panelVerticalHelper );
+
+		return panelContent;
+	}
+
+	/**
+	 * @param panelCurationViewHelper
+	 * @return
+	 */
+	private JPanel buildSegmentationAndAssignmentView() {
+		final JPanel panelContent = new JPanel( new FlowLayout( FlowLayout.CENTER, 0, 10 ) );
+
+		JPanel panelVerticalHelper;
+		JPanel panelHorizontalHelper;
+		JLabel labelHelper;
+		// --- Left data viewer (t-1) -------------
+
+		panelVerticalHelper = new JPanel( new BorderLayout() );
+		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 0 ) );
+		labelHelper = new JLabel( "t-1" );
+		panelHorizontalHelper.add( labelHelper );
+		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
+		// - - - - - -
+		imgCanvasActiveLeft = new Viewer2DCanvas( GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		panelVerticalHelper.add( imgCanvasActiveLeft, BorderLayout.CENTER );
+		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 2, 2, 2, 2, Color.GRAY ) );
+		panelVerticalHelper.setBackground( Color.BLACK );
+		panelContent.add( panelVerticalHelper );
+
+		// --- Left assignment viewer (t-1 -> t) -------------
+		panelVerticalHelper = new JPanel( new BorderLayout() );
+		// - - - - - -
+		leftActiveAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		//TODO NOT nice... do something against that, please!
+		int t = model.getCurrentGLF().getParent().getFrames().indexOf( model.getCurrentGLF() );
+		leftActiveAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalLeftAssignments( t ) );
+		panelVerticalHelper.add( leftActiveAssignmentViewer, BorderLayout.CENTER );
+		panelContent.add( panelVerticalHelper );
+
+		// --- Center data viewer (t) -------------
+
+		panelVerticalHelper = new JPanel( new BorderLayout() );
+		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 0 ) );
+		labelHelper = new JLabel( "t" );
+		panelHorizontalHelper.add( labelHelper );
+		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
+		// - - - - - -
+		imgCanvasActiveCenter = new Viewer2DCanvas( GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		panelVerticalHelper.add( imgCanvasActiveCenter, BorderLayout.CENTER );
+		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 3, 3, 3, 3, Color.RED ) );
+		panelVerticalHelper.setBackground( Color.BLACK );
+		panelContent.add( panelVerticalHelper );
+
+		// --- Left assignment viewer (t -> t+1) -------------
+		panelVerticalHelper = new JPanel( new BorderLayout() );
+		// - - - - - -
+		rightActiveAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		//TODO NOT nice... do something against that, please!
+		t = model.getCurrentGLF().getParent().getFrames().indexOf( model.getCurrentGLF() );
+		rightActiveAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalRightAssignments( t ) );
+		panelVerticalHelper.add( rightActiveAssignmentViewer, BorderLayout.CENTER );
+		panelContent.add( panelVerticalHelper );
+
+		// ---  Right data viewer (t+1) -------------
+
+		panelVerticalHelper = new JPanel( new BorderLayout() );
+		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 0 ) );
+		labelHelper = new JLabel( "t+1" );
+		panelHorizontalHelper.add( labelHelper );
+		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
+		// - - - - - -
+		imgCanvasActiveRight = new Viewer2DCanvas( GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		panelVerticalHelper.add( imgCanvasActiveRight, BorderLayout.CENTER );
+		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 2, 2, 2, 2, Color.GRAY ) );
+		panelVerticalHelper.setBackground( Color.BLACK );
+		panelContent.add( panelVerticalHelper );
+
+		return panelContent;
+	}
+
+	/**
+	 * @return
+	 */
+	private JPanel buildDetailedDataView() {
+		final JPanel panelDataView = new JPanel( new BorderLayout() );
+
+		plot = new Plot2DPanel();
+		updatePlotPanels();
+		plot.setPreferredSize( new Dimension( 500, 500 ) );
+		panelDataView.add( plot, BorderLayout.CENTER );
+
+		return panelDataView;
+	}
+
+	/**
+	 * Removes all plots from the plot panel and adds new ones showing the data
+	 * corresponding to the current slider setting.
+	 */
+	private void updatePlotPanels() {
+		// Intensity plot
+		// --------------
+		plot.removeAllPlots();
+
+		final double[] yMidline = model.getCurrentGLF().getMirroredCenterLineValues( model.mm.getImgTemp() );
+		final double[] ySegmentationData = model.getCurrentGLF().getGapSeparationValues( model.mm.getImgTemp() );
+
+		plot.addLinePlot( "Midline Intensities", new Color( 127, 127, 255 ), yMidline );
+		plot.addLinePlot( "Segmentation data", new Color( 80, 255, 80 ), ySegmentationData );
+
+		plot.setFixedBounds( 1, 0, 1 );
+
+		// ComponentTreeNodes
+
+		// ------------------
+		final ComponentTree< DoubleType, ? > ct = model.getCurrentGLF().getComponentTree();
+
+		final int numCTNs = ComponentTreeUtils.countNodes( ct );
+		final double[][] xydxdyCTNBorders = new double[ numCTNs ][ 4 ];
+		final int t = sliderTime.getValue();
+		final double[][] xydxdyCTNBordersActive = new double[ model.getCurrentGL().getIlp().getOptimalSegmentation( t ).size() ][ 4 ];
+
+		int i = 0;
+		for ( final ComponentTreeNode< DoubleType, ? > root : ct.roots() ) {
+			System.out.println( "" );
+			int level = 0;
+			ArrayList< ComponentTreeNode< DoubleType, ? >> ctnLevel = new ArrayList< ComponentTreeNode< DoubleType, ? >>();
+			ctnLevel.add( root );
+			while ( ctnLevel.size() > 0 ) {
+				for ( final ComponentTreeNode< DoubleType, ? > ctn : ctnLevel ) {
+					addBoxAtIndex( i, ctn, xydxdyCTNBorders, ySegmentationData, level );
+					System.out.print( String.format( "%.4f;\t", model.getCurrentGL().getIlp().localCost( t, ctn ) ) );
+					i++;
+				}
+				ctnLevel = ComponentTreeUtils.getAllChildren( ctnLevel );
+				level++;
+				System.out.println( "" );
+			}
+
+			i = 0;
+			for ( final ComponentTreeNode< DoubleType, ? > ctn : model.getCurrentGL().getIlp().getOptimalSegmentation( t ) ) {
+				addBoxAtIndex( i, ctn, xydxdyCTNBordersActive, ySegmentationData, ComponentTreeUtils.getLevelInTree( ctn ) );
+				i++;
+			}
+		}
+		plot.addBoxPlot( "Seg. Hypothesis", new Color( 127, 127, 127, 255 ), xydxdyCTNBorders );
+		if ( model.getCurrentGL().getIlp().getOptimalSegmentation( t ).size() > 0 ) {
+			plot.addBoxPlot( "Active Seg. Hypothesis", new Color( 255, 0, 0, 255 ), xydxdyCTNBordersActive );
+		}
+	}
+
+	/**
+	 * @param index
+	 * @param ctn
+	 * @param boxDataArray
+	 * @param ydata
+	 * @param level
+	 */
+	private void addBoxAtIndex( final int index, final ComponentTreeNode< DoubleType, ? > ctn, final double[][] boxDataArray, final double[] ydata, final int level ) {
+		int min = Integer.MAX_VALUE;
+		int max = Integer.MIN_VALUE;
+		final Iterator< Localizable > componentIterator = ctn.iterator();
+		while ( componentIterator.hasNext() ) {
+			final int pos = componentIterator.next().getIntPosition( 0 );
+			min = Math.min( min, pos );
+			max = Math.max( max, pos );
+		}
+		final int maxLocation = SimpleFunctionAnalysis.getMax( ydata, min, max ).a.intValue();
+		final int leftLocation = min;
+		final int rightLocation = max;
+		final double maxLocVal = ydata[ maxLocation ];
+		final double minVal = SimpleFunctionAnalysis.getMin( ydata, min, max ).b.doubleValue();
+//					xydxdyCTNBorders[ i ] = new double[] { 0.5 * ( leftLocation + rightLocation ) + 1, 0.5 * ( minVal + maxLocVal ), rightLocation - leftLocation, maxLocVal - minVal };
+		boxDataArray[ index ] = new double[] { 0.5 * ( leftLocation + rightLocation ) + 1, 1.0 - level * 0.05 - 0.02, rightLocation - leftLocation, 0.02 };
 	}
 
 	// -------------------------------------------------------------------------------------
@@ -351,41 +575,87 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 	 */
 	private void dataToDisplayChanged() {
 
-		// - - t-1 - - - - - -
+		// IF 'INACTIVE ASSIGNMENTS' VIEW IS ACTIVE
+		// ========================================
+		if ( tabsViews.getComponent( tabsViews.getSelectedIndex() ).equals( panelInactiveAssignmentsView ) ) {
+			// - - t-1 - - - - - -
 
-		if ( model.getCurrentGLFsPredecessor() != null ) {
-			final GrowthLineFrame glf = model.getCurrentGLFsPredecessor();
-			viewImgLeft = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
-			imgCanvasLeft.setScreenImage( glf, viewImgLeft );
-		} else {
-			// show something empty
-			imgCanvasLeft.setEmptyScreenImage();
+			if ( model.getCurrentGLFsPredecessor() != null ) {
+				final GrowthLineFrame glf = model.getCurrentGLFsPredecessor();
+				viewImgLeftInactive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
+				imgCanvasInactiveLeft.setScreenImage( glf, viewImgLeftInactive );
+			} else {
+				// show something empty
+				imgCanvasInactiveLeft.setEmptyScreenImage();
+			}
+
+			// - - t+1 - - - - - -
+
+			if ( model.getCurrentGLFsSuccessor() != null ) {
+				final GrowthLineFrame glf = model.getCurrentGLFsSuccessor();
+				viewImgRightInactive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
+				imgCanvasInactiveRight.setScreenImage( glf, viewImgRightInactive );
+			} else {
+				// show something empty
+				imgCanvasInactiveRight.setEmptyScreenImage();
+			}
+
+			// - -  t  - - - - - -
+
+			final GrowthLineFrame glf = model.getCurrentGLF();
+			viewImgCenterInactive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
+			imgCanvasInactiveCenter.setScreenImage( glf, viewImgCenterInactive );
+
+			// - -  assignment-views  - - - - - -
+
+			final int t = sliderTime.getValue();
+			leftInactiveAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getInactiveRightAssignments( t - 1 ) );
+			rightInactiveAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getInactiveRightAssignments( t ) );
 		}
 
-		// - - t+1 - - - - - -
+		// IF SEGMENTATION AND ASSIGNMENT VIEW IS ACTIVE
+		// =============================================
+		if ( tabsViews.getComponent( tabsViews.getSelectedIndex() ).equals( panelSegmentationAndAssignmentView ) ) {
+			// - - t-1 - - - - - -
 
-		if ( model.getCurrentGLFsSuccessor() != null ) {
-			final GrowthLineFrame glf = model.getCurrentGLFsSuccessor();
-			viewImgRight = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
-			imgCanvasRight.setScreenImage( glf, viewImgRight );
-		} else {
-			// show something empty
-			imgCanvasRight.setEmptyScreenImage();
+			if ( model.getCurrentGLFsPredecessor() != null ) {
+				final GrowthLineFrame glf = model.getCurrentGLFsPredecessor();
+				viewImgLeftActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
+				imgCanvasActiveLeft.setScreenImage( glf, viewImgLeftActive );
+			} else {
+				// show something empty
+				imgCanvasActiveLeft.setEmptyScreenImage();
+			}
+
+			// - - t+1 - - - - - -
+
+			if ( model.getCurrentGLFsSuccessor() != null ) {
+				final GrowthLineFrame glf = model.getCurrentGLFsSuccessor();
+				viewImgRightActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
+				imgCanvasActiveRight.setScreenImage( glf, viewImgRightActive );
+			} else {
+				// show something empty
+				imgCanvasActiveRight.setEmptyScreenImage();
+			}
+
+			// - -  t  - - - - - -
+
+			final GrowthLineFrame glf = model.getCurrentGLF();
+			viewImgCenterActive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
+			imgCanvasActiveCenter.setScreenImage( glf, viewImgCenterActive );
+
+			// - -  assignment-views  - - - - - -
+
+			final int t = sliderTime.getValue();
+			leftActiveAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalRightAssignments( t - 1 ) );
+			rightActiveAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalRightAssignments( t ) );
 		}
 
-		// - -  t  - - - - - -
-
-		final GrowthLineFrame glf = model.getCurrentGLF();
-		viewImgCenter = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
-		imgCanvasCenter.setScreenImage( glf, viewImgCenter );
-
-		// - -  assignment-views  - - - - - -
-
-		//TODO NOT nice... do something against that, please!
-		final int t = model.getCurrentGLF().getParent().getFrames().indexOf( model.getCurrentGLF() );
-		leftAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalRightAssignments( t - 1 ) );
-		rightAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalRightAssignments( t ) );
-
+		// IF DETAILED DATA VIEW IS ACTIVE
+		// ===============================
+		if ( tabsViews.getComponent( tabsViews.getSelectedIndex() ).equals( panelDetailedDataView ) ) {
+			updatePlotPanels();
+		}
 	}
 
 	/**

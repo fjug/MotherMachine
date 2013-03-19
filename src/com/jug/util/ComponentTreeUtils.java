@@ -75,7 +75,7 @@ public class ComponentTreeUtils {
 	 * Note that this function really only makes sense if the comp.-tree was
 	 * built on a one-dimensional image (as it is the case for my current
 	 * MotherMachine stuff...)
-	 * 
+	 *
 	 * @param node
 	 *            the node in question.
 	 * @return a <code>Pair</code> or two <code>Integers</code> giving the
@@ -148,5 +148,81 @@ public class ComponentTreeUtils {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * @param ct
+	 * @return
+	 */
+	public static int countNodes( final ComponentTree< DoubleType, ? > ct ) {
+		int nodeCount = ct.roots().size();;
+		for ( final ComponentTreeNode< DoubleType, ? > root : ct.roots() ) {
+			nodeCount += countNodes( root );
+		}
+		return nodeCount;
+	}
+
+	/**
+	 * @param root
+	 * @return
+	 */
+	public static int countNodes( final ComponentTreeNode< DoubleType, ? > ctn ) {
+		int nodeCount = ctn.getChildren().size();
+		for ( final ComponentTreeNode< DoubleType, ? > child : ctn.getChildren() ) {
+			nodeCount += countNodes( child );
+		}
+		return nodeCount;
+	}
+
+	/**
+	 * @param ct
+	 * @return
+	 */
+	public static List< ComponentTreeNode< DoubleType, ? >> getListOfNodes( final ComponentTree< DoubleType, ? > ct ) {
+		final ArrayList< ComponentTreeNode< DoubleType, ? >> ret = new ArrayList< ComponentTreeNode< DoubleType, ? >>();
+		for ( final ComponentTreeNode< DoubleType, ? > root : ct.roots() ) {
+			ret.add( root );
+			addListOfNodes( root, ret );
+		}
+		return ret;
+	}
+
+	/**
+	 * @param root
+	 * @param list
+	 */
+	private static void addListOfNodes( final ComponentTreeNode< DoubleType, ? > ctn, final ArrayList< ComponentTreeNode< DoubleType, ? >> list ) {
+		for ( final ComponentTreeNode< DoubleType, ? > child : ctn.getChildren() ) {
+			list.add( child );
+			addListOfNodes( child, list );
+		}
+	}
+
+	/**
+	 * @param ctnLevel
+	 * @return
+	 */
+	public static ArrayList< ComponentTreeNode< DoubleType, ? >> getAllChildren( final ArrayList< ComponentTreeNode< DoubleType, ? >> ctnLevel ) {
+		final ArrayList< ComponentTreeNode< DoubleType, ? >> nextCtnLevel = new ArrayList< ComponentTreeNode< DoubleType, ? >>();
+		for ( final ComponentTreeNode< DoubleType, ? > ctn : ctnLevel ) {
+			for ( final ComponentTreeNode< DoubleType, ? > child : ctn.getChildren() ) {
+				nextCtnLevel.add( child );
+			}
+		}
+		return nextCtnLevel;
+	}
+
+	/**
+	 * @param ctn
+	 * @return
+	 */
+	public static int getLevelInTree( final ComponentTreeNode< DoubleType, ? > ctn ) {
+		int level = 0;
+		ComponentTreeNode< DoubleType, ? > runner = ctn;
+		while ( runner.getParent() != null ) {
+			level++;
+			runner = runner.getParent();
+		}
+		return level;
 	}
 }

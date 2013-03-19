@@ -357,7 +357,7 @@ public class GrowthLineFrame {
 		final RealRandomAccessible< DoubleType > rrImg = Views.interpolate( Views.hyperSlice( img, 2, centerZ ), new NLinearInterpolatorFactory< DoubleType >() );
 		final RealRandomAccess< DoubleType > rraImg = rrImg.realRandomAccess();
 
-		final double[] dIntensity = new double[ imgLocations.size() ];
+		final double[] dIntensity = new double[ imgLocations.size() ]; //  + 1
 		for ( int i = 0; i < imgLocations.size(); i++ ) {
 			final int centerY = imgLocations.get( i ).getIntPosition( 1 );
 
@@ -382,6 +382,7 @@ public class GrowthLineFrame {
 			// dIntensity[i] = maxDiagonalAvg - minIntensity;
 			dIntensity[ i ] = maxDiagonalAvg;
 		}
+//		dIntensity[ imgLocations.size() ] = SimpleFunctionAnalysis.getSum( dIntensity ) / imgLocations.size();
 		return dIntensity;
 	}
 
@@ -465,7 +466,7 @@ public class GrowthLineFrame {
 		}
 
 		for ( final ComponentTreeNode< DoubleType, ? > ctn : optimalSegmentation ) {
-			ArgbDrawingUtils.taintComponentTreeNode( ctn, raAnnotationImg, offsetX + getAvgXpos(), offsetY );
+			ArgbDrawingUtils.taintComponentTreeNode( ctn, raAnnotationImg, offsetX + getAvgXpos(), offsetY + MotherMachine.GL_OFFSET_TOP );
 		}
 	}
 

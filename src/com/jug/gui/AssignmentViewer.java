@@ -4,6 +4,7 @@
 package com.jug.gui;
 
 import java.util.HashMap;
+import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.JTabbedPane;
@@ -35,7 +36,7 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 	private AssignmentView divisionAssignments;
 	private AssignmentView exitAssignments;
 
-	private HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > data;
+	private HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data;
 
 	// -------------------------------------------------------------------------------------
 	// construction
@@ -44,7 +45,7 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 	 * @param dimension
 	 */
 	public AssignmentViewer( final int height ) {
-		this.setBorder( BorderFactory.createEmptyBorder() );
+		this.setBorder( BorderFactory.createEmptyBorder( 0, 0, 0, 0 ) );
 		buildGui( height );
 	}
 
@@ -65,11 +66,9 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 		exitAssignments = new AssignmentView( height );
 
 		allAssignments.display( data );
-		mappingAssignments.display( data, GrowthLineTrackingILP.ASSIGNMENT_MAPPING );
-		divisionAssignments.display( data, GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
-		exitAssignments.display( data, GrowthLineTrackingILP.ASSIGNMENT_EXIT );
-
-		this.addChangeListener( this );
+		mappingAssignments.display( data, GrowthLineTrackingILP.ASSIGNMENT_MAPPING, -100, 100 );
+		divisionAssignments.display( data, GrowthLineTrackingILP.ASSIGNMENT_DIVISION, -100, 100 );
+		exitAssignments.display( data, GrowthLineTrackingILP.ASSIGNMENT_EXIT, -100, 100 );
 
 		this.add( "all", allAssignments );
 		this.add( "mappings", mappingAssignments );
@@ -84,7 +83,7 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 	 *            a <code>HashMap</code> containing pairs of segmentation
 	 *            hypothesis at some time-point t and assignments towards t+1.
 	 */
-	public void display( final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > hashMap ) {
+	public void display( final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> hashMap ) {
 		this.data = hashMap;
 		allAssignments.setData( data );
 		mappingAssignments.setData( data );
