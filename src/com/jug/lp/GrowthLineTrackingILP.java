@@ -50,6 +50,8 @@ public class GrowthLineTrackingILP {
 	public static int ASSIGNMENT_MAPPING = 1;
 	public static int ASSIGNMENT_DIVISION = 2;
 
+	public static final double CUTOFF_COST = 1.0;
+
 	public static GRBEnv env;
 
 	// -------------------------------------------------------------------------------------
@@ -326,18 +328,19 @@ public class GrowthLineTrackingILP {
 
 					cost = 1.0 * ( fromCost + toCost ) + compatibilityCostOfMapping( from, to );
 
-					final String name = String.format( "a_%d^MAPPING--(%d,%d)", t, i, j );
-//					System.out.println( "Added mapping variable '" + name + "'" );
-					final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, name );
-					final MappingAssignment ma = new MappingAssignment( t, newLPVar, model, nodes, edgeSets, from, to );
-					nodes.addAssignment( t, ma );
-					if ( edgeSets.addToRightNeighborhood( from, ma ) == false ) {
-						System.err.println( "ERROR: Mapping-assignment could not be added to right neighborhood!" );
+					if ( cost <= CUTOFF_COST ) {
+						final String name = String.format( "a_%d^MAPPING--(%d,%d)", t, i, j );
+						final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, name );
+						final MappingAssignment ma = new MappingAssignment( t, newLPVar, model, nodes, edgeSets, from, to );
+						nodes.addAssignment( t, ma );
+						if ( edgeSets.addToRightNeighborhood( from, ma ) == false ) {
+							System.err.println( "ERROR: Mapping-assignment could not be added to right neighborhood!" );
+						}
+						if ( edgeSets.addToLeftNeighborhood( to, ma ) == false ) {
+							System.err.println( "ERROR: Mapping-assignment could not be added to left neighborhood!" );
+						}
+						j++;
 					}
-					if ( edgeSets.addToLeftNeighborhood( to, ma ) == false ) {
-						System.err.println( "ERROR: Mapping-assignment could not be added to left neighborhood!" );
-					}
-					j++;
 				}
 			}
 			i++;
@@ -364,7 +367,7 @@ public class GrowthLineTrackingILP {
 		final Pair< Integer, Integer > intervalFrom = ComponentTreeUtils.getTreeNodeInterval( from.getWrappedHypothesis() );
 		final Pair< Integer, Integer > intervalTo = ComponentTreeUtils.getTreeNodeInterval( to.getWrappedHypothesis() );
 
-		double deltaL = ( sizeTo - sizeFrom ) / sizeFrom;
+		double deltaL = ( ( double ) ( sizeTo - sizeFrom ) ) / gl.get( 0 ).size();
 		double costDeltaL = 0.0;
 		if (deltaL > 0) {
 			deltaL = Math.max( 0, deltaL - 0.05 ); // growing up 5% is free
@@ -423,13 +426,15 @@ public class GrowthLineTrackingILP {
 
 							cost = 1.0 * ( fromCost + toCost ) + compatibilityCostOfDivision( from, to, lowerNeighbor );
 
-							final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, String.format( "a_%d^DIVISION--(%d,%d)", t, i, j ) );
-							final DivisionAssignment da = new DivisionAssignment( t, newLPVar, model, nodes, edgeSets, from, to, lowerNeighbor );
-							nodes.addAssignment( t, da );
-							edgeSets.addToRightNeighborhood( from, da );
-							edgeSets.addToLeftNeighborhood( to, da );
-							edgeSets.addToLeftNeighborhood( lowerNeighbor, da );
-							j++;
+							if ( cost <= CUTOFF_COST ) {
+								final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, String.format( "a_%d^DIVISION--(%d,%d)", t, i, j ) );
+								final DivisionAssignment da = new DivisionAssignment( t, newLPVar, model, nodes, edgeSets, from, to, lowerNeighbor );
+								nodes.addAssignment( t, da );
+								edgeSets.addToRightNeighborhood( from, da );
+								edgeSets.addToLeftNeighborhood( to, da );
+								edgeSets.addToLeftNeighborhood( lowerNeighbor, da );
+								j++;
+							}
 						}
 					}
 				}
@@ -464,7 +469,7 @@ public class GrowthLineTrackingILP {
 		final Pair< Integer, Integer > intervalToU = ComponentTreeUtils.getTreeNodeInterval( toUpper.getWrappedHypothesis() );
 		final Pair< Integer, Integer > intervalToL = ComponentTreeUtils.getTreeNodeInterval( toLower.getWrappedHypothesis() );
 
-		double deltaL = ( sizeTo - sizeFrom ) / sizeFrom;
+		double deltaL = ( ( double ) ( sizeTo - sizeFrom ) ) / gl.get( 0 ).size();
 		double costDeltaL = 0.0;
 		if ( deltaL > 0 ) {
 			deltaL = Math.max( 0, deltaL - 0.05 ); // growing up 5% is free
@@ -713,7 +718,7 @@ public class GrowthLineTrackingILP {
 	 * coming in from the left (from t-1).
 	 * Calling this function makes only sense if the <code>run</code>-method was
 	 * called and the convex optimizer could find a optimal feasible solution.
-	 * 
+	 *
 	 * @param t
 	 *            the time at which to look for active left-assignments.
 	 *            Values for t make only sense if <code>>=1</code> and

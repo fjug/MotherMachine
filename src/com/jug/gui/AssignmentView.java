@@ -72,17 +72,31 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	// construction
 	// -------------------------------------------------------------------------------------
 	public AssignmentView( final int height ) {
+		this( height, -GrowthLineTrackingILP.CUTOFF_COST, GrowthLineTrackingILP.CUTOFF_COST );
+		this.doFilterDataByCost = false;
+	}
+
+	/**
+	 * @param height
+	 * @param filterMinCost
+	 * @param filterMaxCost
+	 */
+	public AssignmentView( final int height, final double filterMinCost, final double filterMaxCost ) {
 		this.offsetY = MotherMachine.GL_OFFSET_TOP;
 		this.width = 90;
 		this.height = height;
-		this.setPreferredSize( new Dimension( width, height - 60 ) );
+		this.setPreferredSize( new Dimension( width, height ) );
 		this.addMouseListener( this );
 		this.addMouseMotionListener( this );
+		this.doFilterDataByCost = true;
+		this.filterMinCost = filterMinCost;
+		this.filterMaxCost = filterMaxCost;
 	}
 
 	// -------------------------------------------------------------------------------------
 	// getters and setters
 	// -------------------------------------------------------------------------------------
+
 
 	// -------------------------------------------------------------------------------------
 	// methods

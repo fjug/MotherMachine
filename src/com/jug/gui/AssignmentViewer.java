@@ -66,14 +66,14 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 		exitAssignments = new AssignmentView( height );
 
 		allAssignments.display( data );
-		mappingAssignments.display( data, GrowthLineTrackingILP.ASSIGNMENT_MAPPING, -100, 100 );
-		divisionAssignments.display( data, GrowthLineTrackingILP.ASSIGNMENT_DIVISION, -100, 100 );
-		exitAssignments.display( data, GrowthLineTrackingILP.ASSIGNMENT_EXIT, -100, 100 );
+		mappingAssignments.display( data, GrowthLineTrackingILP.ASSIGNMENT_MAPPING );
+		divisionAssignments.display( data, GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
+		exitAssignments.display( data, GrowthLineTrackingILP.ASSIGNMENT_EXIT );
 
-		this.add( "all", allAssignments );
-		this.add( "mappings", mappingAssignments );
-		this.add( "divisions", divisionAssignments );
-		this.add( "exits", exitAssignments );
+		this.add( "*", allAssignments );
+		this.add( "M", mappingAssignments );
+		this.add( "D", divisionAssignments );
+		this.add( "E", exitAssignments );
 	}
 
 	/**
