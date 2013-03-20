@@ -4,6 +4,7 @@
 package com.jug.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -444,5 +445,17 @@ public class SimpleFunctionAnalysis {
 	public static Pair< Integer, Integer > getHighestMonotoneDecreasingSegment( final double[] fkt, final int i, final int j ) {
 		final double[] inverseFkt = SimpleFunctionAnalysis.flipSign( fkt );
 		return getHighestMonotoneIncreasingSegment( inverseFkt, i, j );
+	}
+
+	/**
+	 * @param gapSepFkt
+	 * @return
+	 */
+	public static double getMedian( final double[] fkt, final int i, final int j ) {
+		final int len = j - i + 1;
+		final double[] fktCopy = new double[ len ];
+		System.arraycopy( fkt, i, fktCopy, 0, len );
+		Arrays.sort( fktCopy );
+		return fktCopy[ len / 2 ];
 	}
 }

@@ -99,9 +99,11 @@ public class CostFactory {
 		double cost = -( maxRimHeight - reducedMaxHeight ) + MotherMachine.MIN_GAP_CONTRAST;
 
 		// Special case: min-value is above average gap-sep-fkt value (happens often at the very top)
-		final double avgFktValue = SimpleFunctionAnalysis.getSum( gapSepFkt ) / gapSepFkt.length;
-		final double distAboveAvg = Math.max( 0.0, min - avgFktValue );
-		cost += 3.0 * distAboveAvg * Math.pow( 1 + distAboveAvg, 8.0 );
+		final double avgFktValue = SimpleFunctionAnalysis.getSum( gapSepFkt ) / ( gapSepFkt.length - 1 );
+//		final double distAboveAvg = Math.max( 0.0, min - avgFktValue );
+		final double medianValue = SimpleFunctionAnalysis.getMedian( gapSepFkt, a, b );
+		final double distAboveAvg = Math.max( 0.0, medianValue - avgFktValue );
+		cost += distAboveAvg * Math.pow( 1 + distAboveAvg, 8.0 );
 
 		// cell is too small
 		if ( a > 0 && b - a < MotherMachine.MIN_CELL_LENGTH ) { // if a==0, only a part of the cell is seen!
