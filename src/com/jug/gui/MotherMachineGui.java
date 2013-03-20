@@ -188,6 +188,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private JSlider sliderTime;
 
 	private JTabbedPane tabsViews;
+	private CountOverviewPanel panelCountingView;
 	private JPanel panelInactiveAssignmentsView;
 	private JPanel panelSegmentationAndAssignmentView;
 	private JPanel panelDetailedDataView;
@@ -200,6 +201,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private AssignmentViewer rightInactiveAssignmentViewer;
 
 	private JButton btnOptimize;
+	private JButton btnOptimizeAll;
 
 	// -------------------------------------------------------------------------------------
 	// construction & gui creation
@@ -260,14 +262,18 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelVerticalHelper.add( sliderGL, BorderLayout.CENTER );
 		add( panelVerticalHelper, BorderLayout.WEST );
 
+		sliderTime.requestFocus();
+
 		// --- All the TABs -------------
 
 		tabsViews = new JTabbedPane();
 
+		panelCountingView = new CountOverviewPanel();
 		panelInactiveAssignmentsView = buildInactiveAssignmentsView();
 		panelSegmentationAndAssignmentView = buildSegmentationAndAssignmentView();
 		panelDetailedDataView = buildDetailedDataView();
 
+		tabsViews.add( "Cell Counting", panelCountingView );
 		tabsViews.add( "Inactive Assignments", panelInactiveAssignmentsView );
 		tabsViews.add( "Segm. & Assingments", panelSegmentationAndAssignmentView );
 		tabsViews.add( "Detailed Data View", panelDetailedDataView );
@@ -277,7 +283,12 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		// --- Controls ----------------------------------
 		btnOptimize = new JButton( "Optimize" );
 		btnOptimize.addActionListener( this );
-		add( btnOptimize, BorderLayout.SOUTH );
+		btnOptimizeAll = new JButton( "Optimize All" );
+		btnOptimizeAll.addActionListener( this );
+		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.RIGHT, 5, 0 ) );
+		panelHorizontalHelper.add( btnOptimize );
+		panelHorizontalHelper.add( btnOptimizeAll );
+		add( panelHorizontalHelper, BorderLayout.SOUTH );
 
 		// --- Final adding and layout steps -------------
 
@@ -289,6 +300,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		// - - - - - - - - - - - - - - - - - - - - - - - -
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 't' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'g' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'q' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'a' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 's' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'd' ), "MMGUI_bindings" );
@@ -306,6 +318,12 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				}
 				if ( e.getActionCommand().equals( "g" ) ) {
 					sliderGL.requestFocus();
+					dataToDisplayChanged();
+				}
+				if ( e.getActionCommand().equals( "q" ) ) {
+					if ( !tabsViews.getComponent( tabsViews.getSelectedIndex() ).equals( panelCountingView ) ) {
+						tabsViews.setSelectedComponent( panelCountingView );
+					}
 					dataToDisplayChanged();
 				}
 				if ( e.getActionCommand().equals( "a" ) ) {
@@ -604,6 +622,16 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private void dataToDisplayChanged() {
 
 		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+
+		// IF 'COUNTING VIEW' VIEW IS ACTIVE
+		// =================================
+		if ( tabsViews.getComponent( tabsViews.getSelectedIndex() ).equals( panelCountingView ) ) {
+			if ( ilp != null ) {
+				panelCountingView.showData( model.getCurrentGL() );
+			} else {
+				panelCountingView.showData( null );
+			}
+		}
 
 		// IF 'INACTIVE ASSIGNMENTS' VIEW IS ACTIVE
 		// ========================================

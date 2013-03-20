@@ -504,4 +504,11 @@ public class GrowthLineFrame {
 		return ret;
 	}
 
+	/**
+	 * @return the time-step this GLF corresponds to in the GL it is part of.
+	 */
+	public int getTime() {
+		return this.getParent().getFrames().indexOf( this );
+	}
+
 }
