@@ -559,17 +559,17 @@ public class MotherMachine {
 		resetImgTempToRaw();
 		System.out.println( " done!" );
 
-		System.out.print( "Generating ComponentTrees..." );
+		System.out.print( "Generating Segmentation Hypotheses..." );
 		generateSegmentationHypotheses();
 		System.out.println( " done!" );
 
-		System.out.println( "Generating Integer Linear Programs..." );
-		generateILPs();
-		System.out.println( " done!" );
-
-		System.out.println( "Running Integer Linear Programs..." );
-		runILPs();
-		System.out.println( " done!" );
+//		System.out.println( "Generating Integer Linear Programs..." );
+//		generateILPs();
+//		System.out.println( " done!" );
+//
+//		System.out.println( "Running Integer Linear Programs..." );
+//		runILPs();
+//		System.out.println( " done!" );
 	}
 
 	/**

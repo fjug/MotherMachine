@@ -38,6 +38,7 @@ import net.imglib2.view.Views;
 
 import org.math.plot.Plot2DPanel;
 
+import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
 import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.util.ComponentTreeUtils;
@@ -202,6 +203,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 	private JButton btnOptimize;
 	private JButton btnOptimizeAll;
+	private JButton btnOptimizeRemainingAndExport;
 
 	// -------------------------------------------------------------------------------------
 	// construction & gui creation
@@ -285,9 +287,12 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		btnOptimize.addActionListener( this );
 		btnOptimizeAll = new JButton( "Optimize All" );
 		btnOptimizeAll.addActionListener( this );
+		btnOptimizeRemainingAndExport = new JButton( "Opt. Remaining & Export" );
+		btnOptimizeRemainingAndExport.addActionListener( this );
 		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.RIGHT, 5, 0 ) );
 		panelHorizontalHelper.add( btnOptimize );
 		panelHorizontalHelper.add( btnOptimizeAll );
+		panelHorizontalHelper.add( btnOptimizeRemainingAndExport );
 		add( panelHorizontalHelper, BorderLayout.SOUTH );
 
 		// --- Final adding and layout steps -------------
@@ -755,6 +760,35 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			model.getCurrentGL().generateILP();
 			System.out.println( "Finding optimal result..." );
 			model.getCurrentGL().runILP();
+			System.out.println( "...done!" );
+			dataToDisplayChanged();
+		}
+		if ( e.getSource().equals( btnOptimizeAll ) ) {
+			int i = 0;
+			final int glCount = model.mm.getGrowthLines().size();
+			for ( final GrowthLine gl : model.mm.getGrowthLines() ) {
+				System.out.println( String.format( "Generating ILP #%d of %d...", i, glCount ) );
+				gl.generateILP();
+				System.out.println( String.format( "Running ILP #%d of %d...", i, glCount ) );
+				gl.runILP();
+				i++;
+			}
+			System.out.println( "...done!" );
+			dataToDisplayChanged();
+		}
+		if ( e.getSource().equals( btnOptimizeRemainingAndExport ) ) {
+			int i = 0;
+			final int glCount = model.mm.getGrowthLines().size();
+			for ( final GrowthLine gl : model.mm.getGrowthLines() ) {
+				if ( gl.getIlp() == null ) {
+					System.out.println( String.format( "Generating ILP #%d of %d...", i, glCount ) );
+					gl.generateILP();
+					System.out.println( String.format( "Running ILP #%d of %d...", i, glCount ) );
+					gl.runILP();
+				}
+				i++;
+			}
+			System.out.println( "Exporting data... (not yet implemented!)" );
 			System.out.println( "...done!" );
 			dataToDisplayChanged();
 		}
