@@ -23,9 +23,8 @@ import net.imglib2.util.Pair;
 
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
-import com.jug.MotherMachine;
+import com.jug.lp.costs.CostFactory;
 import com.jug.util.ComponentTreeUtils;
-import com.jug.util.SimpleFunctionAnalysis;
 
 
 /**
@@ -38,6 +37,8 @@ public class GrowthLineTrackingILP {
 	// -------------------------------------------------------------------------------------
 	// statics
 	// -------------------------------------------------------------------------------------
+	public static boolean FAST_MODE = false;
+
 	public static int OPTIMIZATION_NEVER_PERFORMED = 0;
 	public static int OPTIMAL = 1;
 	public static int INFEASIBLE = 2;
@@ -218,38 +219,7 @@ public class GrowthLineTrackingILP {
 	public double localCost( final int t, final ComponentTreeNode< DoubleType, ? > ctNode ) {
 		//TODO kotz
 		final double[] gapSepFkt = gl.getFrames().get( t ).getGapSeparationValues( null );
-
-		final Pair< Integer, Integer > segInterval = ComponentTreeUtils.getTreeNodeInterval( ctNode );
-		final int a = segInterval.a.intValue();
-		final int b = segInterval.b.intValue();
-
-		int aReduced = SimpleFunctionAnalysis.getRighthandLocalMax( gapSepFkt, a ).a.intValue();
-		aReduced = SimpleFunctionAnalysis.getRighthandLocalMin( gapSepFkt, aReduced ).a.intValue();
-		int bReduced = SimpleFunctionAnalysis.getLefthandLocalMax( gapSepFkt, b ).a.intValue();
-		bReduced = SimpleFunctionAnalysis.getLefthandLocalMin( gapSepFkt, b ).a.intValue();
-
-		final double l = gapSepFkt[ a ];
-		final double r = gapSepFkt[ b - 1 ];
-
-		final double maxReduced = SimpleFunctionAnalysis.getMax( gapSepFkt, aReduced, bReduced ).b.doubleValue();
-		final double min = SimpleFunctionAnalysis.getMin( gapSepFkt, a, b ).b.doubleValue();
-
-//		final double max = SimpleFunctionAnalysis.getMax( gapSepFkt, a + 1, b - 1 ).b.doubleValue();
-
-//		double integral = SimpleFunctionAnalysis.getSum( gapSepFkt, a, b );
-//		integral -= ( b - a ) * min; //subtract baseline
-//		final double area = ( b - a ) * ( max - min );
-
-		final double avgRimHeight = 0.5 * ( l + r ) - min;
-		final double f = 1 - ( ( maxReduced - min ) / ( Math.max( l, r ) - min ) );
-
-		double cost = -1 * f * avgRimHeight;
-
-		// cell is too small
-		if ( b - a < MotherMachine.MIN_CELL_LENGTH ) {
-			cost = 0;
-		}
-		return cost;
+		return CostFactory.getSegmentationCost( ctNode, gapSepFkt );
 	}
 
 	/**
@@ -314,7 +284,7 @@ public class GrowthLineTrackingILP {
 	 * @throws GRBException
 	 */
 	private void addMappingAssignments( final int t, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> curHyps, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> nxtHyps ) throws GRBException {
-		double cost;
+		double cost = 0.0;
 
 		int i = 0;
 		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> from : curHyps ) {
@@ -326,7 +296,8 @@ public class GrowthLineTrackingILP {
 
 				if ( !( ComponentTreeUtils.isBelow( to.getWrappedHypothesis(), from.getWrappedHypothesis() ) ) ) {
 
-					cost = 1.0 * ( fromCost + toCost ) + compatibilityCostOfMapping( from, to );
+					if ( !FAST_MODE )
+						cost = 1.0 * ( fromCost + toCost ) + compatibilityCostOfMapping( from, to );
 
 					if ( cost <= CUTOFF_COST ) {
 						final String name = String.format( "a_%d^MAPPING--(%d,%d)", t, i, j );
@@ -362,33 +333,26 @@ public class GrowthLineTrackingILP {
 	private double compatibilityCostOfMapping( final Hypothesis< ComponentTreeNode< DoubleType, ? >> from, final Hypothesis< ComponentTreeNode< DoubleType, ? >> to ) {
 		final long sizeFrom = from.getWrappedHypothesis().getSize();
 		final long sizeTo = to.getWrappedHypothesis().getSize();
+
 		final double valueFrom = from.getWrappedHypothesis().getValue().get();
 		final double valueTo = to.getWrappedHypothesis().getValue().get();
+
 		final Pair< Integer, Integer > intervalFrom = ComponentTreeUtils.getTreeNodeInterval( from.getWrappedHypothesis() );
 		final Pair< Integer, Integer > intervalTo = ComponentTreeUtils.getTreeNodeInterval( to.getWrappedHypothesis() );
 
-		double deltaL = ( ( double ) ( sizeTo - sizeFrom ) ) / gl.get( 0 ).size();
-		double costDeltaL = 0.0;
-		if (deltaL > 0) {
-			deltaL = Math.max( 0, deltaL - 0.05 ); // growing up 5% is free
-			costDeltaL = deltaL * Math.pow( 1 + deltaL, 1.0 );
-		} else {
-			costDeltaL = deltaL * Math.pow( 1 + deltaL, 2.0 );
-		}
+		final double oldPos = 0.5 * ( intervalFrom.b.intValue() + intervalFrom.a.intValue() );
+		final double newPos = 0.5 * ( intervalTo.b.intValue() + intervalTo.a.intValue() );
 
-		final double deltaV = Math.abs( valueFrom - valueTo ); // change in intensity value of the two CTNs.
-		final double costDeltaV = 0.0 * deltaV; // OFF!!!!
+		final double glLength = gl.get( 0 ).size();
 
-		double deltaH = ( 0.5 * ( intervalFrom.b.intValue() + intervalFrom.a.intValue() ) - 0.5 * ( intervalTo.b.intValue() + intervalTo.a.intValue() ) ) / gl.get( 0 ).size();
-		double costDeltaH = 0.0;
-		if ( deltaH > 0 ) {
-			deltaH = Math.max( 0, deltaH - 0.05 ); // going upwards for up to 5% is for free...
-			costDeltaH = deltaH * Math.pow( 1 + deltaH, 1.0 );
-		} else {
-			costDeltaH = deltaH * Math.pow( 1 + deltaH, 2.0 );
-		}
+		// Finally the costs are computed...
+		final double costDeltaH = CostFactory.getMigrationCost( oldPos, newPos, glLength );
+		final double costDeltaL = CostFactory.getGrowthCost( sizeFrom, sizeTo, glLength );
+		final double costDeltaV = CostFactory.getIntensityMismatchCost( valueFrom, valueTo );
 
-		return costDeltaL + costDeltaV + costDeltaH;
+		final double cost = costDeltaL + costDeltaV + costDeltaH;
+//		System.out.println( String.format( ">>> %f + %f + %f = %f", costDeltaL, costDeltaV, costDeltaH, cost ) );
+		return cost;
 	}
 
 	/**
@@ -407,7 +371,7 @@ public class GrowthLineTrackingILP {
 	 * @throws GRBException
 	 */
 	private void addDivisionAssignments( final int t, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> curHyps, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> nxtHyps ) throws GRBException {
-		double cost;
+		double cost = 0.0;
 
 		int i = 0;
 		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> from : curHyps ) {
@@ -424,7 +388,8 @@ public class GrowthLineTrackingILP {
 						} else {
 							final double toCost = to.getCosts() + lowerNeighbor.getCosts();
 
-							cost = 1.0 * ( fromCost + toCost ) + compatibilityCostOfDivision( from, to, lowerNeighbor );
+							if ( !FAST_MODE )
+								cost = toCost + compatibilityCostOfDivision( from, to, lowerNeighbor );
 
 							if ( cost <= CUTOFF_COST ) {
 								final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, String.format( "a_%d^DIVISION--(%d,%d)", t, i, j ) );
@@ -463,41 +428,27 @@ public class GrowthLineTrackingILP {
 		final long sizeToU = toUpper.getWrappedHypothesis().getSize();
 		final long sizeToL = toLower.getWrappedHypothesis().getSize();
 		final long sizeTo = sizeToU + sizeToL;
+
 		final double valueFrom = from.getWrappedHypothesis().getValue().get();
 		final double valueTo = 0.5 * ( toUpper.getWrappedHypothesis().getValue().get() + toLower.getWrappedHypothesis().getValue().get() );
+
 		final Pair< Integer, Integer > intervalFrom = ComponentTreeUtils.getTreeNodeInterval( from.getWrappedHypothesis() );
 		final Pair< Integer, Integer > intervalToU = ComponentTreeUtils.getTreeNodeInterval( toUpper.getWrappedHypothesis() );
 		final Pair< Integer, Integer > intervalToL = ComponentTreeUtils.getTreeNodeInterval( toLower.getWrappedHypothesis() );
 
-		double deltaL = ( ( double ) ( sizeTo - sizeFrom ) ) / gl.get( 0 ).size();
-		double costDeltaL = 0.0;
-		if ( deltaL > 0 ) {
-			deltaL = Math.max( 0, deltaL - 0.05 ); // growing up 5% is free
-			costDeltaL = deltaL * Math.pow( 1 + deltaL, 1.0 );
-		} else {
-			costDeltaL = deltaL * Math.pow( 1 + deltaL, 2.0 );
-		}
+		final double oldPos = 0.5 * ( intervalFrom.b.intValue() + intervalFrom.a.intValue() );
+		final double newPos = 0.5 * ( intervalToL.b.intValue() + intervalToU.a.intValue() );
 
-		final double deltaV = Math.abs( valueFrom - valueTo ); // change in intensity value of the two CTNs.
-		final double costDeltaV = 0.0 * deltaV; // OFF!!!!
+		final double glLength = gl.get( 0 ).size();
 
-		double deltaH = ( 0.5 * ( intervalFrom.b.intValue() + intervalFrom.a.intValue() ) - 0.5 * ( intervalToL.b.intValue() + intervalToU.a.intValue() ) ) / gl.get( 0 ).size();
-		double costDeltaH = 0.0;
-		if ( deltaH > 0 ) {
-			deltaH = Math.max( 0, deltaH - 0.05 ); // going upwards for up to 5% is for free...
-			costDeltaH = deltaH * Math.pow( 1 + deltaH, 1.0 );
-		} else {
-			costDeltaH = deltaH * Math.pow( 1 + deltaH, 2.0 );
-		}
-
-		final double deltaS = Math.abs( sizeToU - sizeToL ) / Math.min( sizeToU, sizeToL );
-		double costDeltaS = 0.0;
-		if ( deltaS > 20 ) {
-			costDeltaS = deltaS - 20;
-		}
+		// Finally the costs are computed...
+		final double costDeltaH = CostFactory.getMigrationCost( oldPos, newPos, glLength );
+		final double costDeltaL = CostFactory.getGrowthCost( sizeFrom, sizeTo, glLength );
+		final double costDeltaV = CostFactory.getIntensityMismatchCost( valueFrom, valueTo );
+		final double costDeltaS = CostFactory.getUnevenDivisionCost( sizeToU, sizeToL );
 
 		final double cost = costDeltaL + costDeltaV + costDeltaH + costDeltaS;
-		System.out.println( String.format( ">>> %f + %f + %f + %f = %f", costDeltaL, costDeltaV, costDeltaH, costDeltaS, cost ) );
+//		System.out.println( String.format( ">>> %f + %f + %f + %f = %f", costDeltaL, costDeltaV, costDeltaH, costDeltaS, cost ) );
 		return cost;
 	}
 

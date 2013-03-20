@@ -371,7 +371,9 @@ public class GrowthLineFrame {
 					final double y = centerY + ( ( double ) currentOffsetY / maxOffsetX ) * currentOffsetX;
 					rraImg.setPosition( new double[] { x, y } );
 					summedIntensities += rraImg.get().get();
+//					summedIntensities += rraImg.get().get() * Math.abs( currentOffsetX );
 					summands++;
+//					summands += Math.abs( currentOffsetX );
 				}
 				diagonalAverages[ nextAverageIdx ] = summedIntensities / summands;
 				nextAverageIdx++;

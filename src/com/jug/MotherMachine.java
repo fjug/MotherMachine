@@ -94,7 +94,7 @@ public class MotherMachine {
 	 * Prior knowledge: hard offset in detected well center lines - will be cut
 	 * of from bottom.
 	 */
-	public static int GL_OFFSET_BOTTOM = 20;
+	public static int GL_OFFSET_BOTTOM = 10;
 	/**
 	 * Maximum offset in x direction (with respect to growth line center) to
 	 * take the background intensities from that will be subtracted from the
@@ -115,11 +115,11 @@ public class MotherMachine {
 	/**
 	 * Prior knowledge: minimal length of detected cells
 	 */
-	public static int MIN_CELL_LENGTH = 15;
+	public static int MIN_CELL_LENGTH = 25;
 	/**
 	 * Prior knowledge: minimal contrast of an gap (also used for MSERs)
 	 */
-	public static double MIN_GAP_CONTRAST = 0.015; // This is set to a very low value that will basically not filter anything...
+	public static double MIN_GAP_CONTRAST = 0.02; // This is set to a very low value that will basically not filter anything...
 
 	// - - - - - - - - - - - - - -
 	// GUI-WINDOW RELATED STATICS
@@ -1097,7 +1097,7 @@ public class MotherMachine {
 //		for ( final GrowthLine gl : getGrowthLines() ) {
 //			gl.generateILP();
 //		}
-		getGrowthLines().get( 0 ).generateILP();
+//		getGrowthLines().get( 0 ).generateILP();
 	}
 
 	/**
@@ -1106,11 +1106,11 @@ public class MotherMachine {
 	private void runILPs() {
 //		int i = 0;
 //		for ( final GrowthLine gl : getGrowthLines() ) {
-//			System.out.println(" > > > > > Starting LP for GL# " + i + " < < < < < ");
+//			System.out.println( " > > > > > Starting LP for GL# " + i + " < < < < < " );
 //			gl.runILP();
 //			i++;
 //		}
-		getGrowthLines().get( 0 ).runILP();
+//		getGrowthLines().get( 0 ).runILP();
 	}
 
 }

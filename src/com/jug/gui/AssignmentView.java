@@ -85,18 +85,46 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		this.offsetY = MotherMachine.GL_OFFSET_TOP;
 		this.width = 90;
 		this.height = height;
-		this.setPreferredSize( new Dimension( width, height ) );
+		this.setPreferredSize( new Dimension( width, height - 20 ) );
 		this.addMouseListener( this );
 		this.addMouseMotionListener( this );
 		this.doFilterDataByCost = true;
-		this.filterMinCost = filterMinCost;
-		this.filterMaxCost = filterMaxCost;
+		this.setCostFilterMin( filterMinCost );
+		this.setCostFilterMax( filterMaxCost );
 	}
 
 	// -------------------------------------------------------------------------------------
 	// getters and setters
 	// -------------------------------------------------------------------------------------
+	/**
+	 * @return the filterMinCost
+	 */
+	public double getCostFilterMin() {
+		return filterMinCost;
+	}
 
+	/**
+	 * @param filterMinCost
+	 *            the filterMinCost to set
+	 */
+	public void setCostFilterMin( final double filterMinCost ) {
+		this.filterMinCost = filterMinCost;
+	}
+
+	/**
+	 * @return the filterMaxCost
+	 */
+	public double getCostFilterMax() {
+		return filterMaxCost;
+	}
+
+	/**
+	 * @param filterMaxCost
+	 *            the filterMaxCost to set
+	 */
+	public void setCostFilterMax( final double filterMaxCost ) {
+		this.filterMaxCost = filterMaxCost;
+	}
 
 	// -------------------------------------------------------------------------------------
 	// methods
@@ -129,8 +157,8 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		this.data = data;
 
 		doFilterDataByCost = true;
-		this.filterMinCost = minCostToShow;
-		this.filterMaxCost = maxCostToShow;
+		this.setCostFilterMin( minCostToShow );
+		this.setCostFilterMax( maxCostToShow );
 
 		this.repaint();
 	}
@@ -151,7 +179,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		assert ( typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_EXIT ||
 				 typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ||
 				 typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
-		this.display( data, typeToFilter, Double.MIN_VALUE, Double.MAX_VALUE );
+		this.display( data, typeToFilter, this.getCostFilterMin(), this.getCostFilterMax() );
 	}
 
 	/**
@@ -174,8 +202,8 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		this.filterAssignmentType = typeToFilter;
 
 		doFilterDataByCost = true;
-		this.filterMinCost = minCostToShow;
-		this.filterMaxCost = maxCostToShow;
+		this.setCostFilterMin( minCostToShow );
+		this.setCostFilterMax( maxCostToShow );
 		this.data = data;
 
 		this.repaint();
@@ -198,7 +226,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 					continue;
 				}
 				try {
-					if ( doFilterDataByCost && ( assignment.getCost() < this.filterMinCost || assignment.getCost() > this.filterMaxCost ) ) {
+					if ( doFilterDataByCost && ( assignment.getCost() < this.getCostFilterMin() || assignment.getCost() > this.getCostFilterMax() ) ) {
 						continue;
 					}
 				}
@@ -211,9 +239,9 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 
 		if ( this.isDragging ) {
 			g.setColor( Color.GREEN.darker() );
-			g.drawString( String.format( "min: %.4f", this.filterMinCost ), 0, 10 );
+			g.drawString( String.format( "min: %.4f", this.getCostFilterMin() ), 0, 10 );
 			g.setColor( Color.RED.darker() );
-			g.drawString( String.format( "max: %.4f", this.filterMaxCost ), 0, 30 );
+			g.drawString( String.format( "max: %.4f", this.getCostFilterMax() ), 0, 30 );
 			g.setColor( Color.GRAY );
 			g.drawString( String.format( "dlta %.4f", this.dragStepWeight ), 0, 50 );
 		}
@@ -404,7 +432,9 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 */
 	@Override
 	public void mouseClicked( final MouseEvent e ) {
-		System.out.println( "Mouse clicked..." );
+		if ( e.getClickCount() == 2 ) {
+			new DialogAssignmentViewSetup( this, e.getXOnScreen(), e.getYOnScreen() ).setVisible( true );
+		}
 	}
 
 	/**
@@ -466,10 +496,10 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		}
 
 		if ( e.getButton() == MouseEvent.BUTTON1 ) {
-			this.filterMaxCost += dY * this.dragStepWeight;
+			this.setCostFilterMax( this.getCostFilterMax() + dY * this.dragStepWeight );
 		}
 		if ( e.getButton() == MouseEvent.BUTTON3 ) {
-			this.filterMinCost += dY * this.dragStepWeight;
+			this.setCostFilterMin( this.getCostFilterMin() + dY * this.dragStepWeight );
 		}
 
 		this.dragY = e.getY();
@@ -485,4 +515,5 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		this.mousePosY = e.getY();
 		this.repaint();
 	}
+
 }

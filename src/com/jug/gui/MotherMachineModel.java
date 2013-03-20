@@ -49,9 +49,14 @@ public class MotherMachineModel {
 	}
 
 	public void setCurrentGL( final int idx ) {
+		setCurrentGL( idx, 0 );
+	}
+
+	public void setCurrentGL( final int idx, final int glfIdx ) {
 		assert ( idx >= 0 );
 		assert ( idx < mm.getGrowthLines().size() );
 		currentGLidx = idx;
+		currentGLFidx = glfIdx;
 	}
 
 	public GrowthLineFrame getCurrentGLF() {
@@ -111,5 +116,12 @@ public class MotherMachineModel {
 			currentGLFidx = getCurrentGL().size() - 1;
 		}
 		return getCurrentGLF();
+	}
+
+	/**
+	 * @return the time-point of the current GLF within the current GL.
+	 */
+	public int getCurrentTime() {
+		return getCurrentGL().getFrames().indexOf( getCurrentGLF() );
 	}
 }

@@ -9,11 +9,13 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Iterator;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -37,13 +39,14 @@ import net.imglib2.view.Views;
 import org.math.plot.Plot2DPanel;
 
 import com.jug.GrowthLineFrame;
+import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.util.ComponentTreeUtils;
 import com.jug.util.SimpleFunctionAnalysis;
 
 /**
  * @author jug
  */
-public class MotherMachineGui extends JPanel implements ChangeListener {
+public class MotherMachineGui extends JPanel implements ChangeListener, ActionListener {
 
 	final protected class Viewer2DCanvas extends JComponent {
 
@@ -81,6 +84,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 			this.projector = new XYProjector< DoubleType, ARGBType >( viewImg, screenImage, new RealARGBConverter< DoubleType >( 0, 1 ) );
 			this.view = viewImg;
 			this.glf = glf;
+			this.repaint();
 		}
 
 		/**
@@ -116,7 +120,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 				// e.printStackTrace();
 			}
 			catch ( final NullPointerException e ) {
-				System.err.println( "View or glf not yet set in MotherMachineGui!" );
+				// System.err.println( "View or glf not yet set in MotherMachineGui!" );
 				// e.printStackTrace();
 			}
 			g.drawImage( screenImage.image(), 0, 0, w, h, null );
@@ -195,6 +199,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 	private AssignmentViewer leftInactiveAssignmentViewer;
 	private AssignmentViewer rightInactiveAssignmentViewer;
 
+	private JButton btnOptimize;
+
 	// -------------------------------------------------------------------------------------
 	// construction & gui creation
 	// -------------------------------------------------------------------------------------
@@ -225,20 +231,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 
 		// --- Slider for time and GL -------------
 
-		sliderGL = new JSlider( JSlider.VERTICAL, 0, model.mm.getGrowthLines().size() - 1, 0 );
-		sliderGL.setValue( 0 );
-		sliderGL.addChangeListener( this );
-		sliderGL.setMajorTickSpacing( 5 );
-		sliderGL.setMinorTickSpacing( 1 );
-		sliderGL.setPaintTicks( true );
-		sliderGL.setPaintLabels( true );
-		sliderGL.setBorder( BorderFactory.createEmptyBorder( 0, 0, 0, 3 ) );
-		panelVerticalHelper = new JPanel( new BorderLayout() );
-		panelVerticalHelper.setBorder( BorderFactory.createEmptyBorder( 10, 10, 0, 5 ) );
-		panelVerticalHelper.add( new JLabel( "GL#" ), BorderLayout.NORTH );
-		panelVerticalHelper.add( sliderGL, BorderLayout.CENTER );
-		add( panelVerticalHelper, BorderLayout.WEST );
-
 		sliderTime = new JSlider( JSlider.HORIZONTAL, 0, model.getCurrentGL().size() - 1, 0 );
 		sliderTime.setValue( 1 );
 		model.setCurrentGLF( sliderTime.getValue() );
@@ -252,7 +244,21 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 		panelHorizontalHelper.setBorder( BorderFactory.createEmptyBorder( 5, 10, 0, 5 ) );
 		panelHorizontalHelper.add( new JLabel( " t = " ), BorderLayout.WEST );
 		panelHorizontalHelper.add( sliderTime, BorderLayout.CENTER );
-		add( panelHorizontalHelper, BorderLayout.SOUTH );
+		panelContent.add( panelHorizontalHelper, BorderLayout.SOUTH );
+
+		sliderGL = new JSlider( JSlider.VERTICAL, 0, model.mm.getGrowthLines().size() - 1, 0 );
+		sliderGL.setValue( 0 );
+		sliderGL.addChangeListener( this );
+		sliderGL.setMajorTickSpacing( 5 );
+		sliderGL.setMinorTickSpacing( 1 );
+		sliderGL.setPaintTicks( true );
+		sliderGL.setPaintLabels( true );
+		sliderGL.setBorder( BorderFactory.createEmptyBorder( 0, 0, 0, 3 ) );
+		panelVerticalHelper = new JPanel( new BorderLayout() );
+		panelVerticalHelper.setBorder( BorderFactory.createEmptyBorder( 10, 10, 0, 5 ) );
+		panelVerticalHelper.add( new JLabel( "GL#" ), BorderLayout.NORTH );
+		panelVerticalHelper.add( sliderGL, BorderLayout.CENTER );
+		add( panelVerticalHelper, BorderLayout.WEST );
 
 		// --- All the TABs -------------
 
@@ -268,6 +274,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 
 		tabsViews.setSelectedComponent( panelSegmentationAndAssignmentView );
 
+		// --- Controls ----------------------------------
+		btnOptimize = new JButton( "Optimize" );
+		btnOptimize.addActionListener( this );
+		add( btnOptimize, BorderLayout.SOUTH );
+
 		// --- Final adding and layout steps -------------
 
 		panelContent.add( tabsViews, BorderLayout.CENTER );
@@ -276,13 +287,14 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 		// - - - - - - - - - - - - - - - - - - - - - - - -
 		//  KEYSTROKE SETUP (usingInput- and ActionMaps)
 		// - - - - - - - - - - - - - - - - - - - - - - - -
-		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 't' ), "GLV_bindings" );
-		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'g' ), "GLV_bindings" );
-		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'a' ), "GLV_bindings" );
-		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 's' ), "GLV_bindings" );
-		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'd' ), "GLV_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 't' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'g' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'a' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 's' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'd' ), "MMGUI_bindings" );
+		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'o' ), "MMGUI_bindings" );
 
-		this.getActionMap().put( "GLV_bindings", new AbstractAction() {
+		this.getActionMap().put( "MMGUI_bindings", new AbstractAction() {
 
 			private static final long serialVersionUID = 1L;
 
@@ -290,9 +302,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 			public void actionPerformed( final ActionEvent e ) {
 				if ( e.getActionCommand().equals( "t" ) ) {
 					sliderTime.requestFocus();
+					dataToDisplayChanged();
 				}
 				if ( e.getActionCommand().equals( "g" ) ) {
 					sliderGL.requestFocus();
+					dataToDisplayChanged();
 				}
 				if ( e.getActionCommand().equals( "a" ) ) {
 					if ( !tabsViews.getComponent( tabsViews.getSelectedIndex() ).equals( panelInactiveAssignmentsView ) ) {
@@ -312,6 +326,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 					}
 					dataToDisplayChanged();
 				}
+				if ( e.getActionCommand().equals( "o" ) ) {
+					btnOptimize.doClick();
+				}
 			}
 		} );
 	}
@@ -325,6 +342,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 		JPanel panelVerticalHelper;
 		JPanel panelHorizontalHelper;
 		JLabel labelHelper;
+
+		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+
 		// --- Left data viewer (t-1) -------------
 
 		panelVerticalHelper = new JPanel( new BorderLayout() );
@@ -343,9 +363,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		// - - - - - -
 		leftInactiveAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ) );
-		//TODO NOT nice... do something against that, please!
-		int t = model.getCurrentGLF().getParent().getFrames().indexOf( model.getCurrentGLF() );
-		leftInactiveAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getInactiveRightAssignments( t - 1 ) );
+		if ( ilp != null )
+			leftInactiveAssignmentViewer.display( ilp.getInactiveRightAssignments( model.getCurrentTime() - 1 ) );
 		panelVerticalHelper.add( leftInactiveAssignmentViewer, BorderLayout.CENTER );
 		panelContent.add( panelVerticalHelper );
 
@@ -367,9 +386,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		// - - - - - -
 		rightInactiveAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ) );
-		//TODO NOT nice... do something against that, please!
-		t = model.getCurrentGLF().getParent().getFrames().indexOf( model.getCurrentGLF() );
-		rightInactiveAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getInactiveRightAssignments( t ) );
+		if ( ilp != null )
+			rightInactiveAssignmentViewer.display( ilp.getInactiveRightAssignments( model.getCurrentTime() ) );
 		panelVerticalHelper.add( rightInactiveAssignmentViewer, BorderLayout.CENTER );
 		panelContent.add( panelVerticalHelper );
 
@@ -400,6 +418,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 		JPanel panelVerticalHelper;
 		JPanel panelHorizontalHelper;
 		JLabel labelHelper;
+
+		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+
 		// --- Left data viewer (t-1) -------------
 
 		panelVerticalHelper = new JPanel( new BorderLayout() );
@@ -418,9 +439,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		// - - - - - -
 		leftActiveAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ) );
-		//TODO NOT nice... do something against that, please!
-		int t = model.getCurrentGLF().getParent().getFrames().indexOf( model.getCurrentGLF() );
-		leftActiveAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalLeftAssignments( t ) );
+		if ( ilp != null )
+			leftActiveAssignmentViewer.display( ilp.getOptimalRightAssignments( model.getCurrentTime() - 1 ) );
 		panelVerticalHelper.add( leftActiveAssignmentViewer, BorderLayout.CENTER );
 		panelContent.add( panelVerticalHelper );
 
@@ -442,9 +462,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		// - - - - - -
 		rightActiveAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ) );
-		//TODO NOT nice... do something against that, please!
-		t = model.getCurrentGLF().getParent().getFrames().indexOf( model.getCurrentGLF() );
-		rightActiveAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalRightAssignments( t ) );
+		if ( ilp != null )
+			rightActiveAssignmentViewer.display( ilp.getOptimalRightAssignments( model.getCurrentTime() ) );
 		panelVerticalHelper.add( rightActiveAssignmentViewer, BorderLayout.CENTER );
 		panelContent.add( panelVerticalHelper );
 
@@ -484,54 +503,63 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 	 * corresponding to the current slider setting.
 	 */
 	private void updatePlotPanels() {
+
+		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+
 		// Intensity plot
 		// --------------
 		plot.removeAllPlots();
 
 		final double[] yMidline = model.getCurrentGLF().getMirroredCenterLineValues( model.mm.getImgTemp() );
 		final double[] ySegmentationData = model.getCurrentGLF().getGapSeparationValues( model.mm.getImgTemp() );
+		final double[] yAvg = new double[ yMidline.length ];
+		final double constY = SimpleFunctionAnalysis.getSum( ySegmentationData ) / ySegmentationData.length;
+		for ( int i = 0; i < yAvg.length; i++ )
+			yAvg[ i ] = constY;
 
 		plot.addLinePlot( "Midline Intensities", new Color( 127, 127, 255 ), yMidline );
 		plot.addLinePlot( "Segmentation data", new Color( 80, 255, 80 ), ySegmentationData );
+		plot.addLinePlot( "avg. fkt-value", new Color( 200, 64, 64 ), yAvg );
 
-		plot.setFixedBounds( 1, 0, 1 );
+		plot.setFixedBounds( 1, 0.0, 1.0 );
 
 		// ComponentTreeNodes
-
 		// ------------------
-		final ComponentTree< DoubleType, ? > ct = model.getCurrentGLF().getComponentTree();
+		if ( ilp != null ) {
+			final ComponentTree< DoubleType, ? > ct = model.getCurrentGLF().getComponentTree();
 
-		final int numCTNs = ComponentTreeUtils.countNodes( ct );
-		final double[][] xydxdyCTNBorders = new double[ numCTNs ][ 4 ];
-		final int t = sliderTime.getValue();
-		final double[][] xydxdyCTNBordersActive = new double[ model.getCurrentGL().getIlp().getOptimalSegmentation( t ).size() ][ 4 ];
+			final int numCTNs = ComponentTreeUtils.countNodes( ct );
+			final double[][] xydxdyCTNBorders = new double[ numCTNs ][ 4 ];
+			final int t = sliderTime.getValue();
+			final double[][] xydxdyCTNBordersActive = new double[ ilp.getOptimalSegmentation( t ).size() ][ 4 ];
 
-		int i = 0;
-		for ( final ComponentTreeNode< DoubleType, ? > root : ct.roots() ) {
-			System.out.println( "" );
-			int level = 0;
-			ArrayList< ComponentTreeNode< DoubleType, ? >> ctnLevel = new ArrayList< ComponentTreeNode< DoubleType, ? >>();
-			ctnLevel.add( root );
-			while ( ctnLevel.size() > 0 ) {
-				for ( final ComponentTreeNode< DoubleType, ? > ctn : ctnLevel ) {
-					addBoxAtIndex( i, ctn, xydxdyCTNBorders, ySegmentationData, level );
-					System.out.print( String.format( "%.4f;\t", model.getCurrentGL().getIlp().localCost( t, ctn ) ) );
+			int i = 0;
+			for ( final ComponentTreeNode< DoubleType, ? > root : ct.roots() ) {
+				System.out.println( "" );
+				int level = 0;
+				ArrayList< ComponentTreeNode< DoubleType, ? >> ctnLevel = new ArrayList< ComponentTreeNode< DoubleType, ? >>();
+				ctnLevel.add( root );
+				while ( ctnLevel.size() > 0 ) {
+					for ( final ComponentTreeNode< DoubleType, ? > ctn : ctnLevel ) {
+						addBoxAtIndex( i, ctn, xydxdyCTNBorders, ySegmentationData, level );
+						System.out.print( String.format( "%.4f;\t", ilp.localCost( t, ctn ) ) );
+						i++;
+					}
+					ctnLevel = ComponentTreeUtils.getAllChildren( ctnLevel );
+					level++;
+					System.out.println( "" );
+				}
+
+				i = 0;
+				for ( final ComponentTreeNode< DoubleType, ? > ctn : ilp.getOptimalSegmentation( t ) ) {
+					addBoxAtIndex( i, ctn, xydxdyCTNBordersActive, ySegmentationData, ComponentTreeUtils.getLevelInTree( ctn ) );
 					i++;
 				}
-				ctnLevel = ComponentTreeUtils.getAllChildren( ctnLevel );
-				level++;
-				System.out.println( "" );
 			}
-
-			i = 0;
-			for ( final ComponentTreeNode< DoubleType, ? > ctn : model.getCurrentGL().getIlp().getOptimalSegmentation( t ) ) {
-				addBoxAtIndex( i, ctn, xydxdyCTNBordersActive, ySegmentationData, ComponentTreeUtils.getLevelInTree( ctn ) );
-				i++;
+			plot.addBoxPlot( "Seg. Hypothesis", new Color( 127, 127, 127, 255 ), xydxdyCTNBorders );
+			if ( ilp.getOptimalSegmentation( t ).size() > 0 ) {
+				plot.addBoxPlot( "Active Seg. Hypothesis", new Color( 255, 0, 0, 255 ), xydxdyCTNBordersActive );
 			}
-		}
-		plot.addBoxPlot( "Seg. Hypothesis", new Color( 127, 127, 127, 255 ), xydxdyCTNBorders );
-		if ( model.getCurrentGL().getIlp().getOptimalSegmentation( t ).size() > 0 ) {
-			plot.addBoxPlot( "Active Seg. Hypothesis", new Color( 255, 0, 0, 255 ), xydxdyCTNBordersActive );
 		}
 	}
 
@@ -575,6 +603,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 	 */
 	private void dataToDisplayChanged() {
 
+		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
+
 		// IF 'INACTIVE ASSIGNMENTS' VIEW IS ACTIVE
 		// ========================================
 		if ( tabsViews.getComponent( tabsViews.getSelectedIndex() ).equals( panelInactiveAssignmentsView ) ) {
@@ -608,9 +638,14 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 
 			// - -  assignment-views  - - - - - -
 
-			final int t = sliderTime.getValue();
-			leftInactiveAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getInactiveRightAssignments( t - 1 ) );
-			rightInactiveAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getInactiveRightAssignments( t ) );
+			if ( ilp != null ) {
+				final int t = sliderTime.getValue();
+				leftInactiveAssignmentViewer.display( ilp.getInactiveRightAssignments( t - 1 ) );
+				rightInactiveAssignmentViewer.display( ilp.getInactiveRightAssignments( t ) );
+			} else {
+				leftInactiveAssignmentViewer.display( null );
+				rightInactiveAssignmentViewer.display( null );
+			}
 		}
 
 		// IF SEGMENTATION AND ASSIGNMENT VIEW IS ACTIVE
@@ -646,9 +681,14 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 
 			// - -  assignment-views  - - - - - -
 
-			final int t = sliderTime.getValue();
-			leftActiveAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalRightAssignments( t - 1 ) );
-			rightActiveAssignmentViewer.display( model.getCurrentGLF().getParent().getIlp().getOptimalRightAssignments( t ) );
+			if ( ilp != null ) {
+				final int t = sliderTime.getValue();
+				leftActiveAssignmentViewer.display( ilp.getOptimalRightAssignments( t - 1 ) );
+				rightActiveAssignmentViewer.display( ilp.getOptimalRightAssignments( t ) );
+			} else {
+				leftActiveAssignmentViewer.display( null );
+				rightActiveAssignmentViewer.display( null );
+			}
 		}
 
 		// IF DETAILED DATA VIEW IS ACTIVE
@@ -665,7 +705,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 	public void stateChanged( final ChangeEvent e ) {
 
 		if ( e.getSource().equals( sliderGL ) ) {
-			model.setCurrentGL( sliderGL.getValue() );
+			model.setCurrentGL( sliderGL.getValue(), sliderTime.getValue() );
 			dataToDisplayChanged();
 			this.repaint();
 		}
@@ -674,6 +714,21 @@ public class MotherMachineGui extends JPanel implements ChangeListener {
 			model.setCurrentGLF( sliderTime.getValue() );
 			dataToDisplayChanged();
 			this.repaint();
+		}
+	}
+
+	/**
+	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+	 */
+	@Override
+	public void actionPerformed( final ActionEvent e ) {
+		if ( e.getSource().equals( btnOptimize ) ) {
+			System.out.println( "Generating ILP..." );
+			model.getCurrentGL().generateILP();
+			System.out.println( "Finding optimal result..." );
+			model.getCurrentGL().runILP();
+			System.out.println( "...done!" );
+			dataToDisplayChanged();
 		}
 	}
 
