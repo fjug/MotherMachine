@@ -103,7 +103,7 @@ public class CostFactory {
 //		final double distAboveAvg = Math.max( 0.0, min - avgFktValue );
 		final double medianValue = SimpleFunctionAnalysis.getMedian( gapSepFkt, a, b );
 		final double distAboveAvg = Math.max( 0.0, medianValue - avgFktValue );
-		cost += distAboveAvg * Math.pow( 1 + distAboveAvg, 8.0 );
+		cost += ( distAboveAvg + 0.05 ) * Math.pow( 1 + ( distAboveAvg + 0.05 ), 8.0 );
 
 		// cell is too small
 		if ( a > 0 && b - a < MotherMachine.MIN_CELL_LENGTH ) { // if a==0, only a part of the cell is seen!

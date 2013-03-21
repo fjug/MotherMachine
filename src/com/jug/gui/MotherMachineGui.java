@@ -10,8 +10,14 @@ import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Vector;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -777,18 +783,60 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			dataToDisplayChanged();
 		}
 		if ( e.getSource().equals( btnOptimizeRemainingAndExport ) ) {
+			final Vector< Vector< String >> dataToExport = new Vector< Vector< String >>();
+
 			int i = 0;
 			final int glCount = model.mm.getGrowthLines().size();
 			for ( final GrowthLine gl : model.mm.getGrowthLines() ) {
 				if ( gl.getIlp() == null ) {
-					System.out.println( String.format( "Generating ILP #%d of %d...", i, glCount ) );
+					System.out.println( String.format( "\nGenerating ILP #%d of %d...", i + 1, glCount ) );
 					gl.generateILP();
-					System.out.println( String.format( "Running ILP #%d of %d...", i, glCount ) );
+					System.out.println( String.format( "Running ILP #%d of %d...", i + 1, glCount ) );
 					gl.runILP();
+
+					dataToExport.add( gl.getDataVector() );
 				}
 				i++;
 			}
-			System.out.println( "Exporting data... (not yet implemented!)" );
+			System.out.println( "Exporting data..." );
+			Writer out = null;
+		    try {
+				out = new OutputStreamWriter( new FileOutputStream( "test.csv" ) );
+
+				// writing header line
+				int rowNum = 0;
+				for ( int colNum = 0; colNum < dataToExport.get( 0 ).size(); colNum++ ) {
+					out.write( String.format( "t=%d, ", rowNum ) );
+					rowNum++;
+				}
+				out.write( "\n" );
+				// writing GL-data-rows
+				int totalCellCount = 0;
+		    	for (final Vector<String> rowInData : dataToExport) {
+					rowNum++;
+					out.write( String.format( "GL%d, ", rowNum ) );
+					int lastValue = 0;
+		    		for ( final String datum : rowInData ) {
+		    			out.write(datum + ", ");
+						try {
+							lastValue = Integer.parseInt( datum );
+						}
+						catch ( final NumberFormatException nfe ) {
+							lastValue = 0;
+						}
+		    		}
+					totalCellCount += lastValue;
+		    		out.write( "\n" );
+		    	}
+				out.write( "\nTotal cell count:, " + totalCellCount );
+				out.close();
+			}
+			catch ( final FileNotFoundException e1 ) {
+				e1.printStackTrace();
+			}
+			catch ( final IOException e1 ) {
+				e1.printStackTrace();
+			}
 			System.out.println( "...done!" );
 			dataToDisplayChanged();
 		}
