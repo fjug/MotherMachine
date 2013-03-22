@@ -40,5 +40,6 @@
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/JGraphT"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/JGraph5"/>
 	<classpathentry kind="src" path="/ComponentGraphs"/>
+	<classpathentry kind="lib" path="/Library/gurobi510/mac64/lib/gurobi.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -153,8 +153,8 @@ public class GrowthLineTrackingILP {
 					numAss++;
 				}
 			}
-			System.out.println( "Hypothesis count: " + numHyp );
-			System.out.println( "Assignment count: " + numAss );
+			System.out.println( "    Hypothesis count: " + numHyp );
+			System.out.println( "    Assignment count: " + numAss );
 
 			// Add the remaining ILP constraints
 			// (those would be (i) and (ii) of 'Default Solution')

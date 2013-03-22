@@ -16,15 +16,21 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import javax.swing.BorderFactory;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
 import net.imglib2.Cursor;
@@ -47,6 +53,7 @@ import net.imglib2.view.Views;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 
 import com.apple.eawt.Application;
+import com.jug.gui.JFrameSnapper;
 import com.jug.gui.MotherMachineGui;
 import com.jug.gui.MotherMachineModel;
 import com.jug.loops.Loops;
@@ -158,12 +165,17 @@ public class MotherMachine {
 	 * Width (in pixels) of the main GUI-window. This value will be loaded from
 	 * and stored in the properties file!
 	 */
-	private static int GUI_WIDTH = 900;
+	private static int GUI_WIDTH = 800;
 	/**
 	 * Width (in pixels) of the main GUI-window. This value will be loaded from
 	 * and stored in the properties file!
 	 */
-	private static int GUI_HEIGHT = 585;
+	private static int GUI_HEIGHT = 630;
+	/**
+	 * The path to usually open JFileChoosers at (except for initial load
+	 * dialog).
+	 */
+	public static String DEFAULT_PATH = System.getProperty( "user.home" );
 
 	// ====================================================================================================================
 
@@ -192,6 +204,7 @@ public class MotherMachine {
 		SIGMA_PRE_SEGMENTATION_Y = Double.parseDouble( props.getProperty( "SIGMA_PRE_SEGMENTATION_Y", Double.toString( SIGMA_PRE_SEGMENTATION_Y ) ) );
 		SIGMA_GL_DETECTION_X = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION", Double.toString( SIGMA_GL_DETECTION_X ) ) );
 		SIGMA_GL_DETECTION_Y = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION", Double.toString( SIGMA_GL_DETECTION_Y ) ) );
+		DEFAULT_PATH = props.getProperty( "DEFAULT_PATH", DEFAULT_PATH );
 
 		GUI_POS_X = Integer.parseInt( props.getProperty( "GUI_POS_X", Integer.toString( DEFAULT_GUI_POS_X ) ) );
 		GUI_POS_Y = Integer.parseInt( props.getProperty( "GUI_POS_Y", Integer.toString( DEFAULT_GUI_POS_X ) ) );
@@ -214,11 +227,17 @@ public class MotherMachine {
 			GUI_POS_Y = DEFAULT_GUI_POS_Y;
 		}
 
-		String path = props.getProperty( "import_path", "/Users/jug/MPI/ProjectVanNimwegen/RealDatasets/" );
+		String path = props.getProperty( "import_path", System.getProperty( "user.home" ) );
 		final File fPath = main.showStartupDialog( guiFrame, path );
 		path = fPath.getAbsolutePath();
 		props.setProperty( "import_path", fPath.getAbsolutePath() );
-		//Now down on window-close: main.saveParams();
+
+		// Setting up console window and window snapper...
+		main.initConsoleWindow();
+		main.showConsoleWindow();
+		final JFrameSnapper snapper = new JFrameSnapper();
+		snapper.addFrame( main.frameConsoleWindow );
+		snapper.addFrame( guiFrame );
 
 		// ---------------------------------------------------
 		main.processDataFromFolder( path );
@@ -228,7 +247,7 @@ public class MotherMachine {
 		// show loaded and annotated data
 //		ImageJFunctions.show( getImgRaw(), "Rotated & cropped raw data" );
 //		ImageJFunctions.show( getImgTemp(), "Temporary" );
-//		ImageJFunctions.show( getImgAnnotated(), "Annotated ARGB data" );
+//		ImageJFunctions.show( main.imgAnnotated, "Annotated ARGB data" );
 
 		final MotherMachineGui gui = new MotherMachineGui( new MotherMachineModel( main ) );
 		gui.setVisible( true );
@@ -238,6 +257,15 @@ public class MotherMachine {
 		guiFrame.setSize( GUI_WIDTH, GUI_HEIGHT );
 		guiFrame.setLocation( GUI_POS_X, GUI_POS_Y );
 		guiFrame.setVisible( true );
+
+		SwingUtilities.invokeLater( new Runnable() {
+
+			@Override
+			public void run() {
+				snapper.snapFrames( main.frameConsoleWindow, guiFrame, JFrameSnapper.EAST );
+			}
+		} );
+
 		System.out.println( " done!" );
 	}
 
@@ -275,6 +303,15 @@ public class MotherMachine {
 	 * All ILP-related structures are within mmILP.
 	 */
 	private GrowthLineTrackingILP mmILP;
+
+	/**
+	 * Frame hosting the console output.
+	 */
+	private JFrame frameConsoleWindow;
+	/**
+	 * TextArea hosting the console output within the JFrame frameConsoleWindow.
+	 */
+	private JTextArea consoleWindowTextArea;
 
 	// -------------------------------------------------------------------------------------
 	// setters and getters
@@ -343,6 +380,68 @@ public class MotherMachine {
 	// -------------------------------------------------------------------------------------
 
 	/**
+	 * Created and shows the console window and redirects System.out and
+	 * System.err to it.
+	 */
+	private void initConsoleWindow() {
+		frameConsoleWindow = new JFrame( "MotherMachine Console Window" );
+		consoleWindowTextArea = new JTextArea();
+
+//		frameConsoleWindow.setBounds( GUI_POS_X + GUI_WIDTH, GUI_POS_Y, 300, GUI_HEIGHT );
+		final int centerX = ( int ) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2;
+		final int centerY = ( int ) Toolkit.getDefaultToolkit().getScreenSize().getHeight() / 2;
+		frameConsoleWindow.setBounds( centerX - 200, centerY - GUI_HEIGHT / 2, 400, GUI_HEIGHT );
+		final JScrollPane scrollPane = new JScrollPane( consoleWindowTextArea );
+		scrollPane.setBorder( BorderFactory.createEmptyBorder( 0, 15, 0, 0 ) );
+		frameConsoleWindow.getContentPane().add( scrollPane );
+
+		final OutputStream out = new OutputStream() {
+
+			@Override
+			public void write( final int b ) throws IOException {
+				updateConsoleTextArea( String.valueOf( ( char ) b ) );
+			}
+
+			@Override
+			public void write( final byte[] b, final int off, final int len ) throws IOException {
+				updateConsoleTextArea( new String( b, off, len ) );
+			}
+
+			@Override
+			public void write( final byte[] b ) throws IOException {
+				write( b, 0, b.length );
+			}
+		};
+
+		System.setOut( new PrintStream( out, true ) );
+		System.setErr( new PrintStream( out, true ) );
+	}
+
+	private void updateConsoleTextArea( final String text ) {
+		SwingUtilities.invokeLater( new Runnable() {
+
+			@Override
+			public void run() {
+				consoleWindowTextArea.append( text );
+			}
+		} );
+	}
+
+	/**
+	 * Shows the ConsoleWindow
+	 */
+	public void showConsoleWindow() {
+		frameConsoleWindow.setVisible( true );
+	}
+
+	/**
+	 * Hide the ConsoleWindow
+	 */
+	public void hideConsoleWindow() {
+		frameConsoleWindow.setVisible( false );
+	}
+
+	/**
 	 * Initializes the MotherMachine main app. This method contains platform
 	 * specific code like setting icons, etc.
 	 *
@@ -350,7 +449,6 @@ public class MotherMachine {
 	 *            the JFrame containing the MotherMachine.
 	 */
 	private void initMainWindow( final JFrame guiFrame ) {
-		// guiFrame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 		guiFrame.addWindowListener(new WindowAdapter(){
 			@Override
 			public void windowClosing(final WindowEvent we) {
@@ -380,9 +478,14 @@ public class MotherMachine {
 	private File showStartupDialog( final JFrame guiFrame, final String path ) {
 		final String parentFolder = path.substring( 0, path.lastIndexOf( File.separatorChar ) );
 
-		final String message = "Should the MotherMachine be opened with the data found in:\n" + path + "\n\nIn case you want to choose a folder please select 'No'...";
-		final String title = "MotherMachine Start Dialog";
-		final int decision = JOptionPane.showConfirmDialog( guiFrame, message, title, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE );
+		int decision = 0;
+		if ( path.equals( System.getProperty( "user.home" ) ) ) {
+			decision = JOptionPane.NO_OPTION;
+		} else {
+			final String message = "Should the MotherMachine be opened with the data found in:\n" + path + "\n\nIn case you want to choose a folder please select 'No'...";
+			final String title = "MotherMachine Start Dialog";
+			decision = JOptionPane.showConfirmDialog( guiFrame, message, title, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE );
+		}
 		if (decision == JOptionPane.YES_OPTION) {
 			return new File( path );
 		} else {
@@ -490,6 +593,7 @@ public class MotherMachine {
 			props.setProperty( "SIGMA_PRE_SEGMENTATION_Y", Double.toString( SIGMA_PRE_SEGMENTATION_Y ) );
 			props.setProperty( "SIGMA_GL_DETECTION_X", Double.toString( SIGMA_GL_DETECTION_X ) );
 			props.setProperty( "SIGMA_GL_DETECTION_Y", Double.toString( SIGMA_GL_DETECTION_Y ) );
+			props.setProperty( "DEFAULT_PATH", DEFAULT_PATH );
 
 			final java.awt.Point loc = guiFrame.getLocation();
 			GUI_POS_X = loc.x;
@@ -1082,10 +1186,16 @@ public class MotherMachine {
 
 		// ------ DETECTION --------------------------
 
+		System.out.println( "" );
+		int i = 0;
 		for ( final GrowthLine gl : getGrowthLines() ) {
+			i++;
+			System.out.print( "   Working on GL#" + i + " of " + getGrowthLines().size() + "... " );
 			for ( final GrowthLineFrame glf : gl.getFrames() ) {
+				System.out.print( "." );
 				glf.generateSegmentationHypotheses( imgTemp );
 			}
+			System.out.println( " ...done!" );
 		}
 	}
 

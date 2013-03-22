@@ -10,6 +10,7 @@ import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -23,7 +24,9 @@ import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
@@ -31,6 +34,7 @@ import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import loci.formats.gui.ExtensionFileFilter;
 import net.imglib2.Localizable;
 import net.imglib2.algorithm.componenttree.ComponentTree;
 import net.imglib2.algorithm.componenttree.ComponentTreeNode;
@@ -46,6 +50,7 @@ import org.math.plot.Plot2DPanel;
 
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
+import com.jug.MotherMachine;
 import com.jug.lp.GrowthLineTrackingILP;
 import com.jug.util.ComponentTreeUtils;
 import com.jug.util.SimpleFunctionAnalysis;
@@ -245,8 +250,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		sliderTime.setValue( 1 );
 		model.setCurrentGLF( sliderTime.getValue() );
 		sliderTime.addChangeListener( this );
-		sliderTime.setMajorTickSpacing( 5 );
-		sliderTime.setMinorTickSpacing( 1 );
+		sliderTime.setMajorTickSpacing( 10 );
+		sliderTime.setMinorTickSpacing( 2 );
 		sliderTime.setPaintTicks( true );
 		sliderTime.setPaintLabels( true );
 		sliderTime.setBorder( BorderFactory.createEmptyBorder( 0, 0, 0, 3 ) );
@@ -269,8 +274,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelVerticalHelper.add( new JLabel( "GL#" ), BorderLayout.NORTH );
 		panelVerticalHelper.add( sliderGL, BorderLayout.CENTER );
 		add( panelVerticalHelper, BorderLayout.WEST );
-
-		sliderTime.requestFocus();
 
 		// --- All the TABs -------------
 
@@ -762,83 +765,120 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	@Override
 	public void actionPerformed( final ActionEvent e ) {
 		if ( e.getSource().equals( btnOptimize ) ) {
-			System.out.println( "Generating ILP..." );
-			model.getCurrentGL().generateILP();
-			System.out.println( "Finding optimal result..." );
-			model.getCurrentGL().runILP();
-			System.out.println( "...done!" );
-			dataToDisplayChanged();
+			final Thread t = new Thread( new Runnable() {
+
+				@Override
+				public void run() {
+					System.out.println( "Generating ILP..." );
+					model.getCurrentGL().generateILP();
+					System.out.println( "Finding optimal result..." );
+					model.getCurrentGL().runILP();
+					System.out.println( "...done!" );
+					dataToDisplayChanged();
+				}
+			} );
+			t.start();
 		}
 		if ( e.getSource().equals( btnOptimizeAll ) ) {
-			int i = 0;
-			final int glCount = model.mm.getGrowthLines().size();
-			for ( final GrowthLine gl : model.mm.getGrowthLines() ) {
-				System.out.println( String.format( "Generating ILP #%d of %d...", i, glCount ) );
-				gl.generateILP();
-				System.out.println( String.format( "Running ILP #%d of %d...", i, glCount ) );
-				gl.runILP();
-				i++;
-			}
-			System.out.println( "...done!" );
-			dataToDisplayChanged();
+			final Thread t = new Thread( new Runnable() {
+
+				@Override
+				public void run() {
+					int i = 0;
+					final int glCount = model.mm.getGrowthLines().size();
+					for ( final GrowthLine gl : model.mm.getGrowthLines() ) {
+						System.out.println( String.format( "Generating ILP #%d of %d...", i, glCount ) );
+						gl.generateILP();
+						System.out.println( String.format( "Running ILP #%d of %d...", i, glCount ) );
+						gl.runILP();
+						i++;
+					}
+					System.out.println( "...done!" );
+					dataToDisplayChanged();
+				}
+			} );
+			t.start();
 		}
 		if ( e.getSource().equals( btnOptimizeRemainingAndExport ) ) {
-			final Vector< Vector< String >> dataToExport = new Vector< Vector< String >>();
+			final MotherMachineGui self = this;
+			final Thread t = new Thread( new Runnable() {
 
-			int i = 0;
-			final int glCount = model.mm.getGrowthLines().size();
-			for ( final GrowthLine gl : model.mm.getGrowthLines() ) {
-				if ( gl.getIlp() == null ) {
-					System.out.println( String.format( "\nGenerating ILP #%d of %d...", i + 1, glCount ) );
-					gl.generateILP();
-					System.out.println( String.format( "Running ILP #%d of %d...", i + 1, glCount ) );
-					gl.runILP();
+				@Override
+				public void run() {
+					final JFileChooser fc = new JFileChooser( MotherMachine.DEFAULT_PATH );
+					fc.addChoosableFileFilter( new ExtensionFileFilter( new String[] { "csv", "CSV" }, "CVS-file" ) );
 
-					dataToExport.add( gl.getDataVector() );
-				}
-				i++;
-			}
-			System.out.println( "Exporting data..." );
-			Writer out = null;
-		    try {
-				out = new OutputStreamWriter( new FileOutputStream( "test.csv" ) );
+					if ( fc.showSaveDialog( self ) == JFileChooser.APPROVE_OPTION ) {
+						File file = fc.getSelectedFile();
+						if ( !file.getAbsolutePath().endsWith( ".csv" ) && !file.getAbsolutePath().endsWith( ".CSV" ) ) {
+							file = new File( file.getAbsolutePath() + ".csv" );
+						}
+						MotherMachine.DEFAULT_PATH = file.getParent();
 
-				// writing header line
-				int rowNum = 0;
-				for ( int colNum = 0; colNum < dataToExport.get( 0 ).size(); colNum++ ) {
-					out.write( String.format( "t=%d, ", rowNum ) );
-					rowNum++;
-				}
-				out.write( "\n" );
-				// writing GL-data-rows
-				int totalCellCount = 0;
-		    	for (final Vector<String> rowInData : dataToExport) {
-					rowNum++;
-					out.write( String.format( "GL%d, ", rowNum ) );
-					int lastValue = 0;
-		    		for ( final String datum : rowInData ) {
-		    			out.write(datum + ", ");
+						final Vector< Vector< String >> dataToExport = new Vector< Vector< String >>();
+
+						int i = 0;
+						final int glCount = model.mm.getGrowthLines().size();
+						for ( final GrowthLine gl : model.mm.getGrowthLines() ) {
+							if ( gl.getIlp() == null ) {
+								System.out.println( String.format( "\nGenerating ILP #%d of %d...", i + 1, glCount ) );
+								gl.generateILP();
+								System.out.println( String.format( "Running ILP #%d of %d...", i + 1, glCount ) );
+								gl.runILP();
+							}
+
+							dataToExport.add( gl.getDataVector() );
+							i++;
+						}
+
+						System.out.println( "Exporting data..." );
+						Writer out = null;
 						try {
-							lastValue = Integer.parseInt( datum );
+							out = new OutputStreamWriter( new FileOutputStream( file ) );
+
+							// writing header line
+							int rowNum = 0;
+							out.write( ", " );
+							for ( int colNum = 0; colNum < dataToExport.get( 0 ).size(); colNum++ ) {
+								out.write( String.format( "t=%d, ", rowNum ) );
+								rowNum++;
+							}
+							out.write( "\n" );
+							// writing GL-data-rows
+							int totalCellCount = 0;
+							for ( final Vector< String > rowInData : dataToExport ) {
+								rowNum++;
+								out.write( String.format( "GL%d, ", rowNum ) );
+								int lastValue = 0;
+								for ( final String datum : rowInData ) {
+									out.write( datum + ", " );
+									try {
+										lastValue = Integer.parseInt( datum );
+									}
+									catch ( final NumberFormatException nfe ) {
+										lastValue = 0;
+									}
+								}
+								totalCellCount += lastValue;
+								out.write( "\n" );
+							}
+							out.write( "\nTotal cell count:, " + totalCellCount );
+							out.close();
 						}
-						catch ( final NumberFormatException nfe ) {
-							lastValue = 0;
+						catch ( final FileNotFoundException e1 ) {
+							JOptionPane.showMessageDialog( self, "File not found!", "Error!", JOptionPane.ERROR_MESSAGE );
+							e1.printStackTrace();
 						}
-		    		}
-					totalCellCount += lastValue;
-		    		out.write( "\n" );
-		    	}
-				out.write( "\nTotal cell count:, " + totalCellCount );
-				out.close();
-			}
-			catch ( final FileNotFoundException e1 ) {
-				e1.printStackTrace();
-			}
-			catch ( final IOException e1 ) {
-				e1.printStackTrace();
-			}
-			System.out.println( "...done!" );
-			dataToDisplayChanged();
+						catch ( final IOException e1 ) {
+							JOptionPane.showMessageDialog( self, "Selected file could not be written!", "Error!", JOptionPane.ERROR_MESSAGE );
+							e1.printStackTrace();
+						}
+						System.out.println( "...done!" );
+						dataToDisplayChanged();
+					}
+				}
+			} );
+			t.start();
 		}
 	}
 
