@@ -787,11 +787,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					int i = 0;
 					final int glCount = model.mm.getGrowthLines().size();
 					for ( final GrowthLine gl : model.mm.getGrowthLines() ) {
+						i++;
 						System.out.println( String.format( "Generating ILP #%d of %d...", i, glCount ) );
 						gl.generateILP();
 						System.out.println( String.format( "Running ILP #%d of %d...", i, glCount ) );
 						gl.runILP();
-						i++;
 					}
 					System.out.println( "...done!" );
 					dataToDisplayChanged();
@@ -820,15 +820,15 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 						int i = 0;
 						final int glCount = model.mm.getGrowthLines().size();
 						for ( final GrowthLine gl : model.mm.getGrowthLines() ) {
+							i++;
 							if ( gl.getIlp() == null ) {
-								System.out.println( String.format( "\nGenerating ILP #%d of %d...", i + 1, glCount ) );
+								System.out.println( String.format( "\nGenerating ILP #%d of %d...", i, glCount ) );
 								gl.generateILP();
-								System.out.println( String.format( "Running ILP #%d of %d...", i + 1, glCount ) );
+								System.out.println( String.format( "Running ILP #%d of %d...", i, glCount ) );
 								gl.runILP();
 							}
 
 							dataToExport.add( gl.getDataVector() );
-							i++;
 						}
 
 						System.out.println( "Exporting data..." );

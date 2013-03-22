@@ -4,12 +4,14 @@ package com.jug;
  * Main class for the MotherMachine project.
  */
 
+import gurobi.GRBEnv;
+import gurobi.GRBException;
+import gurobi.GRBModel;
 import ij.ImageJ;
 
 import java.awt.DisplayMode;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
-import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -52,7 +54,6 @@ import net.imglib2.view.Views;
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 
-import com.apple.eawt.Application;
 import com.jug.gui.JFrameSnapper;
 import com.jug.gui.MotherMachineGui;
 import com.jug.gui.MotherMachineModel;
@@ -63,7 +64,6 @@ import com.jug.ops.cursor.FindLocationAboveThreshold;
 import com.jug.ops.numerictype.VarOfRai;
 import com.jug.util.DataMover;
 import com.jug.util.DoubleTypeImgLoader;
-import com.jug.util.OSValidator;
 
 
 /**
@@ -172,6 +172,11 @@ public class MotherMachine {
 	 */
 	private static int GUI_HEIGHT = 630;
 	/**
+	 * Width (in pixels) of the console window. This value will be loaded from
+	 * and stored in the properties file!
+	 */
+	private static int GUI_CONSOLE_WIDTH = 600;
+	/**
 	 * The path to usually open JFileChoosers at (except for initial load
 	 * dialog).
 	 */
@@ -187,6 +192,9 @@ public class MotherMachine {
 	 *            muh!
 	 */
 	public static void main( final String[] args ) {
+
+		checkGurobiLicense();
+
 		final MotherMachine main = new MotherMachine();
 		guiFrame = new JFrame( "Interactive MotherMachine" );
 		main.initMainWindow( guiFrame );
@@ -210,6 +218,7 @@ public class MotherMachine {
 		GUI_POS_Y = Integer.parseInt( props.getProperty( "GUI_POS_Y", Integer.toString( DEFAULT_GUI_POS_X ) ) );
 		GUI_WIDTH = Integer.parseInt( props.getProperty( "GUI_WIDTH", Integer.toString( GUI_WIDTH ) ) );
 		GUI_HEIGHT = Integer.parseInt( props.getProperty( "GUI_HEIGHT", Integer.toString( GUI_HEIGHT ) ) );
+		GUI_CONSOLE_WIDTH = Integer.parseInt( props.getProperty( "GUI_CONSOLE_WIDTH", Integer.toString( GUI_CONSOLE_WIDTH ) ) );
 		// Iterate over all currently attached monitors and check if sceen position is actually possible,
 		// otherwise fall back to the DEFAULT values and ignore the ones coming from the properties-file.
 		boolean pos_ok = false;
@@ -272,6 +281,22 @@ public class MotherMachine {
 	// -------------------------------------------------------------------------------------
 	// fields
 	// -------------------------------------------------------------------------------------
+
+	/**
+	 *
+	 */
+	private static void checkGurobiLicense() {
+		try {
+			final GRBEnv env = new GRBEnv();
+			new GRBModel( env );
+		}
+		catch ( final GRBException e ) {
+			JOptionPane.showMessageDialog( MotherMachine.guiFrame,
+					"Could initialize Gurobi.\nYou might not have installed Gurobi properly or you miss a valid license.\nPlease visit 'www.gurobi.com' for further information.",
+					"Gurobi Error", JOptionPane.ERROR_MESSAGE );
+			System.exit( 1 );
+		}
+	}
 
 	/**
 	 * The singleton instance of ImageJ.
@@ -385,26 +410,52 @@ public class MotherMachine {
 	 */
 	private void initConsoleWindow() {
 		frameConsoleWindow = new JFrame( "MotherMachine Console Window" );
+//		frameConsoleWindow.setResizable( false );
 		consoleWindowTextArea = new JTextArea();
 
-//		frameConsoleWindow.setBounds( GUI_POS_X + GUI_WIDTH, GUI_POS_Y, 300, GUI_HEIGHT );
 		final int centerX = ( int ) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2;
 		final int centerY = ( int ) Toolkit.getDefaultToolkit().getScreenSize().getHeight() / 2;
-		frameConsoleWindow.setBounds( centerX - 200, centerY - GUI_HEIGHT / 2, 400, GUI_HEIGHT );
+		frameConsoleWindow.setBounds( centerX - GUI_CONSOLE_WIDTH / 2, centerY - GUI_HEIGHT / 2, GUI_CONSOLE_WIDTH, GUI_HEIGHT );
 		final JScrollPane scrollPane = new JScrollPane( consoleWindowTextArea );
 		scrollPane.setBorder( BorderFactory.createEmptyBorder( 0, 15, 0, 0 ) );
 		frameConsoleWindow.getContentPane().add( scrollPane );
 
 		final OutputStream out = new OutputStream() {
 
+			private final PrintStream original = new PrintStream( System.out );
+
 			@Override
 			public void write( final int b ) throws IOException {
 				updateConsoleTextArea( String.valueOf( ( char ) b ) );
+				original.print( String.valueOf( ( char ) b ) );
 			}
 
 			@Override
 			public void write( final byte[] b, final int off, final int len ) throws IOException {
 				updateConsoleTextArea( new String( b, off, len ) );
+				original.print( new String( b, off, len ) );
+			}
+
+			@Override
+			public void write( final byte[] b ) throws IOException {
+				write( b, 0, b.length );
+			}
+		};
+
+		final OutputStream err = new OutputStream() {
+
+			private final PrintStream original = new PrintStream( System.out );
+
+			@Override
+			public void write( final int b ) throws IOException {
+				updateConsoleTextArea( String.valueOf( ( char ) b ) );
+				original.print( String.valueOf( ( char ) b ) );
+			}
+
+			@Override
+			public void write( final byte[] b, final int off, final int len ) throws IOException {
+				updateConsoleTextArea( new String( b, off, len ) );
+				original.print( new String( b, off, len ) );
 			}
 
 			@Override
@@ -414,7 +465,7 @@ public class MotherMachine {
 		};
 
 		System.setOut( new PrintStream( out, true ) );
-		System.setErr( new PrintStream( out, true ) );
+		System.setErr( new PrintStream( err, true ) );
 	}
 
 	private void updateConsoleTextArea( final String text ) {
@@ -456,15 +507,15 @@ public class MotherMachine {
 				System.exit(0);
 			}
 		} );
-		final java.net.URL url = MotherMachine.class.getResource( "gui/media/IconMotherMachine128.png" );
-		final Toolkit kit = Toolkit.getDefaultToolkit();
-		final Image img = kit.createImage( url );
-		if ( !OSValidator.isMac() ) {
-			guiFrame.setIconImage( img );
-		}
-		if ( OSValidator.isMac() ) {
-			Application.getApplication().setDockIconImage( img );
-		}
+//		final java.net.URL url = MotherMachine.class.getResource( "gui/media/IconMotherMachine128.png" );
+//		final Toolkit kit = Toolkit.getDefaultToolkit();
+//		final Image img = kit.createImage( url );
+//		if ( !OSValidator.isMac() ) {
+//			guiFrame.setIconImage( img );
+//		}
+//		if ( OSValidator.isMac() ) {
+//			Application.getApplication().setDockIconImage( img );
+//		}
 	}
 
 	/**
@@ -476,6 +527,7 @@ public class MotherMachine {
 	 * @return
 	 */
 	private File showStartupDialog( final JFrame guiFrame, final String path ) {
+
 		final String parentFolder = path.substring( 0, path.lastIndexOf( File.separatorChar ) );
 
 		int decision = 0;
@@ -520,8 +572,8 @@ public class MotherMachine {
 			}
 		} );
 		chooser.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY );
-		chooser.setAcceptAllFileFilterUsed( false ); 	// disable the "All files"
-		// option.
+		chooser.setAcceptAllFileFilterUsed( false );
+
 		if ( chooser.showOpenDialog( guiFrame ) == JFileChooser.APPROVE_OPTION ) {
 			return chooser.getSelectedFile();
 		} else {
@@ -605,6 +657,7 @@ public class MotherMachine {
 			props.setProperty( "GUI_POS_Y", Integer.toString( GUI_POS_Y ) );
 			props.setProperty( "GUI_WIDTH", Integer.toString( GUI_WIDTH ) );
 			props.setProperty( "GUI_HEIGHT", Integer.toString( GUI_HEIGHT ) );
+			props.setProperty( "GUI_CONSOLE_WIDTH", Integer.toString( GUI_CONSOLE_WIDTH ) );
 
 			props.store( out, "MotherMachine properties" );
 		}
