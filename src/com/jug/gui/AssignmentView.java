@@ -5,6 +5,7 @@ package com.jug.gui;
 
 import gurobi.GRBException;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -12,6 +13,7 @@ import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.geom.GeneralPath;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.swing.JComponent;
@@ -56,6 +58,10 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	private double filterMinCost = -100.0;
 	private double filterMaxCost = 100.0;
 
+	private boolean doFilterDataByIdentity = false;
+	private boolean doAddToFilter = false; // if 'true' all assignments at the mouse location will be added to the filter next time repaint is called...
+	private final Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > filteredAssignments;
+
 	private HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data;
 
 	private boolean isMouseOver = false;
@@ -67,6 +73,8 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	private int dragX;
 	private int dragY;
 	private double dragStepWeight = 0;
+
+	private boolean doAddAsGroundTruth;
 
 	// -------------------------------------------------------------------------------------
 	// construction
@@ -86,11 +94,15 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		this.width = 90;
 		this.height = height;
 		this.setPreferredSize( new Dimension( width, height - 20 ) );
+
 		this.addMouseListener( this );
 		this.addMouseMotionListener( this );
+
 		this.doFilterDataByCost = true;
 		this.setCostFilterMin( filterMinCost );
 		this.setCostFilterMax( filterMaxCost );
+
+		this.filteredAssignments = new HashSet< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >();
 	}
 
 	// -------------------------------------------------------------------------------------
@@ -245,6 +257,9 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 			g.setColor( Color.GRAY );
 			g.drawString( String.format( "dlta %.4f", this.dragStepWeight ), 0, 50 );
 		}
+
+		// in case we where adding assignments - stop now!
+		this.doAddToFilter = false;
 	}
 
 	/**
@@ -255,6 +270,11 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 * @param assignment
 	 */
 	private void drawAssignment( final Graphics g, final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> assignment ) {
+
+		// Just return in case the given component is in the
+		// set of filtered assignments.
+		if ( this.doFilterDataByIdentity && this.filteredAssignments.contains( assignment ) ) { return; }
+
 		final int type = assignment.getType();
 
 		final Graphics2D g2 = ( Graphics2D ) g;
@@ -301,22 +321,47 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		polygon.lineTo( x4, y4 );
 		polygon.closePath();
 
-		g2.setPaint( new Color( 25 / 256f, 65 / 256f, 165 / 256f, 0.2f ) );
-		g2.fill( polygon );
-		g2.setPaint( new Color( 25 / 256f, 65 / 256f, 165 / 256f, 1.0f ) );
-		g2.draw( polygon );
-
-		// System.out.println( String.format( "(%d,%d) -- (%d,%d,%d,%d)", this.mousePosX, this.mousePosY, x1, y1, x3, y3 ) );
+		// Interaction with mouse:
 		if ( !this.isDragging && this.isMouseOver && polygon.contains( this.mousePosX, this.mousePosY ) ) {
-			try {
-				final double cost = ma.getCost();
-				g2.drawString( String.format( "c=%.4f", cost ), 10, this.mousePosY - 10 - this.currentCostLine * 20 );
-				this.currentCostLine++;
-			}
-			catch ( final GRBException e ) {
-				e.printStackTrace();
+			if ( doAddToFilter ) {
+				// this case happens after shift-click
+				this.filteredAssignments.add( ma );
+			} else if ( this.doAddAsGroundTruth ) {
+				this.doAddAsGroundTruth = false;
+				ma.setGroundTruth( !ma.isGroundTruth() );
+			} else {
+				// otherwise we show the costs by hovering over
+				try {
+					final double cost = ma.getCost();
+					if ( ma.isGroundTruth() ) {
+						g2.setPaint( Color.GREEN.darker() );
+					} else {
+						g2.setPaint( new Color( 25 / 256f, 65 / 256f, 165 / 256f, 1.0f ).darker().darker() );
+					}
+					g2.drawString( String.format( "c=%.4f", cost ), 10, this.mousePosY - 10 - this.currentCostLine * 20 );
+					this.currentCostLine++;
+				}
+				catch ( final GRBException e ) {
+					e.printStackTrace();
+				}
 			}
 		}
+
+		// draw it!
+		g2.setStroke( new BasicStroke( 1 ) );
+		if ( ma.isGroundTruth() ) {
+			g2.setPaint( new Color( 160 / 256f, 200 / 256f, 180 / 256f, 0.6f ) );
+		} else {
+			g2.setPaint( new Color( 25 / 256f, 65 / 256f, 165 / 256f, 0.2f ) );
+		}
+		g2.fill( polygon );
+		if ( ma.isGroundTruth() ) {
+			g2.setPaint( Color.GREEN.darker() );
+			g2.setStroke( new BasicStroke( 3 ) );
+		} else {
+			g2.setPaint( new Color( 25 / 256f, 65 / 256f, 165 / 256f, 1.0f ) );
+		}
+		g2.draw( polygon );
 	}
 
 	/**
@@ -363,22 +408,47 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		polygon.lineTo( x7, y7 );
 		polygon.closePath();
 
-		g2.setPaint( new Color( 250 / 256f, 150 / 256f, 40 / 256f, 0.2f ) );
-		g2.fill( polygon );
-		g2.setPaint( new Color( 250 / 256f, 150 / 256f, 40 / 256f, 1.0f ) );
-		g2.draw( polygon );
-
-		// System.out.println( String.format( "(%d,%d) -- (%d,%d,%d,%d)", this.mousePosX, this.mousePosY, x1, y1, x3, y3 ) );
+		// Interaction with mouse:
 		if ( !this.isDragging && this.isMouseOver && polygon.contains( this.mousePosX, this.mousePosY ) ) {
-			try {
-				final double cost = da.getCost();
-				g2.drawString( String.format( "c=%.4f", cost ), 10, this.mousePosY - 10 - this.currentCostLine * 20 );
-				this.currentCostLine++;
-			}
-			catch ( final GRBException e ) {
-				e.printStackTrace();
+			if ( doAddToFilter ) {
+				// this case happens after shift-click
+				this.filteredAssignments.add( da );
+			} else if ( this.doAddAsGroundTruth ) {
+				this.doAddAsGroundTruth = false;
+				da.setGroundTruth( !da.isGroundTruth() );
+			} else {
+				// otherwise we show the costs by hovering over
+				try {
+					final double cost = da.getCost();
+					if ( da.isGroundTruth() ) {
+						g2.setPaint( Color.GREEN.darker() );
+					} else {
+						g2.setPaint( new Color( 250 / 256f, 150 / 256f, 40 / 256f, 1.0f ).darker().darker() );
+					}
+					g2.drawString( String.format( "c=%.4f", cost ), 10, this.mousePosY - 10 - this.currentCostLine * 20 );
+					this.currentCostLine++;
+				}
+				catch ( final GRBException e ) {
+					e.printStackTrace();
+				}
 			}
 		}
+
+		// draw it!
+		g2.setStroke( new BasicStroke( 1 ) );
+		if ( da.isGroundTruth() ) {
+			g2.setPaint( new Color( 160 / 256f, 200 / 256f, 180 / 256f, 0.6f ) );
+		} else {
+			g2.setPaint( new Color( 250 / 256f, 150 / 256f, 40 / 256f, 0.2f ) );
+		}
+		g2.fill( polygon );
+		if ( da.isGroundTruth() ) {
+			g2.setPaint( Color.GREEN.darker() );
+			g2.setStroke( new BasicStroke( 3 ) );
+		} else {
+			g2.setPaint( new Color( 250 / 256f, 150 / 256f, 40 / 256f, 1.0f ) );
+		}
+		g2.draw( polygon );
 	}
 
 	/**
@@ -442,11 +512,30 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 */
 	@Override
 	public void mousePressed( final MouseEvent e ) {
-		if ( e.getButton() == MouseEvent.BUTTON1 || e.getButton() == MouseEvent.BUTTON3 ) {
+		// plain click to initiate dragging
+		if ( !e.isShiftDown() && !e.isControlDown() && e.getButton() == MouseEvent.BUTTON1 || e.getButton() == MouseEvent.BUTTON3 ) {
 			this.isDragging = true;
 			this.dragX = e.getX();
 			this.dragY = e.getY();
 		}
+
+		// ctrl-click to filter some assignments
+		if ( e.isControlDown() && e.getButton() == MouseEvent.BUTTON1 ) {
+			this.doFilterDataByIdentity = true;
+			this.doAddToFilter = true; // when repainting component next time...
+		}
+
+		// shift-click to filter some assignments
+		if ( e.isShiftDown() && e.getButton() == MouseEvent.BUTTON1 ) {
+			this.doFilterDataByIdentity = false;
+			this.filteredAssignments.clear();
+		}
+
+		// shift-click to filter some assignments
+		if ( e.isAltDown() && e.getButton() == MouseEvent.BUTTON1 ) {
+			this.doAddAsGroundTruth = true;
+		}
+
 		repaint();
 	}
 

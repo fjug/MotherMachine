@@ -25,6 +25,8 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 
 	private GRBVar ilpVar;
 
+	private boolean isGroundTruth = false;
+
 	/**
 	 * Creates an assignment...
 	 *
@@ -107,4 +109,18 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	 * @throws GRBException
 	 */
 	public abstract void addConstraintsToLP() throws GRBException;
+
+	/**
+	 * @return
+	 */
+	public boolean isGroundTruth() {
+		return isGroundTruth;
+	}
+
+	/**
+	 *
+	 */
+	public void setGroundTruth( final boolean groundTruth ) {
+		this.isGroundTruth = groundTruth;
+	}
 }

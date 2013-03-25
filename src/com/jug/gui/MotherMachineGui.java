@@ -7,7 +7,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -23,7 +22,6 @@ import java.util.Vector;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -38,10 +36,6 @@ import loci.formats.gui.ExtensionFileFilter;
 import net.imglib2.Localizable;
 import net.imglib2.algorithm.componenttree.ComponentTree;
 import net.imglib2.algorithm.componenttree.ComponentTreeNode;
-import net.imglib2.display.ARGBScreenImage;
-import net.imglib2.display.RealARGBConverter;
-import net.imglib2.display.XYProjector;
-import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
@@ -59,85 +53,6 @@ import com.jug.util.SimpleFunctionAnalysis;
  * @author jug
  */
 public class MotherMachineGui extends JPanel implements ChangeListener, ActionListener {
-
-	final protected class Viewer2DCanvas extends JComponent {
-
-		private static final long serialVersionUID = 8284204775277266994L;
-
-		private final int w;
-		private final int h;
-		private XYProjector projector;
-		private ARGBScreenImage screenImage;
-		private IntervalView< DoubleType > view;
-		private GrowthLineFrame glf;
-
-		public Viewer2DCanvas( final int w, final int h ) {
-			super();
-			this.w = w;
-			this.h = h;
-			setPreferredSize( new Dimension( w, h ) );
-			this.screenImage = new ARGBScreenImage( w, h );
-			this.projector = null;
-			this.view = null;
-			this.glf = null;
-		}
-
-		/**
-		 * Sets the image data to be displayed when paintComponent is called.
-		 *
-		 * @param glf
-		 *            the GrowthLineFrameto be displayed
-		 * @param viewImg
-		 *            an IntervalView<DoubleType> containing the desired view
-		 *            onto the raw image data
-		 */
-		public void setScreenImage( final GrowthLineFrame glf, final IntervalView< DoubleType > viewImg ) {
-			setEmptyScreenImage();
-			this.projector = new XYProjector< DoubleType, ARGBType >( viewImg, screenImage, new RealARGBConverter< DoubleType >( 0, 1 ) );
-			this.view = viewImg;
-			this.glf = glf;
-			this.repaint();
-		}
-
-		/**
-		 * Prepares to display an empty image.
-		 */
-		public void setEmptyScreenImage() {
-			screenImage = new ARGBScreenImage( w, h );
-			this.projector = null;
-			this.view = null;
-			this.glf = null;
-		}
-
-
-		@Override
-		public void paintComponent( final Graphics g ) {
-			try {
-				if ( projector != null ) {
-					projector.map();
-				}
-				glf.drawCenterLine( screenImage, view );
-				//TODO NOT nice... do something against that, please!
-				final int t = glf.getParent().getFrames().indexOf( glf );
-				glf.drawOptimalSegmentation( screenImage, view, glf.getParent().getIlp().getOptimalSegmentation( t ) );
-			}
-			catch ( final ArrayIndexOutOfBoundsException e ) {
-				// this can happen if a growth line, due to shift, exists in one
-				// frame, and does not exist in others.
-				// If for this growth line we want to visualize a time where the
-				// GrowthLine is empty, the projector
-				// throws a ArrayIndexOutOfBoundsException that I catch
-				// hereby... ;)
-				System.err.println( "ArrayIndexOutOfBoundsException in paintComponent of MMGUI!" );
-				// e.printStackTrace();
-			}
-			catch ( final NullPointerException e ) {
-				// System.err.println( "View or glf not yet set in MotherMachineGui!" );
-				// e.printStackTrace();
-			}
-			g.drawImage( screenImage.image(), 0, 0, w, h, null );
-		}
-	}
 
 	// -------------------------------------------------------------------------------------
 	// statics

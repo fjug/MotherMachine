@@ -371,9 +371,7 @@ public class GrowthLineFrame {
 					final double y = centerY + ( ( double ) currentOffsetY / maxOffsetX ) * currentOffsetX;
 					rraImg.setPosition( new double[] { x, y } );
 					summedIntensities += rraImg.get().get();
-//					summedIntensities += rraImg.get().get() * Math.abs( currentOffsetX );
 					summands++;
-//					summands += Math.abs( currentOffsetX );
 				}
 				diagonalAverages[ nextAverageIdx ] = summedIntensities / summands;
 				nextAverageIdx++;
@@ -384,7 +382,9 @@ public class GrowthLineFrame {
 			// dIntensity[i] = maxDiagonalAvg - minIntensity;
 			dIntensity[ i ] = maxDiagonalAvg;
 		}
-//		dIntensity[ imgLocations.size() ] = SimpleFunctionAnalysis.getSum( dIntensity ) / imgLocations.size();
+
+//		dIntensity = SimpleFunctionAnalysis.normalizeDoubleArray( dIntensity, 0.0, 1.0 );
+
 		return dIntensity;
 	}
 

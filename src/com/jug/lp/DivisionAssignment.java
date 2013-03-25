@@ -94,5 +94,4 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 	public Hypothesis< ComponentTreeNode< DoubleType, ? >> getLowerDesinationHypothesis() {
 		return toLower;
 	}
-
 }

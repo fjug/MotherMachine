@@ -622,6 +622,32 @@ public class GrowthLineTrackingILP {
 	}
 
 	/**
+	 * Returns the active segmentation at time t and the given y-location along
+	 * the gap-separation function of the corresponding GLF.
+	 * Calling this function makes only sense if the <code>run</code>-method was
+	 * called and the convex optimizer could find a optimal feasible solution.
+	 * 
+	 * @param t
+	 *            the time-point at which to look for the optimal segmentation.
+	 * @param gapSepYPos
+	 *            the position along the gap-separation-function you want to
+	 *            receive the active segmentation hypothesis for.
+	 * @return a <code>Hypothesis< ComponentTreeNode< DoubleType, ? >></code>
+	 *         that correspond to the active segmentation hypothesis at the
+	 *         requested location.
+	 *         Note: this function might return <code>null</code> since not all
+	 *         y-locations are occupied by active segmentation hypotheses!
+	 */
+	public Hypothesis< ComponentTreeNode< DoubleType, ? >> getOptimalSegmentationAtLocation( final int t, final int gapSepYPos ) {
+		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = getOptimalHypotheses( t );
+		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> h : hyps ) {
+			final Pair< Integer, Integer > ctnLimits = ComponentTreeUtils.getTreeNodeInterval( h.getWrappedHypothesis() );
+			if ( ctnLimits.a.intValue() <= gapSepYPos && ctnLimits.b.intValue() >= gapSepYPos ) { return h; }
+		}
+		return null;
+	}
+
+	/**
 	 * Returns the optimal segmentation at time t, given by a list of non
 	 * conflicting segmentation hypothesis.
 	 * Calling this function makes only sense if the <code>run</code>-method was
@@ -915,5 +941,4 @@ public class GrowthLineTrackingILP {
 
 		return ret;
 	}
-
 }
