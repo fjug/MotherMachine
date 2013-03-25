@@ -4,9 +4,6 @@ package com.jug;
  * Main class for the MotherMachine project.
  */
 
-import gurobi.GRBEnv;
-import gurobi.GRBException;
-import gurobi.GRBModel;
 import ij.ImageJ;
 
 import java.awt.DisplayMode;
@@ -192,111 +189,103 @@ public class MotherMachine {
 	 *            muh!
 	 */
 	public static void main( final String[] args ) {
+		try {
 
-		checkGurobiLicense();
+			final MotherMachine main = new MotherMachine();
+			guiFrame = new JFrame( "Interactive MotherMachine" );
+			main.initMainWindow( guiFrame );
 
-		final MotherMachine main = new MotherMachine();
-		guiFrame = new JFrame( "Interactive MotherMachine" );
-		main.initMainWindow( guiFrame );
+			props = main.loadParams();
+			BGREM_TEMPLATE_XMIN = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMIN", Integer.toString( BGREM_TEMPLATE_XMIN ) ) );
+			BGREM_TEMPLATE_XMAX = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMAX", Integer.toString( BGREM_TEMPLATE_XMAX ) ) );
+			BGREM_X_OFFSET = Integer.parseInt( props.getProperty( "BGREM_X_OFFSET", Integer.toString( BGREM_X_OFFSET ) ) );
+			GL_OFFSET_BOTTOM = Integer.parseInt( props.getProperty( "GL_OFFSET_BOTTOM", Integer.toString( GL_OFFSET_BOTTOM ) ) );
+			GL_OFFSET_TOP = Integer.parseInt( props.getProperty( "GL_OFFSET_TOP", Integer.toString( GL_OFFSET_TOP ) ) );
+			GL_OFFSET_LATERAL = Integer.parseInt( props.getProperty( "GL_OFFSET_LATERAL", Integer.toString( GL_OFFSET_LATERAL ) ) );
+			MIN_CELL_LENGTH = Integer.parseInt( props.getProperty( "MIN_CELL_LENGTH", Integer.toString( MIN_CELL_LENGTH ) ) );
+			MIN_GAP_CONTRAST = Double.parseDouble( props.getProperty( "MIN_GAP_CONTRAST", Double.toString( MIN_GAP_CONTRAST ) ) );
+			SIGMA_PRE_SEGMENTATION_X = Double.parseDouble( props.getProperty( "SIGMA_PRE_SEGMENTATION_X", Double.toString( SIGMA_PRE_SEGMENTATION_X ) ) );
+			SIGMA_PRE_SEGMENTATION_Y = Double.parseDouble( props.getProperty( "SIGMA_PRE_SEGMENTATION_Y", Double.toString( SIGMA_PRE_SEGMENTATION_Y ) ) );
+			SIGMA_GL_DETECTION_X = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION", Double.toString( SIGMA_GL_DETECTION_X ) ) );
+			SIGMA_GL_DETECTION_Y = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION", Double.toString( SIGMA_GL_DETECTION_Y ) ) );
+			DEFAULT_PATH = props.getProperty( "DEFAULT_PATH", DEFAULT_PATH );
 
-		props = main.loadParams();
-		BGREM_TEMPLATE_XMIN = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMIN", Integer.toString( BGREM_TEMPLATE_XMIN ) ) );
-		BGREM_TEMPLATE_XMAX = Integer.parseInt( props.getProperty( "BGREM_TEMPLATE_XMAX", Integer.toString( BGREM_TEMPLATE_XMAX ) ) );
-		BGREM_X_OFFSET = Integer.parseInt( props.getProperty( "BGREM_X_OFFSET", Integer.toString( BGREM_X_OFFSET ) ) );
-		GL_OFFSET_BOTTOM = Integer.parseInt( props.getProperty( "GL_OFFSET_BOTTOM", Integer.toString( GL_OFFSET_BOTTOM ) ) );
-		GL_OFFSET_TOP = Integer.parseInt( props.getProperty( "GL_OFFSET_TOP", Integer.toString( GL_OFFSET_TOP ) ) );
-		GL_OFFSET_LATERAL = Integer.parseInt( props.getProperty( "GL_OFFSET_LATERAL", Integer.toString( GL_OFFSET_LATERAL ) ) );
-		MIN_CELL_LENGTH = Integer.parseInt( props.getProperty( "MIN_CELL_LENGTH", Integer.toString( MIN_CELL_LENGTH ) ) );
-		MIN_GAP_CONTRAST = Double.parseDouble( props.getProperty( "MIN_GAP_CONTRAST", Double.toString( MIN_GAP_CONTRAST ) ) );
-		SIGMA_PRE_SEGMENTATION_X = Double.parseDouble( props.getProperty( "SIGMA_PRE_SEGMENTATION_X", Double.toString( SIGMA_PRE_SEGMENTATION_X ) ) );
-		SIGMA_PRE_SEGMENTATION_Y = Double.parseDouble( props.getProperty( "SIGMA_PRE_SEGMENTATION_Y", Double.toString( SIGMA_PRE_SEGMENTATION_Y ) ) );
-		SIGMA_GL_DETECTION_X = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION", Double.toString( SIGMA_GL_DETECTION_X ) ) );
-		SIGMA_GL_DETECTION_Y = Double.parseDouble( props.getProperty( "SIGMA_GL_DETECTION", Double.toString( SIGMA_GL_DETECTION_Y ) ) );
-		DEFAULT_PATH = props.getProperty( "DEFAULT_PATH", DEFAULT_PATH );
-
-		GUI_POS_X = Integer.parseInt( props.getProperty( "GUI_POS_X", Integer.toString( DEFAULT_GUI_POS_X ) ) );
-		GUI_POS_Y = Integer.parseInt( props.getProperty( "GUI_POS_Y", Integer.toString( DEFAULT_GUI_POS_X ) ) );
-		GUI_WIDTH = Integer.parseInt( props.getProperty( "GUI_WIDTH", Integer.toString( GUI_WIDTH ) ) );
-		GUI_HEIGHT = Integer.parseInt( props.getProperty( "GUI_HEIGHT", Integer.toString( GUI_HEIGHT ) ) );
-		GUI_CONSOLE_WIDTH = Integer.parseInt( props.getProperty( "GUI_CONSOLE_WIDTH", Integer.toString( GUI_CONSOLE_WIDTH ) ) );
-		// Iterate over all currently attached monitors and check if sceen position is actually possible,
-		// otherwise fall back to the DEFAULT values and ignore the ones coming from the properties-file.
-		boolean pos_ok = false;
-		final GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-		final GraphicsDevice[] gs = ge.getScreenDevices();
-		for ( int i = 0; i < gs.length; i++ ) {
-			final DisplayMode dm = gs[ i ].getDisplayMode();
-			if ( gs[ i ].getDefaultConfiguration().getBounds().contains( new java.awt.Point( GUI_POS_X, GUI_POS_Y ) ) ) {
-				pos_ok = true;
+			GUI_POS_X = Integer.parseInt( props.getProperty( "GUI_POS_X", Integer.toString( DEFAULT_GUI_POS_X ) ) );
+			GUI_POS_Y = Integer.parseInt( props.getProperty( "GUI_POS_Y", Integer.toString( DEFAULT_GUI_POS_X ) ) );
+			GUI_WIDTH = Integer.parseInt( props.getProperty( "GUI_WIDTH", Integer.toString( GUI_WIDTH ) ) );
+			GUI_HEIGHT = Integer.parseInt( props.getProperty( "GUI_HEIGHT", Integer.toString( GUI_HEIGHT ) ) );
+			GUI_CONSOLE_WIDTH = Integer.parseInt( props.getProperty( "GUI_CONSOLE_WIDTH", Integer.toString( GUI_CONSOLE_WIDTH ) ) );
+			// Iterate over all currently attached monitors and check if sceen position is actually possible,
+			// otherwise fall back to the DEFAULT values and ignore the ones coming from the properties-file.
+			boolean pos_ok = false;
+			final GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+			final GraphicsDevice[] gs = ge.getScreenDevices();
+			for ( int i = 0; i < gs.length; i++ ) {
+				final DisplayMode dm = gs[ i ].getDisplayMode();
+				if ( gs[ i ].getDefaultConfiguration().getBounds().contains( new java.awt.Point( GUI_POS_X, GUI_POS_Y ) ) ) {
+					pos_ok = true;
+				}
 			}
-		}
-		// None of the screens contained the top-left window coordinates --> fall back onto default values...
-		if ( !pos_ok ) {
-			GUI_POS_X = DEFAULT_GUI_POS_X;
-			GUI_POS_Y = DEFAULT_GUI_POS_Y;
-		}
-
-		String path = props.getProperty( "import_path", System.getProperty( "user.home" ) );
-		final File fPath = main.showStartupDialog( guiFrame, path );
-		path = fPath.getAbsolutePath();
-		props.setProperty( "import_path", fPath.getAbsolutePath() );
-
-		// Setting up console window and window snapper...
-		main.initConsoleWindow();
-		main.showConsoleWindow();
-		final JFrameSnapper snapper = new JFrameSnapper();
-		snapper.addFrame( main.frameConsoleWindow );
-		snapper.addFrame( guiFrame );
-
-		// ---------------------------------------------------
-		main.processDataFromFolder( path );
-		// ---------------------------------------------------
-
-		System.out.print( "Build and show GUI..." );
-		// show loaded and annotated data
-//		ImageJFunctions.show( getImgRaw(), "Rotated & cropped raw data" );
-//		ImageJFunctions.show( getImgTemp(), "Temporary" );
-//		ImageJFunctions.show( main.imgAnnotated, "Annotated ARGB data" );
-
-		final MotherMachineGui gui = new MotherMachineGui( new MotherMachineModel( main ) );
-		gui.setVisible( true );
-
-//		main.ij = new ImageJ();
-		guiFrame.add( gui );
-		guiFrame.setSize( GUI_WIDTH, GUI_HEIGHT );
-		guiFrame.setLocation( GUI_POS_X, GUI_POS_Y );
-		guiFrame.setVisible( true );
-
-		SwingUtilities.invokeLater( new Runnable() {
-
-			@Override
-			public void run() {
-				snapper.snapFrames( main.frameConsoleWindow, guiFrame, JFrameSnapper.EAST );
+			// None of the screens contained the top-left window coordinates --> fall back onto default values...
+			if ( !pos_ok ) {
+				GUI_POS_X = DEFAULT_GUI_POS_X;
+				GUI_POS_Y = DEFAULT_GUI_POS_Y;
 			}
-		} );
 
-		System.out.println( " done!" );
+			String path = props.getProperty( "import_path", System.getProperty( "user.home" ) );
+			final File fPath = main.showStartupDialog( guiFrame, path );
+			path = fPath.getAbsolutePath();
+			props.setProperty( "import_path", fPath.getAbsolutePath() );
+
+			// Setting up console window and window snapper...
+			main.initConsoleWindow();
+			main.showConsoleWindow();
+			final JFrameSnapper snapper = new JFrameSnapper();
+			snapper.addFrame( main.frameConsoleWindow );
+			snapper.addFrame( guiFrame );
+
+			// ---------------------------------------------------
+			main.processDataFromFolder( path );
+			// ---------------------------------------------------
+
+			System.out.print( "Build and show GUI..." );
+			// show loaded and annotated data
+			//		ImageJFunctions.show( getImgRaw(), "Rotated & cropped raw data" );
+			//		ImageJFunctions.show( getImgTemp(), "Temporary" );
+			//		ImageJFunctions.show( main.imgAnnotated, "Annotated ARGB data" );
+
+			final MotherMachineGui gui = new MotherMachineGui( new MotherMachineModel( main ) );
+			gui.setVisible( true );
+
+			//		main.ij = new ImageJ();
+			guiFrame.add( gui );
+			guiFrame.setSize( GUI_WIDTH, GUI_HEIGHT );
+			guiFrame.setLocation( GUI_POS_X, GUI_POS_Y );
+			guiFrame.setVisible( true );
+
+			SwingUtilities.invokeLater( new Runnable() {
+
+				@Override
+				public void run() {
+					snapper.snapFrames( main.frameConsoleWindow, guiFrame, JFrameSnapper.EAST );
+				}
+			} );
+
+			System.out.println( " done!" );
+		}
+		catch ( final UnsatisfiedLinkError ulr ) {
+			JOptionPane.showMessageDialog( MotherMachine.guiFrame,
+					"Could initialize Gurobi.\n" +
+					"You might not have installed Gurobi properly or you miss a valid license.\n" +
+					"Please visit 'www.gurobi.com' for further information.\n\n" +
+					ulr.getMessage(),
+					"Gurobi Error?", JOptionPane.ERROR_MESSAGE );
+		}
 	}
 
 	// -------------------------------------------------------------------------------------
 	// fields
 	// -------------------------------------------------------------------------------------
-
-	/**
-	 *
-	 */
-	private static void checkGurobiLicense() {
-		try {
-			final GRBEnv env = new GRBEnv();
-			new GRBModel( env );
-		}
-		catch ( final GRBException e ) {
-			JOptionPane.showMessageDialog( MotherMachine.guiFrame,
-					"Could initialize Gurobi.\nYou might not have installed Gurobi properly or you miss a valid license.\nPlease visit 'www.gurobi.com' for further information.",
-					"Gurobi Error", JOptionPane.ERROR_MESSAGE );
-			System.exit( 1 );
-		}
-	}
 
 	/**
 	 * The singleton instance of ImageJ.
