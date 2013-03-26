@@ -57,14 +57,12 @@ public class MappingAssignment extends AbstractAssignment< Hypothesis< Component
 	 */
 	@Override
 	public void addConstraintsToLP() throws GRBException {
-		// MAPPING assignments do not come with assignment specific
-		// constrains...
 	}
 
 	/**
 	 * Returns the segmentation hypothesis this mapping-assignment comes from
 	 * (the one at the earlier time-point t).
-	 * 
+	 *
 	 * @return the associated segmentation-hypothesis.
 	 */
 	public Hypothesis< ComponentTreeNode< DoubleType, ? >> getSourceHypothesis() {
@@ -74,7 +72,7 @@ public class MappingAssignment extends AbstractAssignment< Hypothesis< Component
 	/**
 	 * Returns the segmentation hypothesis this mapping-assignment links to
 	 * (the one at the later time-point t+1).
-	 * 
+	 *
 	 * @return the associated segmentation-hypothesis.
 	 */
 	public Hypothesis< ComponentTreeNode< DoubleType, ? >> getDestinationHypothesis() {

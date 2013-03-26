@@ -4,7 +4,9 @@
 package com.jug.lp;
 
 import gurobi.GRB;
+import gurobi.GRBConstr;
 import gurobi.GRBException;
+import gurobi.GRBLinExpr;
 import gurobi.GRBModel;
 import gurobi.GRBVar;
 
@@ -26,6 +28,7 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	private GRBVar ilpVar;
 
 	private boolean isGroundTruth = false;
+	private GRBConstr constrGroundTruth;
 
 	/**
 	 * Creates an assignment...
@@ -122,5 +125,25 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	 */
 	public void setGroundTruth( final boolean groundTruth ) {
 		this.isGroundTruth = groundTruth;
+		try {
+			addOrRemoveGroundTroothConstraint( groundTruth );
+		}
+		catch ( final GRBException e ) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 *
+	 */
+	private void addOrRemoveGroundTroothConstraint( final boolean add ) throws GRBException {
+		if ( add ) {
+			final GRBLinExpr exprGroundTruth = new GRBLinExpr();
+			exprGroundTruth.addTerm( 1.0, getGRBVar() );
+			constrGroundTruth = model.addConstr( exprGroundTruth, GRB.EQUAL, 1.0, "GroundTruthConstraint_" + getGRBVar().toString() );
+		} else {
+			model.remove( constrGroundTruth );
+		}
+		model.update();
 	}
 }

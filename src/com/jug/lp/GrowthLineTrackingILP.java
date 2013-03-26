@@ -626,7 +626,7 @@ public class GrowthLineTrackingILP {
 	 * the gap-separation function of the corresponding GLF.
 	 * Calling this function makes only sense if the <code>run</code>-method was
 	 * called and the convex optimizer could find a optimal feasible solution.
-	 * 
+	 *
 	 * @param t
 	 *            the time-point at which to look for the optimal segmentation.
 	 * @param gapSepYPos

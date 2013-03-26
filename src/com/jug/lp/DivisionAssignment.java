@@ -59,8 +59,6 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 	 */
 	@Override
 	public void addConstraintsToLP() throws GRBException {
-		// DIVISION assignments do not come with assignment specific
-		// constrains...
 	}
 
 	/**
@@ -88,7 +86,7 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 	 * Returns the upper of the two segmentation hypothesis this
 	 * division-assignment links to (the upper of the two at the later
 	 * time-point t+1).
-	 * 
+	 *
 	 * @return the associated segmentation-hypothesis.
 	 */
 	public Hypothesis< ComponentTreeNode< DoubleType, ? >> getLowerDesinationHypothesis() {

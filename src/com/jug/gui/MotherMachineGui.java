@@ -193,6 +193,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		// --- All the TABs -------------
 
 		tabsViews = new JTabbedPane();
+		tabsViews.addChangeListener( this );
 
 		panelCountingView = new CountOverviewPanel();
 		panelInactiveAssignmentsView = buildInactiveAssignmentsView();
@@ -663,15 +664,14 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 		if ( e.getSource().equals( sliderGL ) ) {
 			model.setCurrentGL( sliderGL.getValue(), sliderTime.getValue() );
-			dataToDisplayChanged();
-			this.repaint();
 		}
 
 		if ( e.getSource().equals( sliderTime ) ) {
 			model.setCurrentGLF( sliderTime.getValue() );
-			dataToDisplayChanged();
-			this.repaint();
 		}
+
+		dataToDisplayChanged();
+		this.repaint();
 	}
 
 	/**
@@ -684,8 +684,12 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 				@Override
 				public void run() {
-					System.out.println( "Generating ILP..." );
-					model.getCurrentGL().generateILP();
+					if ( model.getCurrentGL().getIlp() == null ) {
+						System.out.println( "Generating ILP..." );
+						model.getCurrentGL().generateILP();
+					} else {
+						System.out.println( "Using existing ILP (possibly containing user-defined ground-truth bits)..." );
+					}
 					System.out.println( "Finding optimal result..." );
 					model.getCurrentGL().runILP();
 					System.out.println( "...done!" );
