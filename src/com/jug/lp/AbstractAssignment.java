@@ -127,6 +127,10 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 		this.isGroundTruth = groundTruth;
 		try {
 			addOrRemoveGroundTroothConstraint( groundTruth );
+			model.update();
+			System.out.print( "Running ILP with new ground-truth knowledge..." );
+			model.optimize();
+			System.out.println( " ...done!" );
 		}
 		catch ( final GRBException e ) {
 			e.printStackTrace();
@@ -144,6 +148,5 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 		} else {
 			model.remove( constrGroundTruth );
 		}
-		model.update();
 	}
 }
