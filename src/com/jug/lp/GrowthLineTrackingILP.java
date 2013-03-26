@@ -941,4 +941,85 @@ public class GrowthLineTrackingILP {
 
 		return ret;
 	}
+
+	/**
+	 * Collects and returns all left-assignments given the optimal segmentation.
+	 * Only those assignments are collected that are left-edges from one of the
+	 * currently chosen (optimal) segmentation-hypotheses.
+	 * 
+	 * @param t
+	 *            the time at which to look for inactive left-assignments.
+	 *            Values for t make only sense if <code>>=1</code> and
+	 *            <code>< nodes.getNumberOfTimeSteps().</code>
+	 * @return a hash-map that maps from segmentation hypothesis to a set of
+	 *         assignments that come in from the left (from t-1).
+	 */
+	public HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > > getAllCompatibleLeftAssignments( final int t ) {
+		assert ( t >= 1 );
+		assert ( t < nodes.getNumberOfTimeSteps() );
+
+		final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > >> ret = new HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > >();
+
+		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = this.getOptimalHypotheses( t );
+
+		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : hyps ) {
+			final Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > set = edgeSets.getLeftNeighborhood( hyp );
+
+			if ( set == null ) continue;
+
+			for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > a : set ) {
+				Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > innerSet = ret.get( hyp );
+				if ( innerSet == null ) {
+					innerSet = new HashSet< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > >();
+					innerSet.add( a );
+					ret.put( hyp, innerSet );
+				} else {
+					innerSet.add( a );
+				}
+			}
+		}
+
+		return ret;
+	}
+
+	/**
+	 * Collects and returns all right-assignments given the optimal
+	 * segmentation.
+	 * Only those assignments are collected that are right-edges from one of the
+	 * currently chosen (optimal) segmentation-hypotheses.
+	 *
+	 * @param t
+	 *            the time at which to look for inactive right-assignments.
+	 *            Values for t make only sense if <code>>=0</code> and
+	 *            <code>< nodes.getNumberOfTimeSteps()-1.</code>
+	 * @return a hash-map that maps from segmentation hypothesis to a set of
+	 *         assignments that come in from the right (from t+1).
+	 */
+	public HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > > getAllCompatibleRightAssignments( final int t ) {
+		assert ( t >= 0 );
+		assert ( t < nodes.getNumberOfTimeSteps() - 1 );
+
+		final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > > ret = new HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > >();
+
+		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = this.getOptimalHypotheses( t );
+
+		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : hyps ) {
+			final Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > set = edgeSets.getRightNeighborhood( hyp );
+
+			if ( set == null ) continue;
+
+			for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > a : set ) {
+				Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > innerSet = ret.get( hyp );
+				if ( innerSet == null ) {
+					innerSet = new HashSet< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > >();
+					innerSet.add( a );
+					ret.put( hyp, innerSet );
+				} else {
+					innerSet.add( a );
+				}
+			}
+		}
+
+		return ret;
+	}
 }

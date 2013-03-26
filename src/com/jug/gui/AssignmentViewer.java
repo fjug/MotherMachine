@@ -31,12 +31,14 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 	// -------------------------------------------------------------------------------------
 	// fields
 	// -------------------------------------------------------------------------------------
-	private AssignmentView allAssignments;
-	private AssignmentView mappingAssignments;
-	private AssignmentView divisionAssignments;
-	private AssignmentView exitAssignments;
+	private AssignmentView activeAssignments;
+	private AssignmentView inactiveMappingAssignments;
+	private AssignmentView inactiveDivisionAssignments;
+	private AssignmentView inactiveExitAssignments;
 
 	private HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data;
+
+	private final MotherMachineGui gui;
 
 	// -------------------------------------------------------------------------------------
 	// construction
@@ -44,7 +46,8 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 	/**
 	 * @param dimension
 	 */
-	public AssignmentViewer( final int height ) {
+	public AssignmentViewer( final int height, final MotherMachineGui callbackGui ) {
+		this.gui = callbackGui;
 		this.setBorder( BorderFactory.createEmptyBorder( 0, 0, 0, 0 ) );
 		buildGui( height );
 	}
@@ -60,20 +63,20 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 	 * Builds the user interface.
 	 */
 	private void buildGui( final int height ) {
-		allAssignments = new AssignmentView( height );
-		mappingAssignments = new AssignmentView( height );
-		divisionAssignments = new AssignmentView( height );
-		exitAssignments = new AssignmentView( height );
+		activeAssignments = new AssignmentView( height, gui );
+		inactiveMappingAssignments = new AssignmentView( height, gui );
+		inactiveDivisionAssignments = new AssignmentView( height, gui );
+		inactiveExitAssignments = new AssignmentView( height, gui );
 
-		allAssignments.display( data );
-		mappingAssignments.display( data, GrowthLineTrackingILP.ASSIGNMENT_MAPPING );
-		divisionAssignments.display( data, GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
-		exitAssignments.display( data, GrowthLineTrackingILP.ASSIGNMENT_EXIT );
+		activeAssignments.display( data, true );
+		inactiveMappingAssignments.display( data, false, GrowthLineTrackingILP.ASSIGNMENT_MAPPING );
+		inactiveDivisionAssignments.display( data, false, GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
+		inactiveExitAssignments.display( data, false, GrowthLineTrackingILP.ASSIGNMENT_EXIT );
 
-		this.add( "*", allAssignments );
-		this.add( "M", mappingAssignments );
-		this.add( "D", divisionAssignments );
-		this.add( "E", exitAssignments );
+		this.add( "OPT", activeAssignments );
+		this.add( "M", inactiveMappingAssignments );
+		this.add( "D", inactiveDivisionAssignments );
+		this.add( "E", inactiveExitAssignments );
 	}
 
 	/**
@@ -85,10 +88,10 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 	 */
 	public void display( final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> hashMap ) {
 		this.data = hashMap;
-		allAssignments.setData( data );
-		mappingAssignments.setData( data );
-		divisionAssignments.setData( data );
-		exitAssignments.setData( data );
+		activeAssignments.setData( data, true );
+		inactiveMappingAssignments.setData( data, false );
+		inactiveDivisionAssignments.setData( data, false );
+		inactiveExitAssignments.setData( data, false );
 	}
 
 	/**
@@ -96,14 +99,14 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 	 */
 	@Override
 	public void stateChanged( final ChangeEvent e ) {
-		if ( this.getSelectedComponent().equals( allAssignments ) ) {
-			allAssignments.setData( data );
-		} else if ( this.getSelectedComponent().equals( mappingAssignments ) ) {
-			mappingAssignments.setData( data );
-		} else if ( this.getSelectedComponent().equals( divisionAssignments ) ) {
-			divisionAssignments.setData( data );
-		} else if ( this.getSelectedComponent().equals( exitAssignments ) ) {
-			exitAssignments.setData( data );
+		if ( this.getSelectedComponent().equals( activeAssignments ) ) {
+			activeAssignments.setData( data, true );
+		} else if ( this.getSelectedComponent().equals( inactiveMappingAssignments ) ) {
+			inactiveMappingAssignments.setData( data, false );
+		} else if ( this.getSelectedComponent().equals( inactiveDivisionAssignments ) ) {
+			inactiveDivisionAssignments.setData( data, false );
+		} else if ( this.getSelectedComponent().equals( inactiveExitAssignments ) ) {
+			inactiveExitAssignments.setData( data, false );
 		}
 	}
 

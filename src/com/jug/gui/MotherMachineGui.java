@@ -116,16 +116,12 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 	private JTabbedPane tabsViews;
 	private CountOverviewPanel panelCountingView;
-	private JPanel panelInactiveAssignmentsView;
 	private JPanel panelSegmentationAndAssignmentView;
 	private JPanel panelDetailedDataView;
 	private Plot2DPanel plot;
 
-	private AssignmentViewer leftActiveAssignmentViewer;
-	private AssignmentViewer rightActiveAssignmentViewer;
-
-	private AssignmentViewer leftInactiveAssignmentViewer;
-	private AssignmentViewer rightInactiveAssignmentViewer;
+	private AssignmentViewer leftAssignmentViewer;
+	private AssignmentViewer rightAssignmentViewer;
 
 	private JButton btnOptimize;
 	private JButton btnOptimizeAll;
@@ -196,12 +192,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		tabsViews.addChangeListener( this );
 
 		panelCountingView = new CountOverviewPanel();
-		panelInactiveAssignmentsView = buildInactiveAssignmentsView();
 		panelSegmentationAndAssignmentView = buildSegmentationAndAssignmentView();
 		panelDetailedDataView = buildDetailedDataView();
 
 		tabsViews.add( "Cell Counting", panelCountingView );
-		tabsViews.add( "Inactive Assignments", panelInactiveAssignmentsView );
 		tabsViews.add( "Segm. & Assingments", panelSegmentationAndAssignmentView );
 		tabsViews.add( "Detailed Data View", panelDetailedDataView );
 
@@ -230,7 +224,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		// - - - - - - - - - - - - - - - - - - - - - - - -
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 't' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'g' ), "MMGUI_bindings" );
-		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'q' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'a' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 's' ), "MMGUI_bindings" );
 		this.getInputMap( WHEN_ANCESTOR_OF_FOCUSED_COMPONENT ).put( KeyStroke.getKeyStroke( 'd' ), "MMGUI_bindings" );
@@ -250,15 +243,9 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 					sliderGL.requestFocus();
 					dataToDisplayChanged();
 				}
-				if ( e.getActionCommand().equals( "q" ) ) {
+				if ( e.getActionCommand().equals( "a" ) ) {
 					if ( !tabsViews.getComponent( tabsViews.getSelectedIndex() ).equals( panelCountingView ) ) {
 						tabsViews.setSelectedComponent( panelCountingView );
-					}
-					dataToDisplayChanged();
-				}
-				if ( e.getActionCommand().equals( "a" ) ) {
-					if ( !tabsViews.getComponent( tabsViews.getSelectedIndex() ).equals( panelInactiveAssignmentsView ) ) {
-						tabsViews.setSelectedComponent( panelInactiveAssignmentsView );
 					}
 					dataToDisplayChanged();
 				}
@@ -279,81 +266,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				}
 			}
 		} );
-	}
-
-	/**
-	 * @return
-	 */
-	private JPanel buildInactiveAssignmentsView() {
-		final JPanel panelContent = new JPanel( new FlowLayout( FlowLayout.CENTER, 0, 10 ) );
-
-		JPanel panelVerticalHelper;
-		JPanel panelHorizontalHelper;
-		JLabel labelHelper;
-
-		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
-
-		// --- Left data viewer (t-1) -------------
-
-		panelVerticalHelper = new JPanel( new BorderLayout() );
-		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 0 ) );
-		labelHelper = new JLabel( "t-1" );
-		panelHorizontalHelper.add( labelHelper );
-		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
-		// - - - - - -
-		imgCanvasInactiveLeft = new Viewer2DCanvas( GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
-		panelVerticalHelper.add( imgCanvasInactiveLeft, BorderLayout.CENTER );
-		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 2, 2, 2, 2, Color.GRAY ) );
-		panelVerticalHelper.setBackground( Color.BLACK );
-		panelContent.add( panelVerticalHelper );
-
-		// --- Left assignment viewer (t-1 -> t) -------------
-		panelVerticalHelper = new JPanel( new BorderLayout() );
-		// - - - - - -
-		leftInactiveAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ) );
-		if ( ilp != null )
-			leftInactiveAssignmentViewer.display( ilp.getInactiveRightAssignments( model.getCurrentTime() - 1 ) );
-		panelVerticalHelper.add( leftInactiveAssignmentViewer, BorderLayout.CENTER );
-		panelContent.add( panelVerticalHelper );
-
-		// --- Center data viewer (t) -------------
-
-		panelVerticalHelper = new JPanel( new BorderLayout() );
-		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 0 ) );
-		labelHelper = new JLabel( "t" );
-		panelHorizontalHelper.add( labelHelper );
-		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
-		// - - - - - -
-		imgCanvasInactiveCenter = new Viewer2DCanvas( GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
-		panelVerticalHelper.add( imgCanvasInactiveCenter, BorderLayout.CENTER );
-		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 3, 3, 3, 3, Color.RED ) );
-		panelVerticalHelper.setBackground( Color.BLACK );
-		panelContent.add( panelVerticalHelper );
-
-		// --- Left assignment viewer (t -> t+1) -------------
-		panelVerticalHelper = new JPanel( new BorderLayout() );
-		// - - - - - -
-		rightInactiveAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ) );
-		if ( ilp != null )
-			rightInactiveAssignmentViewer.display( ilp.getInactiveRightAssignments( model.getCurrentTime() ) );
-		panelVerticalHelper.add( rightInactiveAssignmentViewer, BorderLayout.CENTER );
-		panelContent.add( panelVerticalHelper );
-
-		// ---  Right data viewer (t+1) -------------
-
-		panelVerticalHelper = new JPanel( new BorderLayout() );
-		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.CENTER, 5, 0 ) );
-		labelHelper = new JLabel( "t+1" );
-		panelHorizontalHelper.add( labelHelper );
-		panelVerticalHelper.add( panelHorizontalHelper, BorderLayout.NORTH );
-		// - - - - - -
-		imgCanvasInactiveRight = new Viewer2DCanvas( GL_WIDTH_TO_SHOW, ( int ) model.mm.getImgRaw().dimension( 1 ) );
-		panelVerticalHelper.add( imgCanvasInactiveRight, BorderLayout.CENTER );
-		panelVerticalHelper.setBorder( BorderFactory.createMatteBorder( 2, 2, 2, 2, Color.GRAY ) );
-		panelVerticalHelper.setBackground( Color.BLACK );
-		panelContent.add( panelVerticalHelper );
-
-		return panelContent;
 	}
 
 	/**
@@ -386,10 +298,10 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		// --- Left assignment viewer (t-1 -> t) -------------
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		// - - - - - -
-		leftActiveAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		leftAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ), this );
 		if ( ilp != null )
-			leftActiveAssignmentViewer.display( ilp.getOptimalRightAssignments( model.getCurrentTime() - 1 ) );
-		panelVerticalHelper.add( leftActiveAssignmentViewer, BorderLayout.CENTER );
+			leftAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( model.getCurrentTime() - 1 ) );
+		panelVerticalHelper.add( leftAssignmentViewer, BorderLayout.CENTER );
 		panelContent.add( panelVerticalHelper );
 
 		// --- Center data viewer (t) -------------
@@ -406,13 +318,13 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		panelVerticalHelper.setBackground( Color.BLACK );
 		panelContent.add( panelVerticalHelper );
 
-		// --- Left assignment viewer (t -> t+1) -------------
+		// --- Right assignment viewer (t -> t+1) -------------
 		panelVerticalHelper = new JPanel( new BorderLayout() );
 		// - - - - - -
-		rightActiveAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ) );
+		rightAssignmentViewer = new AssignmentViewer( ( int ) model.mm.getImgRaw().dimension( 1 ), this );
 		if ( ilp != null )
-			rightActiveAssignmentViewer.display( ilp.getOptimalRightAssignments( model.getCurrentTime() ) );
-		panelVerticalHelper.add( rightActiveAssignmentViewer, BorderLayout.CENTER );
+			rightAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( model.getCurrentTime() ) );
+		panelVerticalHelper.add( rightAssignmentViewer, BorderLayout.CENTER );
 		panelContent.add( panelVerticalHelper );
 
 		// ---  Right data viewer (t+1) -------------
@@ -549,7 +461,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * View.offset according to the current offset settings. Note: this method
 	 * does not and should not invoke a repaint!
 	 */
-	private void dataToDisplayChanged() {
+	public void dataToDisplayChanged() {
 
 		final GrowthLineTrackingILP ilp = model.getCurrentGL().getIlp();
 
@@ -560,49 +472,6 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 				panelCountingView.showData( model.getCurrentGL() );
 			} else {
 				panelCountingView.showData( null );
-			}
-		}
-
-		// IF 'INACTIVE ASSIGNMENTS' VIEW IS ACTIVE
-		// ========================================
-		if ( tabsViews.getComponent( tabsViews.getSelectedIndex() ).equals( panelInactiveAssignmentsView ) ) {
-			// - - t-1 - - - - - -
-
-			if ( model.getCurrentGLFsPredecessor() != null ) {
-				final GrowthLineFrame glf = model.getCurrentGLFsPredecessor();
-				viewImgLeftInactive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
-				imgCanvasInactiveLeft.setScreenImage( glf, viewImgLeftInactive );
-			} else {
-				// show something empty
-				imgCanvasInactiveLeft.setEmptyScreenImage();
-			}
-
-			// - - t+1 - - - - - -
-
-			if ( model.getCurrentGLFsSuccessor() != null ) {
-				final GrowthLineFrame glf = model.getCurrentGLFsSuccessor();
-				viewImgRightInactive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
-				imgCanvasInactiveRight.setScreenImage( glf, viewImgRightInactive );
-			} else {
-				// show something empty
-				imgCanvasInactiveRight.setEmptyScreenImage();
-			}
-
-			// - -  t  - - - - - -
-
-			final GrowthLineFrame glf = model.getCurrentGLF();
-			viewImgCenterInactive = Views.offset( Views.hyperSlice( model.mm.getImgRaw(), 2, glf.getOffsetZ() ), glf.getOffsetX() - GL_WIDTH_TO_SHOW / 2, glf.getOffsetY() );
-			imgCanvasInactiveCenter.setScreenImage( glf, viewImgCenterInactive );
-
-			// - -  assignment-views  - - - - - -
-
-			if ( ilp != null ) {
-				final int t = sliderTime.getValue();
-				leftInactiveAssignmentViewer.display( ilp.getInactiveRightAssignments( t - 1 ) );
-				rightInactiveAssignmentViewer.display( ilp.getInactiveRightAssignments( t ) );
-			} else {
-				leftInactiveAssignmentViewer.display( null );
-				rightInactiveAssignmentViewer.display( null );
 			}
 		}
 
@@ -641,11 +510,19 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 
 			if ( ilp != null ) {
 				final int t = sliderTime.getValue();
-				leftActiveAssignmentViewer.display( ilp.getOptimalRightAssignments( t - 1 ) );
-				rightActiveAssignmentViewer.display( ilp.getOptimalRightAssignments( t ) );
+				if ( t == 0 ) {
+					leftAssignmentViewer.display( null );
+				} else {
+					leftAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( t - 1 ) );
+				}
+				if ( t == sliderTime.getMaximum() ) {
+					rightAssignmentViewer.display( null );
+				} else {
+					rightAssignmentViewer.display( ilp.getAllCompatibleRightAssignments( t ) );
+				}
 			} else {
-				leftActiveAssignmentViewer.display( null );
-				rightActiveAssignmentViewer.display( null );
+				leftAssignmentViewer.display( null );
+				rightAssignmentViewer.display( null );
 			}
 		}
 

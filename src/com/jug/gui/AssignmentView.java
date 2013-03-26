@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import javax.swing.event.MouseInputListener;
 
 import net.imglib2.algorithm.componenttree.ComponentTreeNode;
@@ -37,6 +38,23 @@ import com.jug.util.ComponentTreeUtils;
  * @author jug
  */
 public class AssignmentView extends JComponent implements MouseInputListener {
+
+	/**
+	 *
+	 */
+	private static final int DISPLAY_COSTS_ABSOLUTE_X = 10;
+
+	/**
+	 *
+	 */
+	private static final int LINEHEIGHT_DISPLAY_COSTS = 20;
+
+	/**
+	 *
+	 */
+	private static final int OFFSET_DISPLAY_COSTS = 10;
+
+	private static final int HEIGHT_OFFSET = 35;
 
 	// -------------------------------------------------------------------------------------
 	// statics
@@ -76,12 +94,15 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 
 	private boolean doAddAsGroundTruth;
 
+	private MotherMachineGui gui;
+
 	// -------------------------------------------------------------------------------------
 	// construction
 	// -------------------------------------------------------------------------------------
-	public AssignmentView( final int height ) {
+	public AssignmentView( final int height, final MotherMachineGui callbackGui ) {
 		this( height, -GrowthLineTrackingILP.CUTOFF_COST, GrowthLineTrackingILP.CUTOFF_COST );
 		this.doFilterDataByCost = false;
+		this.gui = callbackGui;
 	}
 
 	/**
@@ -93,7 +114,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		this.offsetY = MotherMachine.GL_OFFSET_TOP;
 		this.width = 90;
 		this.height = height;
-		this.setPreferredSize( new Dimension( width, height - 20 ) );
+		this.setPreferredSize( new Dimension( width, height - HEIGHT_OFFSET ) );
 
 		this.addMouseListener( this );
 		this.addMouseMotionListener( this );
@@ -148,10 +169,10 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 *            a <code>HashMap</code> containing pairs of segmentation
 	 *            hypothesis at some time-point t and assignments towards t+1.
 	 */
-	public void display( final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data ) {
+	public void display( final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data, final boolean doFilterActive ) {
 		doFilterDataByType = false;
 		doFilterDataByCost = false;
-		this.data = data;
+		setData( data, doFilterActive );
 
 		this.repaint();
 	}
@@ -164,9 +185,9 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 *            a <code>HashMap</code> containing pairs of segmentation
 	 *            hypothesis at some time-point t and assignments towards t+1.
 	 */
-	public void display( final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data, final double minCostToShow, final double maxCostToShow ) {
+	public void display( final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data, final boolean doFilterActive, final double minCostToShow, final double maxCostToShow ) {
 		doFilterDataByType = false;
-		this.data = data;
+		setData( data, doFilterActive );
 
 		doFilterDataByCost = true;
 		this.setCostFilterMin( minCostToShow );
@@ -187,11 +208,11 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 *            <code>GrowthLineTrackingILP.ASSIGNMENT_DIVISION</code>, or
 	 *            <code>GrowthLineTrackingILP.ASSIGNMENT_EXIT</code>.
 	 */
-	public void display( final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data, final int typeToFilter ) {
+	public void display( final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data, final boolean doFilterActive, final int typeToFilter ) {
 		assert ( typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_EXIT ||
 				 typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ||
 				 typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
-		this.display( data, typeToFilter, this.getCostFilterMin(), this.getCostFilterMax() );
+		this.display( data, doFilterActive, typeToFilter, this.getCostFilterMin(), this.getCostFilterMax() );
 	}
 
 	/**
@@ -206,7 +227,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 *            <code>GrowthLineTrackingILP.ASSIGNMENT_DIVISION</code>, or
 	 *            <code>GrowthLineTrackingILP.ASSIGNMENT_EXIT</code>.
 	 */
-	public void display( final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data, final int typeToFilter, final double minCostToShow, final double maxCostToShow ) {
+	public void display( final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data, final boolean doFilterActive, final int typeToFilter, final double minCostToShow, final double maxCostToShow ) {
 		assert ( typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_EXIT ||
 				 typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ||
 				 typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
@@ -216,7 +237,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		doFilterDataByCost = true;
 		this.setCostFilterMin( minCostToShow );
 		this.setCostFilterMax( maxCostToShow );
-		this.data = data;
+		setData( data, doFilterActive );
 
 		this.repaint();
 	}
@@ -329,6 +350,12 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 			} else if ( this.doAddAsGroundTruth ) {
 				this.doAddAsGroundTruth = false;
 				ma.setGroundTruth( !ma.isGroundTruth() );
+				SwingUtilities.invokeLater( new Runnable() {
+					@Override
+					public void run() {
+						gui.dataToDisplayChanged();
+					}
+				} );
 			} else {
 				// otherwise we show the costs by hovering over
 				try {
@@ -338,7 +365,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 					} else {
 						g2.setPaint( new Color( 25 / 256f, 65 / 256f, 165 / 256f, 1.0f ).darker().darker() );
 					}
-					g2.drawString( String.format( "c=%.4f", cost ), 10, this.mousePosY - 10 - this.currentCostLine * 20 );
+					g2.drawString( String.format( "c=%.4f", cost ), DISPLAY_COSTS_ABSOLUTE_X, this.mousePosY - OFFSET_DISPLAY_COSTS - this.currentCostLine * LINEHEIGHT_DISPLAY_COSTS );
 					this.currentCostLine++;
 				}
 				catch ( final GRBException e ) {
@@ -425,7 +452,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 					} else {
 						g2.setPaint( new Color( 250 / 256f, 150 / 256f, 40 / 256f, 1.0f ).darker().darker() );
 					}
-					g2.drawString( String.format( "c=%.4f", cost ), 10, this.mousePosY - 10 - this.currentCostLine * 20 );
+					g2.drawString( String.format( "c=%.4f", cost ), DISPLAY_COSTS_ABSOLUTE_X, this.mousePosY - OFFSET_DISPLAY_COSTS - this.currentCostLine * LINEHEIGHT_DISPLAY_COSTS );
 					this.currentCostLine++;
 				}
 				catch ( final GRBException e ) {
@@ -491,9 +518,28 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 * Sets new data without modifying the filter setting.
 	 *
 	 * @param data
+	 * @param doFilterActive
 	 */
-	public void setData( final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data ) {
-		this.data = data;
+	public void setData( final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data, final boolean doFilterActive ) {
+		if ( data != null && doFilterActive ) {
+			this.data = new HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >>();
+			for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hypo : data.keySet() ) {
+				final Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > activeSet = new HashSet< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >();
+				for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> ass : data.get( hypo ) ) {
+					try {
+						if ( ass.isChoosen() || ass.isGroundTruth() ) {
+							activeSet.add( ass );
+						}
+					}
+					catch ( final GRBException e ) {
+						e.printStackTrace();
+					}
+					this.data.put( hypo, activeSet );
+				}
+			}
+		} else {
+			this.data = data;
+		}
 		this.repaint();
 	}
 
@@ -531,7 +577,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 			this.filteredAssignments.clear();
 		}
 
-		// shift-click to filter some assignments
+		// alt-click to filter some assignments
 		if ( e.isAltDown() && e.getButton() == MouseEvent.BUTTON1 ) {
 			this.doAddAsGroundTruth = true;
 		}
