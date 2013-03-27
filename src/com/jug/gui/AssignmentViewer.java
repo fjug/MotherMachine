@@ -35,6 +35,7 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 	private AssignmentView inactiveMappingAssignments;
 	private AssignmentView inactiveDivisionAssignments;
 	private AssignmentView inactiveExitAssignments;
+	private AssignmentView fixedAssignments;
 
 	private HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data;
 
@@ -67,16 +68,20 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 		inactiveMappingAssignments = new AssignmentView( height, gui );
 		inactiveDivisionAssignments = new AssignmentView( height, gui );
 		inactiveExitAssignments = new AssignmentView( height, gui );
+		fixedAssignments = new AssignmentView( height, gui );
 
 		activeAssignments.display( data, true );
 		inactiveMappingAssignments.display( data, false, GrowthLineTrackingILP.ASSIGNMENT_MAPPING );
 		inactiveDivisionAssignments.display( data, false, GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
 		inactiveExitAssignments.display( data, false, GrowthLineTrackingILP.ASSIGNMENT_EXIT );
+		fixedAssignments.display( data, false );
+		fixedAssignments.setFilterGroundTruth( true );
 
 		this.add( "OPT", activeAssignments );
 		this.add( "M", inactiveMappingAssignments );
 		this.add( "D", inactiveDivisionAssignments );
 		this.add( "E", inactiveExitAssignments );
+		this.add( "GT", fixedAssignments );
 	}
 
 	/**
@@ -92,6 +97,7 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 		inactiveMappingAssignments.setData( data, false );
 		inactiveDivisionAssignments.setData( data, false );
 		inactiveExitAssignments.setData( data, false );
+		fixedAssignments.setData( data, false );
 	}
 
 	/**
@@ -107,6 +113,8 @@ public class AssignmentViewer extends JTabbedPane implements ChangeListener {
 			inactiveDivisionAssignments.setData( data, false );
 		} else if ( this.getSelectedComponent().equals( inactiveExitAssignments ) ) {
 			inactiveExitAssignments.setData( data, false );
+		} else {
+			fixedAssignments.setData( data, false );
 		}
 	}
 

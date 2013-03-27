@@ -28,6 +28,7 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	private GRBVar ilpVar;
 
 	private boolean isGroundTruth = false;
+	private boolean isGroundUntruth = false;
 	private GRBConstr constrGroundTruth;
 
 	/**
@@ -121,14 +122,39 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	}
 
 	/**
+	 * @return
+	 */
+	public boolean isGroundUntruth() {
+		return isGroundUntruth;
+	}
+
+	/**
 	 *
 	 */
 	public void setGroundTruth( final boolean groundTruth ) {
 		this.isGroundTruth = groundTruth;
+		this.isGroundUntruth = false;
+		addOrRemoveGroundTroothConstraint( groundTruth );
+		reoptimize();
+	}
+
+	/**
+	 *
+	 */
+	public void setGroundUntruth( final boolean groundUntruth ) {
+		this.isGroundTruth = false;
+		this.isGroundUntruth = groundUntruth;
+		addOrRemoveGroundTroothConstraint( groundUntruth );
+		reoptimize();
+	}
+
+	/**
+	 * @throws GRBException
+	 */
+	private void reoptimize() {
 		try {
-			addOrRemoveGroundTroothConstraint( groundTruth );
 			model.update();
-			System.out.print( "Running ILP with new ground-truth knowledge..." );
+			System.out.print( "Running ILP with new ground-(un)truth knowledge..." );
 			model.optimize();
 			System.out.println( " ...done!" );
 		}
@@ -140,13 +166,20 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	/**
 	 *
 	 */
-	private void addOrRemoveGroundTroothConstraint( final boolean add ) throws GRBException {
-		if ( add ) {
-			final GRBLinExpr exprGroundTruth = new GRBLinExpr();
-			exprGroundTruth.addTerm( 1.0, getGRBVar() );
-			constrGroundTruth = model.addConstr( exprGroundTruth, GRB.EQUAL, 1.0, "GroundTruthConstraint_" + getGRBVar().toString() );
-		} else {
-			model.remove( constrGroundTruth );
+	private void addOrRemoveGroundTroothConstraint( final boolean add ) {
+		try {
+			if ( add ) {
+				final double value = ( this.isGroundUntruth ) ? 0.0 : 1.0;
+
+				final GRBLinExpr exprGroundTruth = new GRBLinExpr();
+				exprGroundTruth.addTerm( 1.0, getGRBVar() );
+				constrGroundTruth = model.addConstr( exprGroundTruth, GRB.EQUAL, value, "GroundTruthConstraint_" + getGRBVar().toString() );
+			} else {
+				model.remove( constrGroundTruth );
+			}
+		}
+		catch ( final GRBException e ) {
+			e.printStackTrace();
 		}
 	}
 }

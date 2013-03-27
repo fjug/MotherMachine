@@ -93,8 +93,12 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	private double dragStepWeight = 0;
 
 	private boolean doAddAsGroundTruth;
+	private boolean doAddAsGroundUntruth;
 
 	private MotherMachineGui gui;
+
+	private boolean doFilterGroundTruth = false;
+
 
 	// -------------------------------------------------------------------------------------
 	// construction
@@ -295,6 +299,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		// Just return in case the given component is in the
 		// set of filtered assignments.
 		if ( this.doFilterDataByIdentity && this.filteredAssignments.contains( assignment ) ) { return; }
+		if ( this.doFilterGroundTruth && !( assignment.isGroundTruth() || assignment.isGroundUntruth() ) ) { return; }
 
 		final int type = assignment.getType();
 
@@ -356,12 +361,24 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 						gui.dataToDisplayChanged();
 					}
 				} );
+			} else if ( this.doAddAsGroundUntruth ) {
+				this.doAddAsGroundUntruth = false;
+				ma.setGroundUntruth( !ma.isGroundUntruth() );
+				SwingUtilities.invokeLater( new Runnable() {
+
+					@Override
+					public void run() {
+						gui.dataToDisplayChanged();
+					}
+				} );
 			} else {
 				// otherwise we show the costs by hovering over
 				try {
 					final double cost = ma.getCost();
 					if ( ma.isGroundTruth() ) {
 						g2.setPaint( Color.GREEN.darker() );
+					} else if ( ma.isGroundUntruth() ) {
+						g2.setPaint( Color.RED.darker() );
 					} else {
 						g2.setPaint( new Color( 25 / 256f, 65 / 256f, 165 / 256f, 1.0f ).darker().darker() );
 					}
@@ -378,12 +395,17 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		g2.setStroke( new BasicStroke( 1 ) );
 		if ( ma.isGroundTruth() ) {
 			g2.setPaint( new Color( 160 / 256f, 200 / 256f, 180 / 256f, 0.6f ) );
+		} else if ( ma.isGroundUntruth() ) {
+			g2.setPaint( new Color( 256 / 256f, 50 / 256f, 50 / 256f, 0.6f ) );
 		} else {
 			g2.setPaint( new Color( 25 / 256f, 65 / 256f, 165 / 256f, 0.2f ) );
 		}
 		g2.fill( polygon );
 		if ( ma.isGroundTruth() ) {
 			g2.setPaint( Color.GREEN.darker() );
+			g2.setStroke( new BasicStroke( 3 ) );
+		} else if ( ma.isGroundUntruth() ) {
+			g2.setPaint( Color.RED.darker() );
 			g2.setStroke( new BasicStroke( 3 ) );
 		} else {
 			g2.setPaint( new Color( 25 / 256f, 65 / 256f, 165 / 256f, 1.0f ) );
@@ -443,12 +465,31 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 			} else if ( this.doAddAsGroundTruth ) {
 				this.doAddAsGroundTruth = false;
 				da.setGroundTruth( !da.isGroundTruth() );
+				SwingUtilities.invokeLater( new Runnable() {
+
+					@Override
+					public void run() {
+						gui.dataToDisplayChanged();
+					}
+				} );
+			} else if ( this.doAddAsGroundUntruth ) {
+				this.doAddAsGroundUntruth = false;
+				da.setGroundUntruth( !da.isGroundUntruth() );
+				SwingUtilities.invokeLater( new Runnable() {
+
+					@Override
+					public void run() {
+						gui.dataToDisplayChanged();
+					}
+				} );
 			} else {
 				// otherwise we show the costs by hovering over
 				try {
 					final double cost = da.getCost();
 					if ( da.isGroundTruth() ) {
 						g2.setPaint( Color.GREEN.darker() );
+					} else if ( da.isGroundUntruth() ) {
+						g2.setPaint( Color.RED.darker() );
 					} else {
 						g2.setPaint( new Color( 250 / 256f, 150 / 256f, 40 / 256f, 1.0f ).darker().darker() );
 					}
@@ -465,12 +506,17 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		g2.setStroke( new BasicStroke( 1 ) );
 		if ( da.isGroundTruth() ) {
 			g2.setPaint( new Color( 160 / 256f, 200 / 256f, 180 / 256f, 0.6f ) );
+		} else if ( da.isGroundUntruth() ) {
+			g2.setPaint( new Color( 256 / 256f, 50 / 256f, 50 / 256f, 0.6f ) );
 		} else {
 			g2.setPaint( new Color( 250 / 256f, 150 / 256f, 40 / 256f, 0.2f ) );
 		}
 		g2.fill( polygon );
 		if ( da.isGroundTruth() ) {
 			g2.setPaint( Color.GREEN.darker() );
+			g2.setStroke( new BasicStroke( 3 ) );
+		} else if ( da.isGroundUntruth() ) {
+			g2.setPaint( Color.RED.darker() );
 			g2.setStroke( new BasicStroke( 3 ) );
 		} else {
 			g2.setPaint( new Color( 250 / 256f, 150 / 256f, 40 / 256f, 1.0f ) );
@@ -496,22 +542,63 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		final int y1 = offsetY + limits.a.intValue();
 		final int y2 = y1 + limits.b.intValue() - limits.a.intValue();
 
-		g2.setPaint( new Color( 1f, 0f, 0f, 0.2f ) );
-		g2.fillRect( x1, y1, x2 - x1, y2 - y1 );
-		g2.setPaint( Color.RED );
-		g2.drawRect( x1, y1, x2 - x1, y2 - y1 );
-
-		// System.out.println( String.format( "(%d,%d) -- (%d,%d,%d,%d)", this.mousePosX, this.mousePosY, x1, y1, x2, y2 ) );
 		if ( !this.isDragging && this.isMouseOver && this.mousePosX > x1 && this.mousePosX < x2 && this.mousePosY > y1 && this.mousePosY < y2 ) {
-			try {
-				final double cost = ea.getCost();
-				g2.drawString( String.format( "c=%.4f", cost ), 10, this.mousePosY - 10 - this.currentCostLine * 20 );
-				this.currentCostLine++;
-			}
-			catch ( final GRBException e ) {
-				e.printStackTrace();
+			if ( doAddToFilter ) {
+				// this case happens after shift-click
+				this.filteredAssignments.add( ea );
+			} else if ( this.doAddAsGroundTruth ) {
+				this.doAddAsGroundTruth = false;
+				ea.setGroundTruth( !ea.isGroundTruth() );
+				SwingUtilities.invokeLater( new Runnable() {
+
+					@Override
+					public void run() {
+						gui.dataToDisplayChanged();
+					}
+				} );
+			} else if ( this.doAddAsGroundUntruth ) {
+				this.doAddAsGroundUntruth = false;
+				ea.setGroundUntruth( !ea.isGroundUntruth() );
+				SwingUtilities.invokeLater( new Runnable() {
+
+					@Override
+					public void run() {
+						gui.dataToDisplayChanged();
+					}
+				} );
+			} else {
+				// otherwise we show the costs by hovering over
+				try {
+					final double cost = ea.getCost();
+					g2.drawString( String.format( "c=%.4f", cost ), 10, this.mousePosY - 10 - this.currentCostLine * 20 );
+					this.currentCostLine++;
+				}
+				catch ( final GRBException e ) {
+					e.printStackTrace();
+				}
 			}
 		}
+
+		// draw it!
+		g2.setStroke( new BasicStroke( 1 ) );
+		if ( ea.isGroundTruth() ) {
+			g2.setPaint( new Color( 160 / 256f, 200 / 256f, 180 / 256f, 0.6f ) );
+		} else if ( ea.isGroundUntruth() ) {
+			g2.setPaint( new Color( 256 / 256f, 50 / 256f, 50 / 256f, 0.6f ) );
+		} else {
+			g2.setPaint( new Color( 1f, 0f, 0f, 0.2f ) );
+		}
+		g2.fillRect( x1, y1, x2 - x1, y2 - y1 );
+		if ( ea.isGroundTruth() ) {
+			g2.setPaint( Color.GREEN.darker() );
+			g2.setStroke( new BasicStroke( 3 ) );
+		} else if ( ea.isGroundUntruth() ) {
+			g2.setPaint( Color.RED.darker() );
+			g2.setStroke( new BasicStroke( 3 ) );
+		} else {
+			g2.setPaint( Color.RED );
+		}
+		g2.drawRect( x1, y1, x2 - x1, y2 - y1 );
 	}
 
 	/**
@@ -566,20 +653,24 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		}
 
 		// ctrl-click to filter some assignments
-		if ( e.isControlDown() && e.getButton() == MouseEvent.BUTTON1 ) {
+		if ( !e.isAltDown() && e.isControlDown() && e.getButton() == MouseEvent.BUTTON1 ) {
 			this.doFilterDataByIdentity = true;
 			this.doAddToFilter = true; // when repainting component next time...
 		}
 
 		// shift-click to filter some assignments
-		if ( e.isShiftDown() && e.getButton() == MouseEvent.BUTTON1 ) {
+		if ( !e.isAltDown() && e.isShiftDown() && e.getButton() == MouseEvent.BUTTON1 ) {
 			this.doFilterDataByIdentity = false;
 			this.filteredAssignments.clear();
 		}
 
 		// alt-click to filter some assignments
 		if ( e.isAltDown() && e.getButton() == MouseEvent.BUTTON1 ) {
-			this.doAddAsGroundTruth = true;
+			if ( e.isControlDown() ) {
+				this.doAddAsGroundUntruth = true;
+			} else {
+				this.doAddAsGroundTruth = true;
+			}
 		}
 
 		repaint();
@@ -649,6 +740,17 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		this.mousePosX = e.getX();
 		this.mousePosY = e.getY();
 		this.repaint();
+	}
+
+	/**
+	 * If set, this filter shows only assignments that are flagged as being
+	 * ground-truth or ground-untruth.
+	 *
+	 * @param doIt
+	 *            indicate whether of not to set this filter active.
+	 */
+	public void setFilterGroundTruth( final boolean doIt ) {
+		this.doFilterGroundTruth = doIt;
 	}
 
 }
