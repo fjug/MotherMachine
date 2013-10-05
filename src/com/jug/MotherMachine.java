@@ -258,7 +258,7 @@ public class MotherMachine {
 			final MotherMachineGui gui = new MotherMachineGui( new MotherMachineModel( main ) );
 			gui.setVisible( true );
 
-			//		main.ij = new ImageJ();
+			main.ij = new ImageJ();
 			guiFrame.add( gui );
 			guiFrame.setSize( GUI_WIDTH, GUI_HEIGHT );
 			guiFrame.setLocation( GUI_POS_X, GUI_POS_Y );

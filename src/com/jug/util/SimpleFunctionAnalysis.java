@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
 
 /**
  * @author jug
@@ -127,11 +127,11 @@ public class SimpleFunctionAnalysis {
 		return ret;
 	}
 
-	public static Pair< Integer, Double > getMin( final double[] fktValues ) {
+	public static ValuePair< Integer, Double > getMin( final double[] fktValues ) {
 		return getMin( fktValues, 0, fktValues.length - 1 );
 	}
 
-	public static Pair< Integer, Double > getMin( final double[] fktValues, final int from, final int to ) {
+	public static ValuePair< Integer, Double > getMin( final double[] fktValues, final int from, final int to ) {
 		int minPos = from;
 		double min = fktValues[ from ];
 		for ( int i = from; i <= to; i++ ) {
@@ -140,14 +140,14 @@ public class SimpleFunctionAnalysis {
 				min = fktValues[ i ];
 			}
 		}
-		return new Pair< Integer, Double >( Integer.valueOf( minPos ), Double.valueOf( min ) );
+		return new ValuePair< Integer, Double >( Integer.valueOf( minPos ), Double.valueOf( min ) );
 	}
 
-	public static Pair< Integer, Double > getMax( final double[] fktValues ) {
+	public static ValuePair< Integer, Double > getMax( final double[] fktValues ) {
 		return getMax( fktValues, 0, fktValues.length - 1 );
 	}
 
-	public static Pair< Integer, Double > getMax( final double[] fktValues, final int from, final int to ) {
+	public static ValuePair< Integer, Double > getMax( final double[] fktValues, final int from, final int to ) {
 		int maxPos = from;
 		double max = fktValues[ from ];
 		for ( int i = from; i <= to; i++ ) {
@@ -156,39 +156,39 @@ public class SimpleFunctionAnalysis {
 				max = fktValues[ i ];
 			}
 		}
-		return new Pair< Integer, Double >( Integer.valueOf( maxPos ), Double.valueOf( max ) );
+		return new ValuePair< Integer, Double >( Integer.valueOf( maxPos ), Double.valueOf( max ) );
 	}
 
-	public static Pair< Integer, Double > getLefthandLocalMin( final double[] fktValues, final int idx ) {
+	public static ValuePair< Integer, Double > getLefthandLocalMin( final double[] fktValues, final int idx ) {
 		int i = idx;
 		while ( i > 0 && fktValues[ i ] > fktValues[ i - 1 ] ) {
 			i--;
 		}
-		return new Pair< Integer, Double >( Integer.valueOf( i ), Double.valueOf( fktValues[ i ] ) );
+		return new ValuePair< Integer, Double >( Integer.valueOf( i ), Double.valueOf( fktValues[ i ] ) );
 	}
 
-	public static Pair< Integer, Double > getLefthandLocalMax( final double[] fktValues, final int idx ) {
+	public static ValuePair< Integer, Double > getLefthandLocalMax( final double[] fktValues, final int idx ) {
 		int i = idx;
 		while ( i > 0 && fktValues[ i ] <= fktValues[ i - 1 ] ) {
 			i--;
 		}
-		return new Pair< Integer, Double >( Integer.valueOf( i ), Double.valueOf( fktValues[ i ] ) );
+		return new ValuePair< Integer, Double >( Integer.valueOf( i ), Double.valueOf( fktValues[ i ] ) );
 	}
 
-	public static Pair< Integer, Double > getRighthandLocalMin( final double[] fktValues, final int idx ) {
+	public static ValuePair< Integer, Double > getRighthandLocalMin( final double[] fktValues, final int idx ) {
 		int i = idx;
 		while ( i + 1 < fktValues.length && fktValues[ i + 1 ] < fktValues[ i ] ) {
 			i++;
 		}
-		return new Pair< Integer, Double >( Integer.valueOf( i ), Double.valueOf( fktValues[ i ] ) );
+		return new ValuePair< Integer, Double >( Integer.valueOf( i ), Double.valueOf( fktValues[ i ] ) );
 	}
 
-	public static Pair< Integer, Double > getRighthandLocalMax( final double[] fktValues, final int idx ) {
+	public static ValuePair< Integer, Double > getRighthandLocalMax( final double[] fktValues, final int idx ) {
 		int i = idx;
 		while ( i + 1 < fktValues.length && fktValues[ i + 1 ] >= fktValues[ i ] ) {
 			i++;
 		}
-		return new Pair< Integer, Double >( Integer.valueOf( i ), Double.valueOf( fktValues[ i ] ) );
+		return new ValuePair< Integer, Double >( Integer.valueOf( i ), Double.valueOf( fktValues[ i ] ) );
 	}
 
 	public static double[] normalizeDoubleArray( final double[] array, final double min, final double max ) {
@@ -409,7 +409,7 @@ public class SimpleFunctionAnalysis {
 	 * @param fkt
 	 * @return
 	 */
-	public static Pair< Integer, Integer > getHighestMonotoneIncreasingSegment( final double[] fkt, final int i, final int j ) {
+	public static ValuePair< Integer, Integer > getHighestMonotoneIncreasingSegment( final double[] fkt, final int i, final int j ) {
 		int idxStart = i;
 		int idxEnd = j;
 
@@ -433,7 +433,7 @@ public class SimpleFunctionAnalysis {
 			idxEnd = j;
 		}
 
-		return new Pair< Integer, Integer >( new Integer( idxStart ), new Integer( idxEnd ) );
+		return new ValuePair< Integer, Integer >( new Integer( idxStart ), new Integer( idxEnd ) );
 	}
 
 	/**
@@ -442,7 +442,7 @@ public class SimpleFunctionAnalysis {
 	 * @param fkt
 	 * @return
 	 */
-	public static Pair< Integer, Integer > getHighestMonotoneDecreasingSegment( final double[] fkt, final int i, final int j ) {
+	public static ValuePair< Integer, Integer > getHighestMonotoneDecreasingSegment( final double[] fkt, final int i, final int j ) {
 		final double[] inverseFkt = SimpleFunctionAnalysis.flipSign( fkt );
 		return getHighestMonotoneIncreasingSegment( inverseFkt, i, j );
 	}

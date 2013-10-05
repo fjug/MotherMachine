@@ -8,10 +8,11 @@ import java.util.Iterator;
 import java.util.List;
 
 import net.imglib2.Localizable;
+import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.ComponentTree;
 import net.imglib2.algorithm.componenttree.ComponentTreeNode;
 import net.imglib2.type.numeric.real.DoubleType;
-import net.imglib2.util.Pair;
+import net.imglib2.util.ValuePair;
 
 /**
  * @author jug
@@ -55,7 +56,7 @@ public class ComponentTreeUtils {
 	public static boolean isAbove( final ComponentTreeNode< DoubleType, ? > candidate, final ComponentTreeNode< DoubleType, ? > reference ) {
 		final Pair< Integer, Integer > candMinMax = getTreeNodeInterval( candidate );
 		final Pair< Integer, Integer > refMinMax = getTreeNodeInterval( reference );
-		return candMinMax.b.intValue() < refMinMax.a.intValue();
+		return candMinMax.getB().intValue() < refMinMax.getA().intValue();
 	}
 
 	/**
@@ -66,7 +67,7 @@ public class ComponentTreeUtils {
 	public static boolean isBelow( final ComponentTreeNode< DoubleType, ? > candidate, final ComponentTreeNode< DoubleType, ? > reference ) {
 		final Pair< Integer, Integer > candMinMax = getTreeNodeInterval( candidate );
 		final Pair< Integer, Integer > refMinMax = getTreeNodeInterval( reference );
-		return candMinMax.a.intValue() > refMinMax.b.intValue();
+		return candMinMax.getA().intValue() > refMinMax.getB().intValue();
 	}
 
 	/**
@@ -91,7 +92,7 @@ public class ComponentTreeUtils {
 			min = Math.min( min, pos );
 			max = Math.max( max, pos );
 		}
-		return new Pair< Integer, Integer >( new Integer( min ), new Integer( max ) );
+		return new ValuePair< Integer, Integer >( new Integer( min ), new Integer( max ) );
 	}
 
 	// public static double[] getFunctionValues( final ComponentTreeNode<

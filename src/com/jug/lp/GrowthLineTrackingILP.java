@@ -16,10 +16,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import net.imglib2.Pair;
 import net.imglib2.algorithm.componenttree.ComponentTree;
 import net.imglib2.algorithm.componenttree.ComponentTreeNode;
 import net.imglib2.type.numeric.real.DoubleType;
-import net.imglib2.util.Pair;
 
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
@@ -340,8 +340,8 @@ public class GrowthLineTrackingILP {
 		final Pair< Integer, Integer > intervalFrom = ComponentTreeUtils.getTreeNodeInterval( from.getWrappedHypothesis() );
 		final Pair< Integer, Integer > intervalTo = ComponentTreeUtils.getTreeNodeInterval( to.getWrappedHypothesis() );
 
-		final double oldPos = 0.5 * ( intervalFrom.b.intValue() + intervalFrom.a.intValue() );
-		final double newPos = 0.5 * ( intervalTo.b.intValue() + intervalTo.a.intValue() );
+		final double oldPos = 0.5 * ( intervalFrom.getB().intValue() + intervalFrom.getA().intValue() );
+		final double newPos = 0.5 * ( intervalTo.getB().intValue() + intervalTo.getA().intValue() );
 
 		final double glLength = gl.get( 0 ).size();
 
@@ -436,8 +436,8 @@ public class GrowthLineTrackingILP {
 		final Pair< Integer, Integer > intervalToU = ComponentTreeUtils.getTreeNodeInterval( toUpper.getWrappedHypothesis() );
 		final Pair< Integer, Integer > intervalToL = ComponentTreeUtils.getTreeNodeInterval( toLower.getWrappedHypothesis() );
 
-		final double oldPos = 0.5 * ( intervalFrom.b.intValue() + intervalFrom.a.intValue() );
-		final double newPos = 0.5 * ( intervalToL.b.intValue() + intervalToU.a.intValue() );
+		final double oldPos = 0.5 * ( intervalFrom.getB().intValue() + intervalFrom.getA().intValue() );
+		final double newPos = 0.5 * ( intervalToL.getB().intValue() + intervalToU.getA().intValue() );
 
 		final double glLength = gl.get( 0 ).size();
 
@@ -642,7 +642,7 @@ public class GrowthLineTrackingILP {
 		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = getOptimalHypotheses( t );
 		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> h : hyps ) {
 			final Pair< Integer, Integer > ctnLimits = ComponentTreeUtils.getTreeNodeInterval( h.getWrappedHypothesis() );
-			if ( ctnLimits.a.intValue() <= gapSepYPos && ctnLimits.b.intValue() >= gapSepYPos ) { return h; }
+			if ( ctnLimits.getA().intValue() <= gapSepYPos && ctnLimits.getB().intValue() >= gapSepYPos ) { return h; }
 		}
 		return null;
 	}
@@ -946,7 +946,7 @@ public class GrowthLineTrackingILP {
 	 * Collects and returns all left-assignments given the optimal segmentation.
 	 * Only those assignments are collected that are left-edges from one of the
 	 * currently chosen (optimal) segmentation-hypotheses.
-	 * 
+	 *
 	 * @param t
 	 *            the time at which to look for inactive left-assignments.
 	 *            Values for t make only sense if <code>>=1</code> and

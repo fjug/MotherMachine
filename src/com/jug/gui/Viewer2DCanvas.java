@@ -118,7 +118,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 		g.drawImage( screenImage.image(), 0, 0, w, h, null );
 
 		// Mouse-position related stuff...
-		if ( !this.isDragging && this.isMouseOver && glf.getParent().getIlp() != null ) {
+		if ( !this.isDragging && this.isMouseOver && glf != null && glf.getParent().getIlp() != null ) {
 			double cost = Double.NaN;
 			//TODO NOT nice... do something against that, please!
 			final int t = glf.getTime();
