@@ -146,10 +146,27 @@ public class FactorGraphFileBuilder {
 	 *            the variable id for this unary factor.
 	 * @return the id of the factor just added.
 	 */
-	public int addFactor( final int functionId, final int varId ) {
+	public int addFactor( final int functionId, final int varId, final int regionId ) {
 		final List< Integer > varIds = new ArrayList< Integer >();
 		varIds.add( new Integer( varId ) );
-		return addFactor( functionId, varIds );
+		final List< Integer > regionIds = new ArrayList< Integer >();
+		regionIds.add( new Integer( regionId ) );
+		return addFactor( functionId, varIds, regionIds );
+	}
+
+	/**
+	 * Builds a unary factor-string and adds it.
+	 *
+	 * @param functionId
+	 *            id of the function this factor utilizes.
+	 * @param varId
+	 *            the variable id for this unary factor.
+	 * @return the id of the factor just added.
+	 */
+	public int addFactor( final int functionId, final int varId, final List< Integer > regionIds ) {
+		final List< Integer > varIds = new ArrayList< Integer >();
+		varIds.add( new Integer( varId ) );
+		return addFactor( functionId, varIds, regionIds );
 	}
 
 	/**
@@ -161,10 +178,28 @@ public class FactorGraphFileBuilder {
 	 *            list of variables connected with this factor
 	 * @return the id of the factor just added.
 	 */
-	public int addFactor( final int functionId, final List< Integer > varIds ) {
+	public int addFactor( final int functionId, final List< Integer > varIds, final int regionId ) {
+		final List< Integer > regionIds = new ArrayList< Integer >();
+		regionIds.add( new Integer( regionId ) );
+		return addFactor( functionId, varIds, regionIds );
+	}
+
+	/**
+	 * Builds a factor-string and adds it.
+	 * 
+	 * @param functionId
+	 *            id of the function this factor utilizes.
+	 * @param varIds
+	 *            list of variables connected with this factor
+	 * @return the id of the factor just added.
+	 */
+	public int addFactor( final int functionId, final List< Integer > varIds, final List< Integer > regionIds ) {
 
 		String str = Integer.toString( functionId ) + " ";
 		for ( final int i : varIds ) {
+			str += i + " ";
+		}
+		for ( final int i : regionIds ) {
 			str += i + " ";
 		}
 		return addFactor( str );

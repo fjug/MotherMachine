@@ -106,7 +106,7 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< ComponentTre
 
 		// model.addConstr( expr, GRB.LESS_EQUAL, Hup.size(), "dc_" + dcId );
 		final int fkt_id = fgFile.addConstraintFkt( coeffs, "<=", Hup.size() );
-		fgFile.addFactor( fkt_id, varIds );
+		fgFile.addFactor( fkt_id, varIds, 0 );
 	}
 
 	/**

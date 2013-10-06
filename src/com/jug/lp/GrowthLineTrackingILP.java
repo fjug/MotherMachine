@@ -218,7 +218,7 @@ public class GrowthLineTrackingILP {
 				}
 
 				final int fkt_id = fgFile.addFkt( String.format( "table 1 2 0 %f", cost ) );
-				fgFile.addFactor( fkt_id, var_id );
+				fgFile.addFactor( fkt_id, var_id, 0 );
 			}
 		}
 		// SECOND RUN: export all the rest (now that we have the right varId's).
@@ -268,7 +268,7 @@ public class GrowthLineTrackingILP {
 				// add the constraint for this hypothesis
 				//model.addConstr( expr, GRB.EQUAL, 0.0, "ecc_" + eccId );
 				final int fkt_id = fgFile.addConstraintFkt( coeffs, "==", 0 );
-				fgFile.addFactor( fkt_id, varIds );
+				fgFile.addFactor( fkt_id, varIds, 0 );
 			}
 		}
 
@@ -660,7 +660,7 @@ public class GrowthLineTrackingILP {
 			}
 			// model.addConstr( exprR, GRB.LESS_EQUAL, 1.0, name );
 			final int fkt_id = fgFile.addConstraintFkt( coeffs, "<=", 1 );
-			fgFile.addFactor( fkt_id, varIds );
+			fgFile.addFactor( fkt_id, varIds, 0 );
 		} else {
 			// if ctNode is a inner node -> recursion
 			for ( final ComponentTreeNode< DoubleType, ? > ctChild : ctNode.getChildren() ) {
