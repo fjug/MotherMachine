@@ -138,6 +138,21 @@ public class FactorGraphFileBuilder {
 	}
 
 	/**
+	 * Builds a unary factor-string and adds it.
+	 *
+	 * @param functionId
+	 *            id of the function this factor utilizes.
+	 * @param varId
+	 *            the variable id for this unary factor.
+	 * @return the id of the factor just added.
+	 */
+	public int addFactor( final int functionId, final int varId ) {
+		final List< Integer > varIds = new ArrayList< Integer >();
+		varIds.add( new Integer( varId ) );
+		return addFactor( functionId, varIds );
+	}
+
+	/**
 	 * Builds a factor-string and adds it.
 	 *
 	 * @param functionId
@@ -147,6 +162,7 @@ public class FactorGraphFileBuilder {
 	 * @return the id of the factor just added.
 	 */
 	public int addFactor( final int functionId, final List< Integer > varIds ) {
+
 		String str = Integer.toString( functionId ) + " ";
 		for ( final int i : varIds ) {
 			str += i + " ";
