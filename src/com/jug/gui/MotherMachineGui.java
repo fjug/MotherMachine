@@ -583,13 +583,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 							System.out.println( "Using existing ILP (possibly containing user-defined ground-truth bits)..." );
 						}
 						System.out.println( "Saving ILP as FactorGraph..." );
-						try {
-							model.getCurrentGL().getIlp().exportFG( file );
-						}
-						catch ( final IOException e ) {
-							e.printStackTrace();
-							return;
-						}
+						model.getCurrentGL().getIlp().exportFG( file );
 						System.out.println( "...done!" );
 					}
 

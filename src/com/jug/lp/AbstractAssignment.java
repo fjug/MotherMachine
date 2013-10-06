@@ -10,8 +10,6 @@ import gurobi.GRBLinExpr;
 import gurobi.GRBModel;
 import gurobi.GRBVar;
 
-import java.util.List;
-
 
 /**
  * Partially implemented class for everything that wants to be an assignment.
@@ -23,13 +21,11 @@ import java.util.List;
  */
 public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 
-	private static int nextVarIdx = 0;
-
 	private int type;
 
 	protected GRBModel model;
 
-	private int ilpVarIdx = -1;
+	private int exportVarIdx = -1;
 	private GRBVar ilpVar;
 
 	private boolean isGroundTruth = false;
@@ -69,9 +65,13 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	 *
 	 * @return a variable index that is unique for the indicator
 	 *         variable used for this assignment.
+	 * @throws Exception
 	 */
 	public int getVarIdx() {
-		return ilpVarIdx;
+		if ( exportVarIdx == -1 ) {
+			System.out.println( "AAAAACHTUNG!!! Variable index not initialized before export was attempted!" );
+		}
+		return exportVarIdx;
 	}
 
 	/**
@@ -87,10 +87,17 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	 */
 	public void setGRBVar( final GRBVar ilpVar ) {
 		this.ilpVar = ilpVar;
-		if ( this.ilpVarIdx == -1 ) {
-			this.ilpVarIdx = nextVarIdx;
-			nextVarIdx++;
-		}
+	}
+
+	/**
+	 * One can set a variable id.
+	 * This is used for exporting purposes like e.g. by
+	 * <code>FactorGraphFileBuilder</code>.
+	 *
+	 * @param varId
+	 */
+	public void setVarId( final int varId ) {
+		this.exportVarIdx = varId;
 	}
 
 	/**
@@ -135,10 +142,11 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	public abstract void addConstraintsToLP() throws GRBException;
 
 	/**
-	 * Adds a list of functions and factors to the given lists. This fkt is used
-	 * to save a FactorGraph describing the optimization problem at hand.
+	 * Adds a list of functions and factors to the FactorGraphFileBuilder.
+	 * This fkt and fac is used to save a FactorGraph describing the
+	 * optimization problem at hand.
 	 */
-	public abstract void addFunctionsAndFactors( List< String > functions, List< String > factors );
+	public abstract void addFunctionsAndFactors( FactorGraphFileBuilder fgFile );
 
 	/**
 	 * @return
