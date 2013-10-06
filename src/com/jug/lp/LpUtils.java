@@ -37,4 +37,36 @@ public class LpUtils {
 		}
 		return Hup;
 	}
+
+	/**
+	 * Builds a constraint string as needed to save a FactorGraph.
+	 *
+	 * @param coeffs
+	 *            all coefficients needed for this function
+	 * @param comp
+	 *            must be one of: "<=", "==", or ">="
+	 * @param rhs
+	 *            the right hand side of the inequality (equality) constraint
+	 * @return
+	 */
+	public static String assembleConstraintString( final List< Integer > coeffs, final String comp, final int rhs ) {
+		String str = "constraint " + coeffs.size() + " ";
+		for ( final int i : coeffs ) {
+			str += i + " ";
+		}
+		str += " " + comp + " " + rhs;
+		return str;
+	}
+
+	/**
+	 * @param varIds
+	 * @return
+	 */
+	public static String assembleFactorString( final long functionId, final List< Integer > varIds ) {
+		String str = "" + functionId + " ";
+		for ( final int i : varIds ) {
+			str += i + " ";
+		}
+		return str;
+	}
 }

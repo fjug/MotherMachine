@@ -123,6 +123,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	private AssignmentViewer leftAssignmentViewer;
 	private AssignmentViewer rightAssignmentViewer;
 
+	private JButton btnSaveFG;
 	private JButton btnOptimize;
 	private JButton btnOptimizeAll;
 	private JButton btnOptimizeRemainingAndExport;
@@ -202,6 +203,8 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		tabsViews.setSelectedComponent( panelSegmentationAndAssignmentView );
 
 		// --- Controls ----------------------------------
+		btnSaveFG = new JButton( "Save FG" );
+		btnSaveFG.addActionListener( this );
 		btnOptimize = new JButton( "Optimize" );
 		btnOptimize.addActionListener( this );
 		btnOptimizeAll = new JButton( "Optimize All" );
@@ -209,6 +212,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		btnOptimizeRemainingAndExport = new JButton( "Opt. Remaining & Export" );
 		btnOptimizeRemainingAndExport.addActionListener( this );
 		panelHorizontalHelper = new JPanel( new FlowLayout( FlowLayout.RIGHT, 5, 0 ) );
+		panelHorizontalHelper.add( btnSaveFG );
 		panelHorizontalHelper.add( btnOptimize );
 		panelHorizontalHelper.add( btnOptimizeAll );
 		panelHorizontalHelper.add( btnOptimizeRemainingAndExport );
@@ -556,6 +560,43 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 */
 	@Override
 	public void actionPerformed( final ActionEvent e ) {
+		if ( e.getSource().equals( btnSaveFG ) ) {
+			final MotherMachineGui self = this;
+			final Thread t = new Thread( new Runnable() {
+
+				@Override
+				public void run() {
+					final JFileChooser fc = new JFileChooser( MotherMachine.DEFAULT_PATH );
+					fc.addChoosableFileFilter( new ExtensionFileFilter( new String[] { "txt", "TXT" }, "TXT-file" ) );
+
+					if ( fc.showSaveDialog( self ) == JFileChooser.APPROVE_OPTION ) {
+						File file = fc.getSelectedFile();
+						if ( !file.getAbsolutePath().endsWith( ".txt" ) && !file.getAbsolutePath().endsWith( ".TXT" ) ) {
+							file = new File( file.getAbsolutePath() + ".txt" );
+						}
+						MotherMachine.DEFAULT_PATH = file.getParent();
+
+						if ( model.getCurrentGL().getIlp() == null ) {
+							System.out.println( "Generating ILP..." );
+							model.getCurrentGL().generateILP();
+						} else {
+							System.out.println( "Using existing ILP (possibly containing user-defined ground-truth bits)..." );
+						}
+						System.out.println( "Saving ILP as FactorGraph..." );
+						try {
+							model.getCurrentGL().getIlp().exportFG( file );
+						}
+						catch ( final IOException e ) {
+							e.printStackTrace();
+							return;
+						}
+						System.out.println( "...done!" );
+					}
+
+				}
+			} );
+			t.start();
+		}
 		if ( e.getSource().equals( btnOptimize ) ) {
 			final Thread t = new Thread( new Runnable() {
 

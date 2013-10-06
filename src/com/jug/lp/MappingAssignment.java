@@ -6,6 +6,9 @@ package com.jug.lp;
 import gurobi.GRBException;
 import gurobi.GRBModel;
 import gurobi.GRBVar;
+
+import java.util.List;
+
 import net.imglib2.algorithm.componenttree.ComponentTreeNode;
 import net.imglib2.type.numeric.real.DoubleType;
 
@@ -18,9 +21,7 @@ public class MappingAssignment extends AbstractAssignment< Hypothesis< Component
 	private final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > >, Hypothesis< ComponentTreeNode< DoubleType, ? > > > nodes;
 	@SuppressWarnings( "unused" )
 	private final HypothesisNeighborhoods< Hypothesis< ComponentTreeNode< DoubleType, ? > >, AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > edges;
-	@SuppressWarnings( "unused" )
 	private final Hypothesis< ComponentTreeNode< DoubleType, ? >> from;
-	@SuppressWarnings( "unused" )
 	private final Hypothesis< ComponentTreeNode< DoubleType, ? >> to;
 
 	/**
@@ -57,6 +58,15 @@ public class MappingAssignment extends AbstractAssignment< Hypothesis< Component
 	 */
 	@Override
 	public void addConstraintsToLP() throws GRBException {
+	}
+
+	/**
+	 * Mapping assignments do not come with constraints.
+	 *
+	 * @see com.jug.lp.AbstractAssignment#getConstraint()
+	 */
+	@Override
+	public void addFunctionsAndFactors( final List< String > functions, final List< String > factors ) {
 	}
 
 	/**

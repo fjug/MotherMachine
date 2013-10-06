@@ -10,6 +10,10 @@ import gurobi.GRBLinExpr;
 import gurobi.GRBModel;
 import gurobi.GRBVar;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -173,6 +177,121 @@ public class GrowthLineTrackingILP {
 			e.printStackTrace();
 		}
 
+	}
+
+	/**
+	 * Writes the FactorGraph corresponding to the optimization problem of the
+	 * given growth-line into a file.
+	 *
+	 * @throws IOException
+	 */
+	public void exportFG( final File file ) throws IOException {
+		// Here I collect all the lines I will eventually write into the FG-file...
+		final List< String > content_variables = new ArrayList< String >();
+		final List< String > content_functions = new ArrayList< String >();
+		final List< String > content_factors = new ArrayList< String >();
+
+		// VARIABLES-SECTION-LINES (content trivial, all are binary indicators!)
+		int next_var = 0;
+		int next_fkt = 0;
+		int next_fac = 0;
+
+		for ( int t = 0; t < nodes.getNumberOfTimeSteps(); t++ ) {
+			content_variables.add( "# === TimePoint t=" + t + " ================" );
+			content_variables.add( "# --- Hypothesis-variables ----------" );
+
+			content_functions.add( "# === TimePoint t=" + t + " ================" );
+			content_functions.add( "# --- Unary-terms -------------------" );
+
+			content_factors.add( "# === TimePoint t=" + t + " ================" );
+			content_factors.add( "# --- Unary-factor-terms ------------" );
+
+			final List< Hypothesis< ComponentTreeNode< DoubleType, ? >> > hyps_t = nodes.getHypothesesAt( t );
+			for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : hyps_t ) {
+				content_variables.add( "2" );
+				content_functions.add( String.format( "table 1 2 0 %f", hyp.getCosts() ) );
+				content_factors.add( LpUtils.assembleFactorString( next_var, new ArrayList< Integer >( new Integer( next_var ) ) ) );
+				next_var++;
+				next_fkt++;
+				next_fac++;
+			}
+
+			content_variables.add( "# --- Assignment-variables ----------" );
+			content_functions.add( "# --- Assignment Constraints ---------------" );
+			content_factors.add(   "# --- Assignment Constraints ---------------" );
+
+			final List< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > assmts_t = nodes.getAssignmentsAt( t );
+			for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> assmt : assmts_t ) {
+				content_variables.add( "2" );
+				assmt.addFunctionsAndFactors( content_functions, content_factors );
+				next_var++;
+			}
+
+			content_functions.add( "# --- Path-Blocking Constraints ------------" );
+			content_factors.add(   "# --- Path-Blocking Constraints ------------" );
+
+			final ComponentTree< DoubleType, ? > ct = gl.get( t ).getComponentTree();
+			for ( final ComponentTreeNode< DoubleType, ? > ctRoot : ct.roots() ) {
+				// And call the function adding all the path-blocking-constraints...
+				recursivelyAddPathBlockingConstraints( ctRoot, t, content_functions, content_factors );
+			}
+
+			content_functions.add( "# --- Explanation-Continuity Constraints ------" );
+			content_factors.add(   "# --- Explanation-Continuity Constraints ------" );
+
+			for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : nodes.getHypothesesAt( t ) ) {
+				final List< Integer > varIds = new ArrayList< Integer >();
+				final List< Integer > coeffs = new ArrayList< Integer >();
+
+				if ( edgeSets.getLeftNeighborhood( hyp ) != null ) {
+					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a_j : edgeSets.getLeftNeighborhood( hyp ) ) {
+						//expr.addTerm( 1.0, a_j.getGRBVar() );
+						coeffs.add( new Integer( 1 ) );
+						varIds.add( new Integer( a_j.getVarIdx() ) );
+					}
+				}
+				if ( edgeSets.getRightNeighborhood( hyp ) != null ) {
+					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a_j : edgeSets.getRightNeighborhood( hyp ) ) {
+						//expr.addTerm( -1.0, a_j.getGRBVar() );
+						coeffs.add( new Integer( -1 ) );
+						varIds.add( new Integer( a_j.getVarIdx() ) );
+					}
+				}
+
+				// add the constraint for this hypothesis
+				//model.addConstr( expr, GRB.EQUAL, 0.0, "ecc_" + eccId );
+				content_functions.add( LpUtils.assembleConstraintString( coeffs, "==", 0 ) );
+				content_factors.add( LpUtils.assembleFactorString( content_functions.size(), varIds ) );
+			}
+		}
+
+		// WRITE FILE
+		final BufferedWriter out = new BufferedWriter( new FileWriter( file ) );
+		out.write( "# variables functions factors" );
+		out.newLine();
+
+		out.write( "" + next_var + " " + content_functions.size() + " " + content_factors.size() );
+		out.newLine();
+
+		out.write( "# #### VARIABLE SECTION ###################################" );
+		out.newLine();
+		for ( final String line : content_variables ) {
+			out.write( line );
+			out.newLine();
+		}
+		out.write( "# #### FUNCTION SECTION ###################################" );
+		out.newLine();
+		for ( final String line : content_functions ) {
+			out.write( line );
+			out.newLine();
+		}
+		out.write( "# #### FACTOR SECTION #####################################" );
+		out.newLine();
+		for ( final String line : content_factors ) {
+			out.write( line );
+			out.newLine();
+		}
+		out.close();
 	}
 
 	/**
@@ -519,6 +638,51 @@ public class GrowthLineTrackingILP {
 			// if ctNode is a inner node -> recursion
 			for ( final ComponentTreeNode< DoubleType, ? > ctChild : ctNode.getChildren() ) {
 				recursivelyAddPathBlockingConstraints( ctChild, t );
+			}
+		}
+	}
+
+	/**
+	 *
+	 * @param ctNode
+	 * @param t
+	 * @param functions
+	 * @param factors
+	 */
+	private void recursivelyAddPathBlockingConstraints( final ComponentTreeNode< DoubleType, ? > ctNode, final int t, final List< String > functions, final List< String > factors ) {
+
+		// if ctNode is a leave node -> add constraint (by going up the list of
+		// parents and building up the constraint)
+		if ( ctNode.getChildren().size() == 0 ) {
+			final List< Integer > varIds = new ArrayList< Integer >();
+			final List< Integer > coeffs = new ArrayList< Integer >();
+
+			ComponentTreeNode< DoubleType, ? > runnerNode = ctNode;
+
+			// final GRBLinExpr exprR = new GRBLinExpr();
+			while ( runnerNode != null ) {
+				@SuppressWarnings( "unchecked" )
+				final Hypothesis< ComponentTreeNode< DoubleType, ? > > hypothesis = ( Hypothesis< ComponentTreeNode< DoubleType, ? >> ) nodes.findHypothesisContaining( runnerNode );
+				if ( hypothesis == null ) {
+					System.err.println( "WARNING: Hypothesis for a CTN was not found in GrowthLineTrackingILP -- this is an indication for some design problem of the system!" );
+				}
+
+				if ( edgeSets.getRightNeighborhood( hypothesis ) != null ) {
+					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a : edgeSets.getRightNeighborhood( hypothesis ) ) {
+						// exprR.addTerm( 1.0, a.getGRBVar() );
+						coeffs.add( new Integer( 1 ) );
+						varIds.add( new Integer( a.getVarIdx() ) );
+					}
+				}
+				runnerNode = runnerNode.getParent();
+			}
+			// model.addConstr( exprR, GRB.LESS_EQUAL, 1.0, name );
+			functions.add( LpUtils.assembleConstraintString( coeffs, "<=", 1 ) );
+			factors.add( LpUtils.assembleFactorString( functions.size(), varIds ) );
+		} else {
+			// if ctNode is a inner node -> recursion
+			for ( final ComponentTreeNode< DoubleType, ? > ctChild : ctNode.getChildren() ) {
+				recursivelyAddPathBlockingConstraints( ctChild, t, functions, factors );
 			}
 		}
 	}

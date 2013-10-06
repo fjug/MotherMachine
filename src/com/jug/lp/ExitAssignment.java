@@ -9,6 +9,7 @@ import gurobi.GRBLinExpr;
 import gurobi.GRBModel;
 import gurobi.GRBVar;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import net.imglib2.algorithm.componenttree.ComponentTreeNode;
@@ -76,9 +77,42 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< ComponentTre
 	}
 
 	/**
+	 * Adds a list of constraints and factors as strings.
+	 *
+	 * @see com.jug.lp.AbstractAssignment#getConstraint()
+	 */
+	@Override
+	public void addFunctionsAndFactors( final List< String > functions, final List< String > factors ) {
+		final List< Integer > varIds = new ArrayList< Integer >();
+		final List< Integer > coeffs = new ArrayList< Integer >();
+
+		// expr.addTerm( Hup.size(), this.getGRBVar() );
+		coeffs.add( new Integer( Hup.size() ) );
+		varIds.add( new Integer( this.getVarIdx() ) );
+
+		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> upperHyp : Hup ) {
+			if ( edges.getRightNeighborhood( upperHyp ) != null ) {
+				for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a_j : edges.getRightNeighborhood( upperHyp ) ) {
+					if ( a_j.getType() == GrowthLineTrackingILP.ASSIGNMENT_EXIT ) {
+						continue;
+					}
+					// add term if assignment is NOT another exit-assignment
+					// expr.addTerm( 1.0, a_j.getGRBVar() );
+					coeffs.add( new Integer( 1 ) );
+					varIds.add( new Integer( a_j.getVarIdx() ) );
+				}
+			}
+		}
+
+		// model.addConstr( expr, GRB.LESS_EQUAL, Hup.size(), "dc_" + dcId );
+		functions.add( LpUtils.assembleConstraintString( coeffs, "<=", Hup.size() ) );
+		factors.add( LpUtils.assembleFactorString( functions.size(), varIds ) );
+	}
+
+	/**
 	 * Returns the segmentation hypothesis this exit-assignment is associated
 	 * with.
-	 * 
+	 *
 	 * @return the associated segmentation-hypothesis.
 	 */
 	public Hypothesis< ComponentTreeNode< DoubleType, ? >> getAssociatedHypothesis() {

@@ -10,6 +10,8 @@ import gurobi.GRBLinExpr;
 import gurobi.GRBModel;
 import gurobi.GRBVar;
 
+import java.util.List;
+
 
 /**
  * Partially implemented class for everything that wants to be an assignment.
@@ -21,10 +23,13 @@ import gurobi.GRBVar;
  */
 public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 
+	private static int nextVarIdx = 0;
+
 	private int type;
 
 	protected GRBModel model;
 
+	private int ilpVarIdx = -1;
 	private GRBVar ilpVar;
 
 	private boolean isGroundTruth = false;
@@ -59,6 +64,17 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	}
 
 	/**
+	 * This function is for example used when exporting a FactorGraph
+	 * that describes the entire optimization problem at hand.
+	 *
+	 * @return a variable index that is unique for the indicator
+	 *         variable used for this assignment.
+	 */
+	public int getVarIdx() {
+		return ilpVarIdx;
+	}
+
+	/**
 	 * @return the ilpVar
 	 */
 	public GRBVar getGRBVar() {
@@ -71,6 +87,10 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	 */
 	public void setGRBVar( final GRBVar ilpVar ) {
 		this.ilpVar = ilpVar;
+		if ( this.ilpVarIdx == -1 ) {
+			this.ilpVarIdx = nextVarIdx;
+			nextVarIdx++;
+		}
 	}
 
 	/**
@@ -113,6 +133,12 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	 * @throws GRBException
 	 */
 	public abstract void addConstraintsToLP() throws GRBException;
+
+	/**
+	 * Adds a list of functions and factors to the given lists. This fkt is used
+	 * to save a FactorGraph describing the optimization problem at hand.
+	 */
+	public abstract void addFunctionsAndFactors( List< String > functions, List< String > factors );
 
 	/**
 	 * @return
