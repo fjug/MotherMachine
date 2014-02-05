@@ -9,21 +9,21 @@ import gurobi.GRBVar;
 
 import java.util.List;
 
-import net.imglib2.algorithm.componenttree.ComponentTreeNode;
+import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.DoubleType;
 
 /**
  * @author jug
  */
-public class DivisionAssignment extends AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > {
+public class DivisionAssignment extends AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > {
 
 	@SuppressWarnings( "unused" )
-	private final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > >, Hypothesis< ComponentTreeNode< DoubleType, ? > > > nodes;
+	private final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > >, Hypothesis< Component< DoubleType, ? > > > nodes;
 	@SuppressWarnings( "unused" )
-	private final HypothesisNeighborhoods< Hypothesis< ComponentTreeNode< DoubleType, ? > >, AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > edges;
-	private final Hypothesis< ComponentTreeNode< DoubleType, ? >> from;
-	private final Hypothesis< ComponentTreeNode< DoubleType, ? >> toUpper;
-	private final Hypothesis< ComponentTreeNode< DoubleType, ? >> toLower;
+	private final HypothesisNeighborhoods< Hypothesis< Component< DoubleType, ? > >, AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > edges;
+	private final Hypothesis< Component< DoubleType, ? >> from;
+	private final Hypothesis< Component< DoubleType, ? >> toUpper;
+	private final Hypothesis< Component< DoubleType, ? >> toLower;
 
 	/**
 	 * Creates an DivisionAssignment.
@@ -36,13 +36,7 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 	 * @throws GRBException
 	 */
 	public DivisionAssignment( final int t, final GRBVar ilpVariable, final GRBModel model,
-			final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > >,
-			Hypothesis< ComponentTreeNode< DoubleType, ? > > > nodes,
-			final HypothesisNeighborhoods< Hypothesis< ComponentTreeNode< DoubleType, ? > >,
-			AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > edges,
-		    final Hypothesis< ComponentTreeNode< DoubleType, ? >> from,
-		    final Hypothesis< ComponentTreeNode< DoubleType, ? >> toUpper,
-		    final Hypothesis< ComponentTreeNode< DoubleType, ? >> toLower ) throws GRBException {
+ final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > >, Hypothesis< Component< DoubleType, ? > > > nodes, final HypothesisNeighborhoods< Hypothesis< Component< DoubleType, ? > >, AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > edges, final Hypothesis< Component< DoubleType, ? >> from, final Hypothesis< Component< DoubleType, ? >> toUpper, final Hypothesis< Component< DoubleType, ? >> toLower ) throws GRBException {
 		super( GrowthLineTrackingILP.ASSIGNMENT_DIVISION, ilpVariable, model );
 		this.from = from;
 		this.toUpper = toUpper;
@@ -79,7 +73,7 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 	 *
 	 * @return the associated segmentation-hypothesis.
 	 */
-	public Hypothesis< ComponentTreeNode< DoubleType, ? >> getSourceHypothesis() {
+	public Hypothesis< Component< DoubleType, ? >> getSourceHypothesis() {
 		return from;
 	}
 
@@ -90,7 +84,7 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 	 *
 	 * @return the associated segmentation-hypothesis.
 	 */
-	public Hypothesis< ComponentTreeNode< DoubleType, ? >> getUpperDesinationHypothesis() {
+	public Hypothesis< Component< DoubleType, ? >> getUpperDesinationHypothesis() {
 		return toUpper;
 	}
 
@@ -101,7 +95,7 @@ public class DivisionAssignment extends AbstractAssignment< Hypothesis< Componen
 	 *
 	 * @return the associated segmentation-hypothesis.
 	 */
-	public Hypothesis< ComponentTreeNode< DoubleType, ? >> getLowerDesinationHypothesis() {
+	public Hypothesis< Component< DoubleType, ? >> getLowerDesinationHypothesis() {
 		return toLower;
 	}
 }

@@ -18,7 +18,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 
-import net.imglib2.algorithm.componenttree.ComponentTreeNode;
+import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.DoubleType;
 
 import com.jug.GrowthLine;
@@ -113,8 +113,8 @@ public class CountOverviewPanel extends JPanel {
 				int exits = 0;
 				int divisions = 0;
 
-				for ( final Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > set : currentGL.getIlp().getOptimalRightAssignments( glf.getTime() ).values() ) {
-					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> ora : set ) {
+				for ( final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > set : currentGL.getIlp().getOptimalRightAssignments( glf.getTime() ).values() ) {
+					for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> ora : set ) {
 						cells++;
 						if ( ora.getType() == GrowthLineTrackingILP.ASSIGNMENT_DIVISION )
 							divisions++;

@@ -8,7 +8,7 @@ import java.util.Iterator;
 import net.imglib2.Localizable;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
-import net.imglib2.algorithm.componenttree.ComponentTreeNode;
+import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.real.DoubleType;
 
@@ -23,7 +23,7 @@ public class ArgbDrawingUtils {
 	 * @param offsetX
 	 * @param offsetY
 	 */
-	public static void taintComponentTreeNode( final ComponentTreeNode< DoubleType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
+	public static void taintComponentTreeNode( final Component< DoubleType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
 		assert ( ctn.iterator().hasNext() );
 
 		switch ( ctn.iterator().next().numDimensions() ) {
@@ -41,7 +41,7 @@ public class ArgbDrawingUtils {
 	 * @param offsetX
 	 * @param offsetY
 	 */
-	private static void taint1dComponentTreeNode( final ComponentTreeNode< DoubleType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
+	private static void taint1dComponentTreeNode( final Component< DoubleType, ? > ctn, final RandomAccess< ARGBType > raArgbImg, final long offsetX, final long offsetY ) {
 
 		final Iterator< Localizable > componentIterator = ctn.iterator();
 		while ( componentIterator.hasNext() ) {

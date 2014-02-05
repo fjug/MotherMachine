@@ -7,7 +7,6 @@
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-algorithms-gpl"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-algorithms-legacy"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-ij"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-io"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-meta"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-ops"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-realtransform"/>
@@ -17,7 +16,7 @@
 	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/net/imagej/ij/1.47a/ij-1.47a.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/loci/loci-common/4.4-SNAPSHOT/loci-common-4.4-SNAPSHOT.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/loci/ome-xml/4.4-SNAPSHOT/ome-xml-4.4-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/loci/scifio/4.4-SNAPSHOT/scifio-4.4-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/io/scif/scifio/0.8.2/scifio-0.8.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/loci/jai_imageio/4.4-SNAPSHOT/jai_imageio-4.4-SNAPSHOT.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/loci/lwf-stubs/4.4-SNAPSHOT/lwf-stubs-4.4-SNAPSHOT.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/log4j/log4j/1.2.14/log4j-1.2.14.jar"/>

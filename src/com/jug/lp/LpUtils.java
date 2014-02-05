@@ -6,7 +6,7 @@ package com.jug.lp;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.imglib2.algorithm.componenttree.ComponentTreeNode;
+import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.DoubleType;
 
 import com.jug.util.ComponentTreeUtils;
@@ -28,9 +28,9 @@ public class LpUtils {
 	 * @return a List of all Hypothesis from hyps that lie above the
 	 *         segmentation hypothesis hyp.
 	 */
-	public static List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> getHup( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps ) {
-		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> Hup = new ArrayList< Hypothesis< ComponentTreeNode< DoubleType, ? >>>();
-		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> candidate : hyps ) {
+	public static List< Hypothesis< Component< DoubleType, ? >>> getHup( final Hypothesis< Component< DoubleType, ? >> hyp, final List< Hypothesis< Component< DoubleType, ? >>> hyps ) {
+		final List< Hypothesis< Component< DoubleType, ? >>> Hup = new ArrayList< Hypothesis< Component< DoubleType, ? >>>();
+		for ( final Hypothesis< Component< DoubleType, ? >> candidate : hyps ) {
 			if ( ComponentTreeUtils.isAbove( candidate.getWrappedHypothesis(), hyp.getWrappedHypothesis() ) ) {
 				Hup.add( candidate );
 			}

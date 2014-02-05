@@ -32,10 +32,9 @@ import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import loci.formats.gui.ExtensionFileFilter;
 import net.imglib2.Localizable;
-import net.imglib2.algorithm.componenttree.ComponentTree;
-import net.imglib2.algorithm.componenttree.ComponentTreeNode;
+import net.imglib2.algorithm.componenttree.Component;
+import net.imglib2.algorithm.componenttree.ComponentForest;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
@@ -390,40 +389,44 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		// ComponentTreeNodes
 		// ------------------
 		if ( ilp != null ) {
-			final ComponentTree< DoubleType, ? > ct = model.getCurrentGLF().getComponentTree();
+			final ComponentForest< ? > ct = model.getCurrentGLF().getComponentTree();
+			bla( ct, ySegmentationData, ilp );
+		}
+	}
 
-			final int numCTNs = ComponentTreeUtils.countNodes( ct );
-			final double[][] xydxdyCTNBorders = new double[ numCTNs ][ 4 ];
-			final int t = sliderTime.getValue();
-			final double[][] xydxdyCTNBordersActive = new double[ ilp.getOptimalSegmentation( t ).size() ][ 4 ];
+	private < C extends Component< ?, C > > void bla( final ComponentForest< C > ct, final double[] ySegmentationData, final GrowthLineTrackingILP ilp )
+	{
+		final int numCTNs = ComponentTreeUtils.countNodes( ct );
+		final double[][] xydxdyCTNBorders = new double[ numCTNs ][ 4 ];
+		final int t = sliderTime.getValue();
+		final double[][] xydxdyCTNBordersActive = new double[ ilp.getOptimalSegmentation( t ).size() ][ 4 ];
 
-			int i = 0;
-			for ( final ComponentTreeNode< DoubleType, ? > root : ct.roots() ) {
-				System.out.println( "" );
-				int level = 0;
-				ArrayList< ComponentTreeNode< DoubleType, ? >> ctnLevel = new ArrayList< ComponentTreeNode< DoubleType, ? >>();
-				ctnLevel.add( root );
-				while ( ctnLevel.size() > 0 ) {
-					for ( final ComponentTreeNode< DoubleType, ? > ctn : ctnLevel ) {
-						addBoxAtIndex( i, ctn, xydxdyCTNBorders, ySegmentationData, level );
-						System.out.print( String.format( "%.4f;\t", ilp.localCost( t, ctn ) ) );
-						i++;
-					}
-					ctnLevel = ComponentTreeUtils.getAllChildren( ctnLevel );
-					level++;
-					System.out.println( "" );
-				}
-
-				i = 0;
-				for ( final ComponentTreeNode< DoubleType, ? > ctn : ilp.getOptimalSegmentation( t ) ) {
-					addBoxAtIndex( i, ctn, xydxdyCTNBordersActive, ySegmentationData, ComponentTreeUtils.getLevelInTree( ctn ) );
+		int i = 0;
+		for ( final C root : ct.roots() ) {
+			System.out.println( "" );
+			int level = 0;
+			ArrayList< C > ctnLevel = new ArrayList< C >();
+			ctnLevel.add( root );
+			while ( ctnLevel.size() > 0 ) {
+				for ( final Component< ?, ? > ctn : ctnLevel ) {
+					addBoxAtIndex( i, ctn, xydxdyCTNBorders, ySegmentationData, level );
+					System.out.print( String.format( "%.4f;\t", ilp.localCost( t, ctn ) ) );
 					i++;
 				}
+				ctnLevel = ComponentTreeUtils.getAllChildren( ctnLevel );
+				level++;
+				System.out.println( "" );
 			}
-			plot.addBoxPlot( "Seg. Hypothesis", new Color( 127, 127, 127, 255 ), xydxdyCTNBorders );
-			if ( ilp.getOptimalSegmentation( t ).size() > 0 ) {
-				plot.addBoxPlot( "Active Seg. Hypothesis", new Color( 255, 0, 0, 255 ), xydxdyCTNBordersActive );
+
+			i = 0;
+			for ( final C ctn : ilp.getOptimalSegmentation( t ) ) {
+				addBoxAtIndex( i, ctn, xydxdyCTNBordersActive, ySegmentationData, ComponentTreeUtils.getLevelInTree( ctn ) );
+				i++;
 			}
+		}
+		plot.addBoxPlot( "Seg. Hypothesis", new Color( 127, 127, 127, 255 ), xydxdyCTNBorders );
+		if ( ilp.getOptimalSegmentation( t ).size() > 0 ) {
+			plot.addBoxPlot( "Active Seg. Hypothesis", new Color( 255, 0, 0, 255 ), xydxdyCTNBordersActive );
 		}
 	}
 
@@ -434,7 +437,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 	 * @param ydata
 	 * @param level
 	 */
-	private void addBoxAtIndex( final int index, final ComponentTreeNode< DoubleType, ? > ctn, final double[][] boxDataArray, final double[] ydata, final int level ) {
+	private void addBoxAtIndex( final int index, final Component< ?, ? > ctn, final double[][] boxDataArray, final double[] ydata, final int level ) {
 		int min = Integer.MAX_VALUE;
 		int max = Integer.MIN_VALUE;
 		final Iterator< Localizable > componentIterator = ctn.iterator();

@@ -35,7 +35,7 @@ public class AssignmentsAndHypotheses< A extends AbstractAssignment< H >, H exte
 	 * A Map from any <code>Object</code> to a segmentation hypothesis.
 	 * Hypotheses are used to encapsulate any kind of entity (segmentation
 	 * hypothesis) out there in the world. This might for example be a
-	 * <code>ComponentTreeNode</code>.
+	 * <code>Component</code>.
 	 */
 	private final Map< Object, H > hmap;
 

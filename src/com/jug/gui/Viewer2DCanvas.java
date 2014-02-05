@@ -11,10 +11,9 @@ import java.awt.event.MouseEvent;
 import javax.swing.JComponent;
 import javax.swing.event.MouseInputListener;
 
-import net.imglib2.algorithm.componenttree.ComponentTreeNode;
-import net.imglib2.display.ARGBScreenImage;
-import net.imglib2.display.RealARGBConverter;
-import net.imglib2.display.XYProjector;
+import net.imglib2.algorithm.componenttree.Component;
+import net.imglib2.converter.RealARGBConverter;
+import net.imglib2.display.screenimage.awt.ARGBScreenImage;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.view.IntervalView;
@@ -122,7 +121,7 @@ public class Viewer2DCanvas extends JComponent implements MouseInputListener {
 			double cost = Double.NaN;
 			//TODO NOT nice... do something against that, please!
 			final int t = glf.getTime();
-			final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp = glf.getParent().getIlp().getOptimalSegmentationAtLocation( t, this.mousePosY );
+			final Hypothesis< Component< DoubleType, ? >> hyp = glf.getParent().getIlp().getOptimalSegmentationAtLocation( t, this.mousePosY );
 			if ( hyp != null ) {
 				cost = hyp.getCosts();
 			}

@@ -21,7 +21,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.MouseInputListener;
 
 import net.imglib2.Pair;
-import net.imglib2.algorithm.componenttree.ComponentTreeNode;
+import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.DoubleType;
 
 import com.jug.MotherMachine;
@@ -78,9 +78,9 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 
 	private boolean doFilterDataByIdentity = false;
 	private boolean doAddToFilter = false; // if 'true' all assignments at the mouse location will be added to the filter next time repaint is called...
-	private final Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > filteredAssignments;
+	private final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > filteredAssignments;
 
-	private HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data;
+	private HashMap< Hypothesis< Component< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >> data;
 
 	private boolean isMouseOver = false;
 	private int mousePosX;
@@ -127,7 +127,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		this.setCostFilterMin( filterMinCost );
 		this.setCostFilterMax( filterMaxCost );
 
-		this.filteredAssignments = new HashSet< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >();
+		this.filteredAssignments = new HashSet< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >();
 	}
 
 	// -------------------------------------------------------------------------------------
@@ -173,7 +173,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 *            a <code>HashMap</code> containing pairs of segmentation
 	 *            hypothesis at some time-point t and assignments towards t+1.
 	 */
-	public void display( final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data, final boolean doFilterActive ) {
+	public void display( final HashMap< Hypothesis< Component< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >> data, final boolean doFilterActive ) {
 		doFilterDataByType = false;
 		doFilterDataByCost = false;
 		setData( data, doFilterActive );
@@ -189,7 +189,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 *            a <code>HashMap</code> containing pairs of segmentation
 	 *            hypothesis at some time-point t and assignments towards t+1.
 	 */
-	public void display( final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data, final boolean doFilterActive, final double minCostToShow, final double maxCostToShow ) {
+	public void display( final HashMap< Hypothesis< Component< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >> data, final boolean doFilterActive, final double minCostToShow, final double maxCostToShow ) {
 		doFilterDataByType = false;
 		setData( data, doFilterActive );
 
@@ -212,7 +212,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 *            <code>GrowthLineTrackingILP.ASSIGNMENT_DIVISION</code>, or
 	 *            <code>GrowthLineTrackingILP.ASSIGNMENT_EXIT</code>.
 	 */
-	public void display( final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data, final boolean doFilterActive, final int typeToFilter ) {
+	public void display( final HashMap< Hypothesis< Component< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >> data, final boolean doFilterActive, final int typeToFilter ) {
 		assert ( typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_EXIT ||
 				 typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ||
 				 typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
@@ -231,7 +231,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 *            <code>GrowthLineTrackingILP.ASSIGNMENT_DIVISION</code>, or
 	 *            <code>GrowthLineTrackingILP.ASSIGNMENT_EXIT</code>.
 	 */
-	public void display( final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data, final boolean doFilterActive, final int typeToFilter, final double minCostToShow, final double maxCostToShow ) {
+	public void display( final HashMap< Hypothesis< Component< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >> data, final boolean doFilterActive, final int typeToFilter, final double minCostToShow, final double maxCostToShow ) {
 		assert ( typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_EXIT ||
 				 typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_MAPPING ||
 				 typeToFilter == GrowthLineTrackingILP.ASSIGNMENT_DIVISION );
@@ -257,8 +257,8 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 		if ( data == null ) return;
 
 		this.currentCostLine = 0;
-		for ( final Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > setOfAssignments : data.values() ) {
-			for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> assignment : setOfAssignments ) {
+		for ( final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > setOfAssignments : data.values() ) {
+			for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> assignment : setOfAssignments ) {
 				if ( doFilterDataByType && assignment.getType() != filterAssignmentType ) {
 					continue;
 				}
@@ -294,7 +294,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 * @param g
 	 * @param assignment
 	 */
-	private void drawAssignment( final Graphics g, final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> assignment ) {
+	private void drawAssignment( final Graphics g, final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> assignment ) {
 
 		// Just return in case the given component is in the
 		// set of filtered assignments.
@@ -325,8 +325,8 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 * @param size
 	 */
 	private void drawMappingAssignment( final Graphics g, final Graphics2D g2, final MappingAssignment ma, final Dimension size ) {
-		final Hypothesis< ComponentTreeNode< DoubleType, ? >> leftHyp = ma.getSourceHypothesis();
-		final Hypothesis< ComponentTreeNode< DoubleType, ? >> rightHyp = ma.getDestinationHypothesis();
+		final Hypothesis< Component< DoubleType, ? >> leftHyp = ma.getSourceHypothesis();
+		final Hypothesis< Component< DoubleType, ? >> rightHyp = ma.getDestinationHypothesis();
 
 		final Pair< Integer, Integer > limitsLeft = ComponentTreeUtils.getTreeNodeInterval( leftHyp.getWrappedHypothesis() );
 		final Pair< Integer, Integer > limitsRight = ComponentTreeUtils.getTreeNodeInterval( rightHyp.getWrappedHypothesis() );
@@ -423,9 +423,9 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 * @param size
 	 */
 	private void drawDivisionAssignment( final Graphics g, final Graphics2D g2, final DivisionAssignment da, final Dimension size ) {
-		final Hypothesis< ComponentTreeNode< DoubleType, ? >> leftHyp = da.getSourceHypothesis();
-		final Hypothesis< ComponentTreeNode< DoubleType, ? >> rightHypUpper = da.getUpperDesinationHypothesis();
-		final Hypothesis< ComponentTreeNode< DoubleType, ? >> rightHypLower = da.getLowerDesinationHypothesis();
+		final Hypothesis< Component< DoubleType, ? >> leftHyp = da.getSourceHypothesis();
+		final Hypothesis< Component< DoubleType, ? >> rightHypUpper = da.getUpperDesinationHypothesis();
+		final Hypothesis< Component< DoubleType, ? >> rightHypLower = da.getLowerDesinationHypothesis();
 
 		final Pair< Integer, Integer > limitsLeft = ComponentTreeUtils.getTreeNodeInterval( leftHyp.getWrappedHypothesis() );
 		final Pair< Integer, Integer > limitsRightUpper = ComponentTreeUtils.getTreeNodeInterval( rightHypUpper.getWrappedHypothesis() );
@@ -533,7 +533,7 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 * @param size
 	 */
 	private void drawExitAssignment( final Graphics g, final Graphics2D g2, final ExitAssignment ea, final Dimension size ) {
-		final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp = ea.getAssociatedHypothesis();
+		final Hypothesis< Component< DoubleType, ? >> hyp = ea.getAssociatedHypothesis();
 		final Pair< Integer, Integer > limits = ComponentTreeUtils.getTreeNodeInterval( hyp.getWrappedHypothesis() );
 
 		final int x1 = 0;
@@ -606,12 +606,12 @@ public class AssignmentView extends JComponent implements MouseInputListener {
 	 * @param data
 	 * @param doFilterActive
 	 */
-	public void setData( final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >> data, final boolean doFilterActive ) {
+	public void setData( final HashMap< Hypothesis< Component< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >> data, final boolean doFilterActive ) {
 		if ( data != null && doFilterActive ) {
-			this.data = new HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >>();
-			for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hypo : data.keySet() ) {
-				final Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > activeSet = new HashSet< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> >();
-				for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> ass : data.get( hypo ) ) {
+			this.data = new HashMap< Hypothesis< Component< DoubleType, ? >>, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >>();
+			for ( final Hypothesis< Component< DoubleType, ? >> hypo : data.keySet() ) {
+				final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > activeSet = new HashSet< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> >();
+				for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> ass : data.get( hypo ) ) {
 					try {
 						if ( ass.isChoosen() || ass.isGroundTruth() ) {
 							activeSet.add( ass );

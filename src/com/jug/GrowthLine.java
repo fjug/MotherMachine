@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
-import net.imglib2.algorithm.componenttree.ComponentTreeNode;
+import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.DoubleType;
 
 import com.jug.lp.AbstractAssignment;
@@ -25,8 +25,9 @@ public class GrowthLine {
 	// -------------------------------------------------------------------------------------
 	private final List< GrowthLineFrame > frames;
 	private GrowthLineTrackingILP ilp; //<
-			// Hypothesis< ComponentTreeNode< DoubleType, ? > >,
-			// AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > ilp;
+
+	// Hypothesis< Component< DoubleType, ? > >,
+	// AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > ilp;
 
 	// -------------------------------------------------------------------------------------
 	// setters and getters
@@ -126,8 +127,8 @@ public class GrowthLine {
 				int exits = 0;
 				int divisions = 0;
 
-				for ( final Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > set : getIlp().getOptimalRightAssignments( glf.getTime() ).values() ) {
-					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> ora : set ) {
+				for ( final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > set : getIlp().getOptimalRightAssignments( glf.getTime() ).values() ) {
+					for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> ora : set ) {
 						cells++;
 						if ( ora.getType() == GrowthLineTrackingILP.ASSIGNMENT_DIVISION )
 							divisions++;

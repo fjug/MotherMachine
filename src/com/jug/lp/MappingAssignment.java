@@ -9,20 +9,20 @@ import gurobi.GRBVar;
 
 import java.util.List;
 
-import net.imglib2.algorithm.componenttree.ComponentTreeNode;
+import net.imglib2.algorithm.componenttree.Component;
 import net.imglib2.type.numeric.real.DoubleType;
 
 /**
  * @author jug
  */
-public class MappingAssignment extends AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > {
+public class MappingAssignment extends AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > {
 
 	@SuppressWarnings( "unused" )
-	private final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > >, Hypothesis< ComponentTreeNode< DoubleType, ? > > > nodes;
+	private final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > >, Hypothesis< Component< DoubleType, ? > > > nodes;
 	@SuppressWarnings( "unused" )
-	private final HypothesisNeighborhoods< Hypothesis< ComponentTreeNode< DoubleType, ? > >, AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > edges;
-	private final Hypothesis< ComponentTreeNode< DoubleType, ? >> from;
-	private final Hypothesis< ComponentTreeNode< DoubleType, ? >> to;
+	private final HypothesisNeighborhoods< Hypothesis< Component< DoubleType, ? > >, AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > edges;
+	private final Hypothesis< Component< DoubleType, ? >> from;
+	private final Hypothesis< Component< DoubleType, ? >> to;
 
 	/**
 	 * Creates an MappingAssignment.
@@ -34,12 +34,7 @@ public class MappingAssignment extends AbstractAssignment< Hypothesis< Component
 	 * @throws GRBException
 	 */
 	public MappingAssignment( final int t, final GRBVar ilpVariable, final GRBModel model,
-			final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > >,
-						Hypothesis< ComponentTreeNode< DoubleType, ? > > > nodes,
-			final HypothesisNeighborhoods< Hypothesis< ComponentTreeNode< DoubleType, ? > >,
-						AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > edges,
-			final Hypothesis<ComponentTreeNode<DoubleType,?>> from,
-			final Hypothesis< ComponentTreeNode< DoubleType, ? >> to ) throws GRBException {
+ final AssignmentsAndHypotheses< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > >, Hypothesis< Component< DoubleType, ? > > > nodes, final HypothesisNeighborhoods< Hypothesis< Component< DoubleType, ? > >, AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > edges, final Hypothesis< Component< DoubleType, ? >> from, final Hypothesis< Component< DoubleType, ? >> to ) throws GRBException {
 		super( GrowthLineTrackingILP.ASSIGNMENT_MAPPING, ilpVariable, model );
 		this.from = from;
 		this.to = to;
@@ -75,7 +70,7 @@ public class MappingAssignment extends AbstractAssignment< Hypothesis< Component
 	 *
 	 * @return the associated segmentation-hypothesis.
 	 */
-	public Hypothesis< ComponentTreeNode< DoubleType, ? >> getSourceHypothesis() {
+	public Hypothesis< Component< DoubleType, ? >> getSourceHypothesis() {
 		return from;
 	}
 
@@ -85,7 +80,7 @@ public class MappingAssignment extends AbstractAssignment< Hypothesis< Component
 	 *
 	 * @return the associated segmentation-hypothesis.
 	 */
-	public Hypothesis< ComponentTreeNode< DoubleType, ? >> getDestinationHypothesis() {
+	public Hypothesis< Component< DoubleType, ? >> getDestinationHypothesis() {
 		return to;
 	}
 

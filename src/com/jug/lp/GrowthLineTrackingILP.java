@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.Set;
 
 import net.imglib2.Pair;
-import net.imglib2.algorithm.componenttree.ComponentTree;
-import net.imglib2.algorithm.componenttree.ComponentTreeNode;
+import net.imglib2.algorithm.componenttree.Component;
+import net.imglib2.algorithm.componenttree.ComponentForest;
 import net.imglib2.type.numeric.real.DoubleType;
 
 import com.jug.GrowthLine;
@@ -34,7 +34,7 @@ import com.jug.util.ComponentTreeUtils;
  */
 public class GrowthLineTrackingILP {
 
-	// < H extends Hypothesis< ComponentTreeNode< DoubleType, ? > >, A extends AbstractAssignment< H > >
+	// < H extends Hypothesis< Component< DoubleType, ? > >, A extends AbstractAssignment< H > >
 
 	// -------------------------------------------------------------------------------------
 	// statics
@@ -66,16 +66,11 @@ public class GrowthLineTrackingILP {
 	private int status;
 
 	public final AssignmentsAndHypotheses<
-		AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > >,
-		Hypothesis< ComponentTreeNode< DoubleType, ? > > >              nodes =
+ AbstractAssignment< Hypothesis< Component< DoubleType, ? > > >, Hypothesis< Component< DoubleType, ? > > > nodes =
 				new AssignmentsAndHypotheses<
-							AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > >,
-							Hypothesis< ComponentTreeNode< DoubleType, ? > > >();
+ AbstractAssignment< Hypothesis< Component< DoubleType, ? > > >, Hypothesis< Component< DoubleType, ? > > >();
 	public final HypothesisNeighborhoods<
-		Hypothesis< ComponentTreeNode< DoubleType, ? > >,
-		AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > edgeSets =
-				new HypothesisNeighborhoods< Hypothesis< ComponentTreeNode< DoubleType, ? > >,
-					AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > >();
+ Hypothesis< Component< DoubleType, ? > >, AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > edgeSets = new HypothesisNeighborhoods< Hypothesis< Component< DoubleType, ? > >, AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > >();
 
 	private int pbcId = 0;
 
@@ -143,14 +138,14 @@ public class GrowthLineTrackingILP {
 			// constraints to the model
 			// - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 			int numHyp = 0;
-			for ( final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> innerList : nodes.getAllHypotheses() ) {
-				for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hypothesis : innerList ) {
+			for ( final List< Hypothesis< Component< DoubleType, ? >>> innerList : nodes.getAllHypotheses() ) {
+				for ( final Hypothesis< Component< DoubleType, ? >> hypothesis : innerList ) {
 					numHyp++;
 				}
 			}
 			int numAss = 0;
-			for ( final List< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > innerList : nodes.getAllAssignments() ) {
-				for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> assignment : innerList ) {
+			for ( final List< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > innerList : nodes.getAllAssignments() ) {
+				for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> assignment : innerList ) {
 					assignment.addConstraintsToLP();
 					numAss++;
 				}
@@ -201,8 +196,8 @@ public class GrowthLineTrackingILP {
 			fgFile.addFactorComment( "=== FAC-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
 			fgFile.addFactorComment( "--- FAC-SECTION :: Unary (Segmentation) Factors -------" );
 
-			final List< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > assmts_t = nodes.getAssignmentsAt( t );
-			for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> assmt : assmts_t ) {
+			final List< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > assmts_t = nodes.getAssignmentsAt( t );
+			for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> assmt : assmts_t ) {
 				final int var_id = fgFile.addVar( 2 );
 				assmt.setVarId( var_id );
 
@@ -241,8 +236,8 @@ public class GrowthLineTrackingILP {
 			fgFile.addFactorComment( "=== FAC-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
 			fgFile.addFactorComment( "--- FAC-SECTION :: Assignment Factors ----------------" );
 
-			final List< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > assmts_t = nodes.getAssignmentsAt( t );
-			for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> assmt : assmts_t ) {
+			final List< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > assmts_t = nodes.getAssignmentsAt( t );
+			for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> assmt : assmts_t ) {
 				final List< Integer > regionIds = new ArrayList< Integer >();
 				regionIds.add( new Integer( regionId ) );
 				assmt.addFunctionsAndFactors( fgFile, regionIds );
@@ -254,29 +249,26 @@ public class GrowthLineTrackingILP {
 			fgFile.addFktComment( "--- FKT-SECTION :: Path-Blocking Constraints ------------" );
 			fgFile.addFactorComment( "--- FAC-SECTION :: Path-Blocking Constraints ------------" );
 
-			final ComponentTree< DoubleType, ? > ct = gl.get( t ).getComponentTree();
-			for ( final ComponentTreeNode< DoubleType, ? > ctRoot : ct.roots() ) {
-				// And call the function adding all the path-blocking-constraints...
-				recursivelyAddPathBlockingConstraints( ctRoot, t, fgFile );
-			}
+			final ComponentForest< ? > ct = gl.get( t ).getComponentTree();
+			recursivelyAddPathBlockingConstraints( ct, t, fgFile );
 
 			if ( t > 0 && t < nodes.getNumberOfTimeSteps() ) {
 				fgFile.addFktComment( "--- FKT-SECTION :: Explanation-Continuity Constraints ------" );
 				fgFile.addFactorComment( "--- FAC-SECTION :: Explanation-Continuity Constraints ------" );
 
-				for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : nodes.getHypothesesAt( t ) ) {
+				for ( final Hypothesis< Component< DoubleType, ? >> hyp : nodes.getHypothesesAt( t ) ) {
 					final List< Integer > varIds = new ArrayList< Integer >();
 					final List< Integer > coeffs = new ArrayList< Integer >();
 
 					if ( edgeSets.getLeftNeighborhood( hyp ) != null ) {
-						for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a_j : edgeSets.getLeftNeighborhood( hyp ) ) {
+						for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> a_j : edgeSets.getLeftNeighborhood( hyp ) ) {
 							//expr.addTerm( 1.0, a_j.getGRBVar() );
 							coeffs.add( new Integer( 1 ) );
 							varIds.add( new Integer( a_j.getVarIdx() ) );
 						}
 					}
 					if ( edgeSets.getRightNeighborhood( hyp ) != null ) {
-						for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a_j : edgeSets.getRightNeighborhood( hyp ) ) {
+						for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> a_j : edgeSets.getRightNeighborhood( hyp ) ) {
 							//expr.addTerm( -1.0, a_j.getGRBVar() );
 							coeffs.add( new Integer( -1 ) );
 							varIds.add( new Integer( a_j.getVarIdx() ) );
@@ -295,6 +287,13 @@ public class GrowthLineTrackingILP {
 		fgFile.write( file );
 	}
 
+	private < C extends Component< ?, C > > void recursivelyAddPathBlockingConstraints( final ComponentForest< C > ct, final int t, final FactorGraphFileBuilder fgFile ) {
+		for ( final C ctRoot : ct.roots() ) {
+			// And call the function adding all the path-blocking-constraints...
+			recursivelyAddPathBlockingConstraints( ctRoot, t, fgFile );
+		}
+	}
+
 	/**
 	 * Traverses all GL-frames in the given GL and adds all
 	 * component-tree-nodes, wrapped in instances of <code>Hypothesis</code>, to
@@ -305,7 +304,7 @@ public class GrowthLineTrackingILP {
 		for ( int t = 0; t < gl.size(); t++ ) {
 			final GrowthLineFrame glf = gl.getFrames().get( t );
 
-			for ( final ComponentTreeNode< DoubleType, ? > ctRoot : glf.getComponentTree().roots() ) {
+			for ( final Component< DoubleType, ? > ctRoot : glf.getComponentTree().roots() ) {
 				recursivelyAddCTNsAsHypotheses( t, ctRoot );
 			}
 		}
@@ -320,13 +319,13 @@ public class GrowthLineTrackingILP {
 	 * @param t
 	 *            the time-index the ctNode comes from.
 	 */
-	private void recursivelyAddCTNsAsHypotheses( final int t, final ComponentTreeNode< DoubleType, ? > ctNode ) {
+	private void recursivelyAddCTNsAsHypotheses( final int t, final Component< DoubleType, ? > ctNode ) {
 
 		final double cost = localCost( t, ctNode );
-		nodes.addHypothesis( t, new Hypothesis< ComponentTreeNode< DoubleType, ? > >( ctNode, cost ) );
+		nodes.addHypothesis( t, new Hypothesis< Component< DoubleType, ? > >( ctNode, cost ) );
 
 		// do the same for all children
-		for ( final ComponentTreeNode< DoubleType, ? > ctChild : ctNode.getChildren() ) {
+		for ( final Component< DoubleType, ? > ctChild : ctNode.getChildren() ) {
 			recursivelyAddCTNsAsHypotheses( t, ctChild );
 		}
 	}
@@ -336,7 +335,7 @@ public class GrowthLineTrackingILP {
 	 * @param ctNode
 	 * @return
 	 */
-	public double localCost( final int t, final ComponentTreeNode< DoubleType, ? > ctNode ) {
+	public double localCost( final int t, final Component< ?, ? > ctNode ) {
 		//TODO kotz
 		final double[] gapSepFkt = gl.getFrames().get( t ).getGapSeparationValues( null );
 		return CostFactory.getSegmentationCost( ctNode, gapSepFkt );
@@ -352,8 +351,8 @@ public class GrowthLineTrackingILP {
 	 */
 	private void enumerateAndAddAssignments() throws GRBException {
 		for ( int t = 0; t < gl.size() - 1; t++ ) {
-			final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> curHyps = nodes.getHypothesesAt( t );
-			final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> nxtHyps = nodes.getHypothesesAt( t + 1 );
+			final List< Hypothesis< Component< DoubleType, ? >>> curHyps = nodes.getHypothesesAt( t );
+			final List< Hypothesis< Component< DoubleType, ? >>> nxtHyps = nodes.getHypothesesAt( t + 1 );
 
 			addExitAssignments( t, curHyps );
 			addMappingAssignments( t, curHyps, nxtHyps );
@@ -376,13 +375,13 @@ public class GrowthLineTrackingILP {
 	 *            should be added.
 	 * @throws GRBException
 	 */
-	private void addExitAssignments( final int t, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps ) throws GRBException {
+	private void addExitAssignments( final int t, final List< Hypothesis< Component< DoubleType, ? >>> hyps ) throws GRBException {
 		final double cost = 0.0;
 		int i = 0;
-		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : hyps ) {
+		for ( final Hypothesis< Component< DoubleType, ? >> hyp : hyps ) {
 //			cost = hyp.getCosts();
 			final GRBVar newLPVar = model.addVar( 0.0, 1.0, cost, GRB.BINARY, String.format( "a_%d^EXIT--%d", t, i ) );
-			final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> Hup = LpUtils.getHup( hyp, hyps );
+			final List< Hypothesis< Component< DoubleType, ? >>> Hup = LpUtils.getHup( hyp, hyps );
 			final ExitAssignment ea = new ExitAssignment( t, newLPVar, model, nodes, edgeSets, Hup, hyp );
 			nodes.addAssignment( t, ea );
 			edgeSets.addToRightNeighborhood( hyp, ea );
@@ -403,15 +402,15 @@ public class GrowthLineTrackingILP {
 	 *            added <code>MappingAssignments</code> should end at.
 	 * @throws GRBException
 	 */
-	private void addMappingAssignments( final int t, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> curHyps, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> nxtHyps ) throws GRBException {
+	private void addMappingAssignments( final int t, final List< Hypothesis< Component< DoubleType, ? >>> curHyps, final List< Hypothesis< Component< DoubleType, ? >>> nxtHyps ) throws GRBException {
 		double cost = 0.0;
 
 		int i = 0;
-		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> from : curHyps ) {
+		for ( final Hypothesis< Component< DoubleType, ? >> from : curHyps ) {
 			int j = 0;
 			final double fromCost = from.getCosts();
 
-			for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> to : nxtHyps ) {
+			for ( final Hypothesis< Component< DoubleType, ? >> to : nxtHyps ) {
 				final double toCost = to.getCosts();
 
 				if ( !( ComponentTreeUtils.isBelow( to.getWrappedHypothesis(), from.getWrappedHypothesis() ) ) ) {
@@ -450,12 +449,12 @@ public class GrowthLineTrackingILP {
 	 * @return the cost we want to set for the given combination of segmentation
 	 *         hypothesis.
 	 */
-	private double compatibilityCostOfMapping( final Hypothesis< ComponentTreeNode< DoubleType, ? >> from, final Hypothesis< ComponentTreeNode< DoubleType, ? >> to ) {
-		final long sizeFrom = from.getWrappedHypothesis().getSize();
-		final long sizeTo = to.getWrappedHypothesis().getSize();
+	private double compatibilityCostOfMapping( final Hypothesis< Component< DoubleType, ? >> from, final Hypothesis< Component< DoubleType, ? >> to ) {
+		final long sizeFrom = from.getWrappedHypothesis().size();
+		final long sizeTo = to.getWrappedHypothesis().size();
 
-		final double valueFrom = from.getWrappedHypothesis().getValue().get();
-		final double valueTo = to.getWrappedHypothesis().getValue().get();
+		final double valueFrom = from.getWrappedHypothesis().value().get();
+		final double valueTo = to.getWrappedHypothesis().value().get();
 
 		final Pair< Integer, Integer > intervalFrom = ComponentTreeUtils.getTreeNodeInterval( from.getWrappedHypothesis() );
 		final Pair< Integer, Integer > intervalTo = ComponentTreeUtils.getTreeNodeInterval( to.getWrappedHypothesis() );
@@ -490,19 +489,19 @@ public class GrowthLineTrackingILP {
 	 *            added <code>DivisionAssignments</code> should end at.
 	 * @throws GRBException
 	 */
-	private void addDivisionAssignments( final int t, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> curHyps, final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> nxtHyps ) throws GRBException {
+	private void addDivisionAssignments( final int t, final List< Hypothesis< Component< DoubleType, ? >>> curHyps, final List< Hypothesis< Component< DoubleType, ? >>> nxtHyps ) throws GRBException {
 		double cost = 0.0;
 
 		int i = 0;
-		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> from : curHyps ) {
+		for ( final Hypothesis< Component< DoubleType, ? >> from : curHyps ) {
 			int j = 0;
 			final double fromCost = from.getCosts();
 
-			for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> to : nxtHyps ) {
+			for ( final Hypothesis< Component< DoubleType, ? >> to : nxtHyps ) {
 				if ( !( ComponentTreeUtils.isBelow( to.getWrappedHypothesis(), from.getWrappedHypothesis() ) ) ) {
-					for ( final ComponentTreeNode< DoubleType, ? > neighborCTN : ComponentTreeUtils.getRightNeighbors( to.getWrappedHypothesis() ) ) {
+					for ( final Component< DoubleType, ? > neighborCTN : ComponentTreeUtils.getRightNeighbors( to.getWrappedHypothesis() ) ) {
 						@SuppressWarnings( "unchecked" )
-						final Hypothesis< ComponentTreeNode< DoubleType, ? > > lowerNeighbor = ( Hypothesis< ComponentTreeNode< DoubleType, ? >> ) nodes.findHypothesisContaining( neighborCTN );
+						final Hypothesis< Component< DoubleType, ? > > lowerNeighbor = ( Hypothesis< Component< DoubleType, ? >> ) nodes.findHypothesisContaining( neighborCTN );
 						if ( lowerNeighbor == null ) {
 							System.out.println( "CRITICAL BUG!!!! Check GrowthLineTimeSeris::adDivisionAssignment(...)" );
 						} else {
@@ -543,14 +542,14 @@ public class GrowthLineTrackingILP {
 	 * @return the cost we want to set for the given combination of segmentation
 	 *         hypothesis.
 	 */
-	private double compatibilityCostOfDivision( final Hypothesis< ComponentTreeNode< DoubleType, ? >> from, final Hypothesis< ComponentTreeNode< DoubleType, ? >> toUpper, final Hypothesis< ComponentTreeNode< DoubleType, ? >> toLower ) {
-		final long sizeFrom = from.getWrappedHypothesis().getSize();
-		final long sizeToU = toUpper.getWrappedHypothesis().getSize();
-		final long sizeToL = toLower.getWrappedHypothesis().getSize();
+	private double compatibilityCostOfDivision( final Hypothesis< Component< DoubleType, ? >> from, final Hypothesis< Component< DoubleType, ? >> toUpper, final Hypothesis< Component< DoubleType, ? >> toLower ) {
+		final long sizeFrom = from.getWrappedHypothesis().size();
+		final long sizeToU = toUpper.getWrappedHypothesis().size();
+		final long sizeToL = toLower.getWrappedHypothesis().size();
 		final long sizeTo = sizeToU + sizeToL;
 
-		final double valueFrom = from.getWrappedHypothesis().getValue().get();
-		final double valueTo = 0.5 * ( toUpper.getWrappedHypothesis().getValue().get() + toLower.getWrappedHypothesis().getValue().get() );
+		final double valueFrom = from.getWrappedHypothesis().value().get();
+		final double valueTo = 0.5 * ( toUpper.getWrappedHypothesis().value().get() + toLower.getWrappedHypothesis().value().get() );
 
 		final Pair< Integer, Integer > intervalFrom = ComponentTreeUtils.getTreeNodeInterval( from.getWrappedHypothesis() );
 		final Pair< Integer, Integer > intervalToU = ComponentTreeUtils.getTreeNodeInterval( toUpper.getWrappedHypothesis() );
@@ -590,11 +589,16 @@ public class GrowthLineTrackingILP {
 		// For each time-point
 		for ( int t = 0; t < gl.size(); t++ ) {
 			// Get the full component tree
-			final ComponentTree< DoubleType, ? > ct = gl.get( t ).getComponentTree();
-			for ( final ComponentTreeNode< DoubleType, ? > ctRoot : ct.roots() ) {
-				// And call the function adding all the path-blocking-constraints...
-				recursivelyAddPathBlockingConstraints( ctRoot, t );
-			}
+			final ComponentForest< ? > ct = gl.get( t ).getComponentTree();
+			// And call the function adding all the path-blocking-constraints...
+			recursivelyAddPathBlockingConstraints( ct, t );
+		}
+	}
+
+	private < C extends Component< ?, C > > void recursivelyAddPathBlockingConstraints( final ComponentForest< C > ct, final int t ) throws GRBException {
+		for ( final C ctRoot : ct.roots() ) {
+			// And call the function adding all the path-blocking-constraints...
+			recursivelyAddPathBlockingConstraints( ctRoot, t );
 		}
 	}
 
@@ -610,23 +614,23 @@ public class GrowthLineTrackingILP {
 	 * @param t
 	 * @throws GRBException
 	 */
-	private void recursivelyAddPathBlockingConstraints( final ComponentTreeNode< DoubleType, ? > ctNode, final int t ) throws GRBException {
+	private < C extends Component< ?, C > > void recursivelyAddPathBlockingConstraints( final C ctNode, final int t ) throws GRBException {
 
 		// if ctNode is a leave node -> add constraint (by going up the list of
 		// parents and building up the constraint)
 		if ( ctNode.getChildren().size() == 0 ) {
-			ComponentTreeNode< DoubleType, ? > runnerNode = ctNode;
+			C runnerNode = ctNode;
 
 			final GRBLinExpr exprR = new GRBLinExpr();
 			while ( runnerNode != null ) {
 				@SuppressWarnings( "unchecked" )
-				final Hypothesis< ComponentTreeNode< DoubleType, ? > > hypothesis = ( Hypothesis< ComponentTreeNode< DoubleType, ? >> ) nodes.findHypothesisContaining( runnerNode );
+				final Hypothesis< Component< DoubleType, ? > > hypothesis = ( Hypothesis< Component< DoubleType, ? >> ) nodes.findHypothesisContaining( runnerNode );
 				if ( hypothesis == null ) {
 					System.err.println( "WARNING: Hypothesis for a CTN was not found in GrowthLineTrackingILP -- this is an indication for some design problem of the system!" );
 				}
 
 				if ( edgeSets.getRightNeighborhood( hypothesis ) != null ) {
-					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a : edgeSets.getRightNeighborhood( hypothesis ) ) {
+					for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> a : edgeSets.getRightNeighborhood( hypothesis ) ) {
 						exprR.addTerm( 1.0, a.getGRBVar() );
 					}
 				}
@@ -637,7 +641,7 @@ public class GrowthLineTrackingILP {
 			model.addConstr( exprR, GRB.LESS_EQUAL, 1.0, name );
 		} else {
 			// if ctNode is a inner node -> recursion
-			for ( final ComponentTreeNode< DoubleType, ? > ctChild : ctNode.getChildren() ) {
+			for ( final C ctChild : ctNode.getChildren() ) {
 				recursivelyAddPathBlockingConstraints( ctChild, t );
 			}
 		}
@@ -650,7 +654,7 @@ public class GrowthLineTrackingILP {
 	 * @param functions
 	 * @param factors
 	 */
-	private void recursivelyAddPathBlockingConstraints( final ComponentTreeNode< DoubleType, ? > ctNode, final int t, final FactorGraphFileBuilder fgFile ) {
+	private < C extends Component< ?, C > > void recursivelyAddPathBlockingConstraints( final C ctNode, final int t, final FactorGraphFileBuilder fgFile ) {
 
 		// if ctNode is a leave node -> add constraint (by going up the list of
 		// parents and building up the constraint)
@@ -658,18 +662,18 @@ public class GrowthLineTrackingILP {
 			final List< Integer > varIds = new ArrayList< Integer >();
 			final List< Integer > coeffs = new ArrayList< Integer >();
 
-			ComponentTreeNode< DoubleType, ? > runnerNode = ctNode;
+			C runnerNode = ctNode;
 
 			// final GRBLinExpr exprR = new GRBLinExpr();
 			while ( runnerNode != null ) {
 				@SuppressWarnings( "unchecked" )
-				final Hypothesis< ComponentTreeNode< DoubleType, ? > > hypothesis = ( Hypothesis< ComponentTreeNode< DoubleType, ? >> ) nodes.findHypothesisContaining( runnerNode );
+				final Hypothesis< Component< DoubleType, ? > > hypothesis = ( Hypothesis< Component< DoubleType, ? >> ) nodes.findHypothesisContaining( runnerNode );
 				if ( hypothesis == null ) {
 					System.err.println( "WARNING: Hypothesis for a CTN was not found in GrowthLineTrackingILP -- this is an indication for some design problem of the system!" );
 				}
 
 				if ( edgeSets.getRightNeighborhood( hypothesis ) != null ) {
-					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a : edgeSets.getRightNeighborhood( hypothesis ) ) {
+					for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> a : edgeSets.getRightNeighborhood( hypothesis ) ) {
 						// exprR.addTerm( 1.0, a.getGRBVar() );
 						coeffs.add( new Integer( 1 ) );
 						varIds.add( new Integer( a.getVarIdx() ) );
@@ -683,7 +687,7 @@ public class GrowthLineTrackingILP {
 			fgFile.addFactor( fkt_id, varIds, ( t + 1 ) / 2 );
 		} else {
 			// if ctNode is a inner node -> recursion
-			for ( final ComponentTreeNode< DoubleType, ? > ctChild : ctNode.getChildren() ) {
+			for ( final C ctChild : ctNode.getChildren() ) {
 				recursivelyAddPathBlockingConstraints( ctChild, t, fgFile );
 			}
 		}
@@ -705,16 +709,16 @@ public class GrowthLineTrackingILP {
 		// For each time-point
 		for ( int t = 1; t < gl.size() - 1; t++ ) { // !!! sparing out the border !!!
 
-			for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : nodes.getHypothesesAt( t ) ) {
+			for ( final Hypothesis< Component< DoubleType, ? >> hyp : nodes.getHypothesesAt( t ) ) {
 				final GRBLinExpr expr = new GRBLinExpr();
 
 				if ( edgeSets.getLeftNeighborhood( hyp ) != null ) {
-					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a_j : edgeSets.getLeftNeighborhood( hyp ) ) {
+					for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> a_j : edgeSets.getLeftNeighborhood( hyp ) ) {
 						expr.addTerm( 1.0, a_j.getGRBVar() );
 					}
 				}
 				if ( edgeSets.getRightNeighborhood( hyp ) != null ) {
-					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a_j : edgeSets.getRightNeighborhood( hyp ) ) {
+					for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> a_j : edgeSets.getRightNeighborhood( hyp ) ) {
 						expr.addTerm( -1.0, a_j.getGRBVar() );
 					}
 				}
@@ -776,11 +780,11 @@ public class GrowthLineTrackingILP {
 	 *         active segmentation hypothesis (chosen by the optimization
 	 *         procedure).
 	 */
-	public List< ComponentTreeNode< DoubleType, ? >> getOptimalSegmentation( final int t ) {
-		final ArrayList< ComponentTreeNode< DoubleType, ? >> ret = new ArrayList< ComponentTreeNode< DoubleType, ? >>();
+	public List< Component< DoubleType, ? >> getOptimalSegmentation( final int t ) {
+		final ArrayList< Component< DoubleType, ? >> ret = new ArrayList< Component< DoubleType, ? >>();
 
-		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = getOptimalHypotheses( t );
-		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> h : hyps ) {
+		final List< Hypothesis< Component< DoubleType, ? >>> hyps = getOptimalHypotheses( t );
+		for ( final Hypothesis< Component< DoubleType, ? >> h : hyps ) {
 			ret.add( h.getWrappedHypothesis() );
 		}
 
@@ -798,15 +802,15 @@ public class GrowthLineTrackingILP {
 	 * @param gapSepYPos
 	 *            the position along the gap-separation-function you want to
 	 *            receive the active segmentation hypothesis for.
-	 * @return a <code>Hypothesis< ComponentTreeNode< DoubleType, ? >></code>
-	 *         that correspond to the active segmentation hypothesis at the
+	 * @return a <code>Hypothesis< Component< DoubleType, ? >></code> that
+	 *         correspond to the active segmentation hypothesis at the
 	 *         requested location.
 	 *         Note: this function might return <code>null</code> since not all
 	 *         y-locations are occupied by active segmentation hypotheses!
 	 */
-	public Hypothesis< ComponentTreeNode< DoubleType, ? >> getOptimalSegmentationAtLocation( final int t, final int gapSepYPos ) {
-		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = getOptimalHypotheses( t );
-		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> h : hyps ) {
+	public Hypothesis< Component< DoubleType, ? >> getOptimalSegmentationAtLocation( final int t, final int gapSepYPos ) {
+		final List< Hypothesis< Component< DoubleType, ? >>> hyps = getOptimalHypotheses( t );
+		for ( final Hypothesis< Component< DoubleType, ? >> h : hyps ) {
 			final Pair< Integer, Integer > ctnLimits = ComponentTreeUtils.getTreeNodeInterval( h.getWrappedHypothesis() );
 			if ( ctnLimits.getA().intValue() <= gapSepYPos && ctnLimits.getB().intValue() >= gapSepYPos ) { return h; }
 		}
@@ -821,19 +825,17 @@ public class GrowthLineTrackingILP {
 	 *
 	 * @param t
 	 *            the time-point at which to look for the optimal segmentation.
-	 * @return a list of
-	 *         <code>Hypothesis< ComponentTreeNode< DoubleType, ? > ></code>
+	 * @return a list of <code>Hypothesis< Component< DoubleType, ? > ></code>
 	 *         that correspond to the active segmentation hypothesis (chosen by
 	 *         the optimization procedure).
 	 */
-	public List< Hypothesis< ComponentTreeNode< DoubleType, ? > > > getOptimalHypotheses( final int t ) {
-		final ArrayList< Hypothesis< ComponentTreeNode< DoubleType, ? > > > ret =
-				new ArrayList< Hypothesis< ComponentTreeNode< DoubleType, ? > > >();
+	public List< Hypothesis< Component< DoubleType, ? > > > getOptimalHypotheses( final int t ) {
+		final ArrayList< Hypothesis< Component< DoubleType, ? > > > ret = new ArrayList< Hypothesis< Component< DoubleType, ? > > >();
 
-		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = nodes.getHypothesesAt( t );
+		final List< Hypothesis< Component< DoubleType, ? >>> hyps = nodes.getHypothesesAt( t );
 
-		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : hyps ) {
-			Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > nh;
+		for ( final Hypothesis< Component< DoubleType, ? >> hyp : hyps ) {
+			Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > nh;
 			if ( t > 0 ) {
 				nh = edgeSets.getLeftNeighborhood( hyp );
 			} else {
@@ -841,7 +843,7 @@ public class GrowthLineTrackingILP {
 			}
 
 			try {
-				final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> aa = findActiveAssignment( nh );
+				final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> aa = findActiveAssignment( nh );
 				if ( aa != null ) {
 					ret.add( hyp );
 				}
@@ -872,22 +874,19 @@ public class GrowthLineTrackingILP {
 	 *         Note that segmentation hypothesis that are not active will NOT be
 	 *         included in the hash-map.
 	 */
-	public HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set < AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > > getOptimalLeftAssignments( final int t ) {
+	public HashMap< Hypothesis< Component< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > > getOptimalLeftAssignments( final int t ) {
 		assert ( t >= 1 );
 		assert ( t < nodes.getNumberOfTimeSteps() );
 
-		final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >,
-					   Set < AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > >  ret =
-				new HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >,
-							 Set < AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > > ();
+		final HashMap< Hypothesis< Component< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > > ret = new HashMap< Hypothesis< Component< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > >();
 
-		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = nodes.getHypothesesAt( t );
+		final List< Hypothesis< Component< DoubleType, ? >>> hyps = nodes.getHypothesesAt( t );
 
-		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : hyps ) {
+		for ( final Hypothesis< Component< DoubleType, ? >> hyp : hyps ) {
 			try {
-				final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> ola = getOptimalLeftAssignment( hyp );
+				final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> ola = getOptimalLeftAssignment( hyp );
 				if ( ola != null ) {
-					final HashSet< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > oneElemSet = new HashSet< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > >();
+					final HashSet< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > oneElemSet = new HashSet< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > >();
 					oneElemSet.add( ola );
 					ret.put( hyp, oneElemSet );
 				}
@@ -915,7 +914,7 @@ public class GrowthLineTrackingILP {
 	 *         previous time-point.
 	 * @throws GRBException
 	 */
-	private AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > getOptimalLeftAssignment( final Hypothesis< ComponentTreeNode< DoubleType, ? > > hypothesis ) throws GRBException {
+	private AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > getOptimalLeftAssignment( final Hypothesis< Component< DoubleType, ? > > hypothesis ) throws GRBException {
 		return findActiveAssignment( edgeSets.getLeftNeighborhood( hypothesis ) );
 	}
 
@@ -936,24 +935,21 @@ public class GrowthLineTrackingILP {
 	 *         Note that segmentation hypothesis that are not active will NOT be
 	 *         included in the hash-map.
 	 */
-	public HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set < AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > > getOptimalRightAssignments( final int t ) {
+	public HashMap< Hypothesis< Component< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > > getOptimalRightAssignments( final int t ) {
 		assert ( t >= 0 );
 		assert ( t < nodes.getNumberOfTimeSteps() - 1 );
 
-		final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >,
-		   			   Set < AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > >  ret =
-		   		new HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >,
-		   					 Set < AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > > ();
+		final HashMap< Hypothesis< Component< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > > ret = new HashMap< Hypothesis< Component< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > >();
 
-		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = nodes.getHypothesesAt( t );
+		final List< Hypothesis< Component< DoubleType, ? >>> hyps = nodes.getHypothesesAt( t );
 
 		if ( hyps == null ) return ret;
 
-		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : hyps ) {
+		for ( final Hypothesis< Component< DoubleType, ? >> hyp : hyps ) {
 			try {
-				final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> ora = getOptimalRightAssignment( hyp );
+				final AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> ora = getOptimalRightAssignment( hyp );
 				if ( ora != null ) {
-					final HashSet< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > oneElemSet = new HashSet< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > >();
+					final HashSet< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > oneElemSet = new HashSet< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > >();
 					oneElemSet.add( ora );
 					ret.put( hyp, oneElemSet );
 				}
@@ -981,7 +977,7 @@ public class GrowthLineTrackingILP {
 	 *         next time-point.
 	 * @throws GRBException
 	 */
-	private AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > getOptimalRightAssignment( final Hypothesis< ComponentTreeNode< DoubleType, ? > > hypothesis ) throws GRBException {
+	private AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > getOptimalRightAssignment( final Hypothesis< Component< DoubleType, ? > > hypothesis ) throws GRBException {
 		return findActiveAssignment( edgeSets.getRightNeighborhood( hypothesis ) );
 	}
 
@@ -997,10 +993,10 @@ public class GrowthLineTrackingILP {
 	 *         optimizer!)
 	 * @throws GRBException
 	 */
-	private AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > findActiveAssignment( final Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > set ) throws GRBException {
+	private AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > findActiveAssignment( final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > set ) throws GRBException {
 		if ( set == null ) return null;
 
-		for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > a : set ) {
+		for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > a : set ) {
 			if ( a.isChoosen() ) { return a; }
 		}
 		return null;
@@ -1021,25 +1017,25 @@ public class GrowthLineTrackingILP {
 	 *         assignments that (i) are NOT active, and (ii) come in from the
 	 *         left (from t-1).
 	 */
-	public HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > > getInactiveLeftAssignments( final int t ) {
+	public HashMap< Hypothesis< Component< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > > getInactiveLeftAssignments( final int t ) {
 		assert ( t >= 1 );
 		assert ( t < nodes.getNumberOfTimeSteps() );
 
-		final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > >> ret = new HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > >();
+		final HashMap< Hypothesis< Component< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > >> ret = new HashMap< Hypothesis< Component< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > >();
 
-		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = this.getOptimalHypotheses( t );
+		final List< Hypothesis< Component< DoubleType, ? >>> hyps = this.getOptimalHypotheses( t );
 
-		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : hyps ) {
+		for ( final Hypothesis< Component< DoubleType, ? >> hyp : hyps ) {
 			try {
-				final Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > set = edgeSets.getLeftNeighborhood( hyp );
+				final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > set = edgeSets.getLeftNeighborhood( hyp );
 
 				if ( set == null ) continue;
 
-				for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > a : set ) {
+				for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > a : set ) {
 					if ( !a.isChoosen() ) {
-						Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > innerSet = ret.get( hyp );
+						Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > innerSet = ret.get( hyp );
 						if ( innerSet == null ) {
-							innerSet = new HashSet< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > >();
+							innerSet = new HashSet< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > >();
 							innerSet.add( a );
 							ret.put( hyp, innerSet );
 						} else {
@@ -1072,25 +1068,25 @@ public class GrowthLineTrackingILP {
 	 *         assignments that (i) are NOT active, and (ii) come in from the
 	 *         right (from t+1).
 	 */
-	public HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > > getInactiveRightAssignments( final int t ) {
+	public HashMap< Hypothesis< Component< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > > getInactiveRightAssignments( final int t ) {
 		assert ( t >= 0 );
 		assert ( t < nodes.getNumberOfTimeSteps() - 1 );
 
-		final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > > ret = new HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > >();
+		final HashMap< Hypothesis< Component< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > > ret = new HashMap< Hypothesis< Component< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > >();
 
-		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = this.getOptimalHypotheses( t );
+		final List< Hypothesis< Component< DoubleType, ? >>> hyps = this.getOptimalHypotheses( t );
 
-		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : hyps ) {
+		for ( final Hypothesis< Component< DoubleType, ? >> hyp : hyps ) {
 			try {
-				final Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > set = edgeSets.getRightNeighborhood( hyp );
+				final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > set = edgeSets.getRightNeighborhood( hyp );
 
 				if ( set == null ) continue;
 
-				for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > a : set ) {
+				for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > a : set ) {
 					if ( !a.isChoosen() ) {
-						Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > innerSet = ret.get( hyp );
+						Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > innerSet = ret.get( hyp );
 						if ( innerSet == null ) {
-							innerSet = new HashSet< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > >();
+							innerSet = new HashSet< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > >();
 							innerSet.add( a );
 							ret.put( hyp, innerSet );
 						} else {
@@ -1120,23 +1116,23 @@ public class GrowthLineTrackingILP {
 	 * @return a hash-map that maps from segmentation hypothesis to a set of
 	 *         assignments that come in from the left (from t-1).
 	 */
-	public HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > > getAllCompatibleLeftAssignments( final int t ) {
+	public HashMap< Hypothesis< Component< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > > getAllCompatibleLeftAssignments( final int t ) {
 		assert ( t >= 1 );
 		assert ( t < nodes.getNumberOfTimeSteps() );
 
-		final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > >> ret = new HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > >();
+		final HashMap< Hypothesis< Component< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > >> ret = new HashMap< Hypothesis< Component< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > >();
 
-		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = this.getOptimalHypotheses( t );
+		final List< Hypothesis< Component< DoubleType, ? >>> hyps = this.getOptimalHypotheses( t );
 
-		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : hyps ) {
-			final Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > set = edgeSets.getLeftNeighborhood( hyp );
+		for ( final Hypothesis< Component< DoubleType, ? >> hyp : hyps ) {
+			final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > set = edgeSets.getLeftNeighborhood( hyp );
 
 			if ( set == null ) continue;
 
-			for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > a : set ) {
-				Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > innerSet = ret.get( hyp );
+			for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > a : set ) {
+				Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > innerSet = ret.get( hyp );
 				if ( innerSet == null ) {
-					innerSet = new HashSet< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > >();
+					innerSet = new HashSet< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > >();
 					innerSet.add( a );
 					ret.put( hyp, innerSet );
 				} else {
@@ -1161,23 +1157,23 @@ public class GrowthLineTrackingILP {
 	 * @return a hash-map that maps from segmentation hypothesis to a set of
 	 *         assignments that come in from the right (from t+1).
 	 */
-	public HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > > getAllCompatibleRightAssignments( final int t ) {
+	public HashMap< Hypothesis< Component< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > > getAllCompatibleRightAssignments( final int t ) {
 		assert ( t >= 0 );
 		assert ( t < nodes.getNumberOfTimeSteps() - 1 );
 
-		final HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > > ret = new HashMap< Hypothesis< ComponentTreeNode< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > > >();
+		final HashMap< Hypothesis< Component< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > > ret = new HashMap< Hypothesis< Component< DoubleType, ? > >, Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > > >();
 
-		final List< Hypothesis< ComponentTreeNode< DoubleType, ? >>> hyps = this.getOptimalHypotheses( t );
+		final List< Hypothesis< Component< DoubleType, ? >>> hyps = this.getOptimalHypotheses( t );
 
-		for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : hyps ) {
-			final Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > set = edgeSets.getRightNeighborhood( hyp );
+		for ( final Hypothesis< Component< DoubleType, ? >> hyp : hyps ) {
+			final Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > set = edgeSets.getRightNeighborhood( hyp );
 
 			if ( set == null ) continue;
 
-			for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > a : set ) {
-				Set< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > innerSet = ret.get( hyp );
+			for ( final AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > a : set ) {
+				Set< AbstractAssignment< Hypothesis< Component< DoubleType, ? >>> > innerSet = ret.get( hyp );
 				if ( innerSet == null ) {
-					innerSet = new HashSet< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? > > > >();
+					innerSet = new HashSet< AbstractAssignment< Hypothesis< Component< DoubleType, ? > > > >();
 					innerSet.add( a );
 					ret.put( hyp, innerSet );
 				} else {

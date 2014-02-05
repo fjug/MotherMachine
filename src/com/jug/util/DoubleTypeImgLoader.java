@@ -3,6 +3,9 @@
  */
 package com.jug.util;
 
+import io.scif.img.ImgIOException;
+import io.scif.img.ImgOpener;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
@@ -16,8 +19,6 @@ import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.io.ImgIOException;
-import net.imglib2.io.ImgOpener;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.DoubleType;
@@ -40,7 +41,7 @@ public class DoubleTypeImgLoader {
 	 * @throws IncompatibleTypeException
 	 * @throws Exception
 	 */
-	public static < T extends RealType< T > & NativeType< T > > List< Img< DoubleType >> loadTiffsFromFolder( final String strFolder ) throws ImgIOException, IncompatibleTypeException, Exception {
+	public static List< Img< DoubleType >> loadTiffsFromFolder( final String strFolder ) throws ImgIOException, IncompatibleTypeException, Exception {
 
 		final File folder = new File( strFolder );
 		final FilenameFilter filter = new FilenameFilter() {
@@ -54,12 +55,12 @@ public class DoubleTypeImgLoader {
 		if ( listOfFiles == null )
 			throw new Exception( "Given argument is not a valid folder!" );
 
-		final ImgFactory< ? > imgFactory = new ArrayImgFactory< T >();
+		final ImgFactory< DoubleType > imgFactory = new ArrayImgFactory< DoubleType >();
 		final List< Img< DoubleType > > images = new ArrayList< Img< DoubleType > >();
 		for ( int i = 0; i < listOfFiles.length; i++ ) {
 			if ( listOfFiles[ i ].isFile() ) {
 				// System.out.println("Loading file '" + listOfFiles[i].getName() +"' ...");
-				final Img< DoubleType > image = new ImgOpener().openImg( listOfFiles[ i ].getAbsolutePath(), imgFactory );
+				final Img< DoubleType > image = new ImgOpener().openImg( listOfFiles[ i ].getAbsolutePath(), imgFactory, new DoubleType() ).getImg();
 				images.add( image );
 			}
 		}

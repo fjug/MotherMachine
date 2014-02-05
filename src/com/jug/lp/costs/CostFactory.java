@@ -4,8 +4,7 @@
 package com.jug.lp.costs;
 
 import net.imglib2.Pair;
-import net.imglib2.algorithm.componenttree.ComponentTreeNode;
-import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.algorithm.componenttree.Component;
 
 import com.jug.MotherMachine;
 import com.jug.util.ComponentTreeUtils;
@@ -75,7 +74,7 @@ public class CostFactory {
 	 * @param gapSepFkt
 	 * @return
 	 */
-	public static double getSegmentationCost( final ComponentTreeNode< DoubleType, ? > ctNode, final double[] gapSepFkt ) {
+	public static double getSegmentationCost( final Component< ?, ? > ctNode, final double[] gapSepFkt ) {
 		final Pair< Integer, Integer > segInterval = ComponentTreeUtils.getTreeNodeInterval( ctNode );
 		final int a = segInterval.getA().intValue();
 		final int b = segInterval.getB().intValue();

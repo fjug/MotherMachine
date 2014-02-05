@@ -9,8 +9,9 @@ import java.util.List;
 
 import net.imglib2.Localizable;
 import net.imglib2.Pair;
+import net.imglib2.algorithm.componenttree.Component;
+import net.imglib2.algorithm.componenttree.ComponentForest;
 import net.imglib2.algorithm.componenttree.ComponentTree;
-import net.imglib2.algorithm.componenttree.ComponentTreeNode;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.util.ValuePair;
 
@@ -24,10 +25,10 @@ public class ComponentTreeUtils {
 	 * @param tree
 	 * @return
 	 */
-	public static List< ComponentTreeNode< DoubleType, ? >> getListOfLeavesInOrder( final ComponentTree< DoubleType, ? > tree ) {
-		final List< ComponentTreeNode< DoubleType, ? > > leaves = new ArrayList< ComponentTreeNode< DoubleType, ? > >();
+	public static < C extends Component< ?, C > > List< C > getListOfLeavesInOrder( final ComponentTree< C > tree ) {
+		final List< C > leaves = new ArrayList< C >();
 
-		for ( final ComponentTreeNode< DoubleType, ? > root : tree.roots() ) {
+		for ( final C root : tree.roots() ) {
 			recursivelyAddLeaves( root, leaves );
 		}
 
@@ -38,11 +39,11 @@ public class ComponentTreeUtils {
 	 * @param root
 	 * @param leaves
 	 */
-	private static void recursivelyAddLeaves( final ComponentTreeNode< DoubleType, ? > node, final List< ComponentTreeNode< DoubleType, ? >> leaves ) {
+	private static < C extends Component< ?, C > > void recursivelyAddLeaves( final C node, final List< C > leaves ) {
 		if ( node.getChildren().size() == 0 ) {
 			leaves.add( node );
 		} else {
-			for ( final ComponentTreeNode< DoubleType, ? > child : node.getChildren() ) {
+			for ( final C child : node.getChildren() ) {
 				recursivelyAddLeaves( child, leaves );
 			}
 		}
@@ -53,7 +54,7 @@ public class ComponentTreeUtils {
 	 * @param hyp
 	 * @return
 	 */
-	public static boolean isAbove( final ComponentTreeNode< DoubleType, ? > candidate, final ComponentTreeNode< DoubleType, ? > reference ) {
+	public static boolean isAbove( final Component< DoubleType, ? > candidate, final Component< DoubleType, ? > reference ) {
 		final Pair< Integer, Integer > candMinMax = getTreeNodeInterval( candidate );
 		final Pair< Integer, Integer > refMinMax = getTreeNodeInterval( reference );
 		return candMinMax.getB().intValue() < refMinMax.getA().intValue();
@@ -64,7 +65,7 @@ public class ComponentTreeUtils {
 	 * @param hyp
 	 * @return
 	 */
-	public static boolean isBelow( final ComponentTreeNode< DoubleType, ? > candidate, final ComponentTreeNode< DoubleType, ? > reference ) {
+	public static boolean isBelow( final Component< DoubleType, ? > candidate, final Component< DoubleType, ? > reference ) {
 		final Pair< Integer, Integer > candMinMax = getTreeNodeInterval( candidate );
 		final Pair< Integer, Integer > refMinMax = getTreeNodeInterval( reference );
 		return candMinMax.getA().intValue() > refMinMax.getB().intValue();
@@ -83,7 +84,7 @@ public class ComponentTreeUtils {
 	 *         leftmost and rightmost point on the x-axis that is covered by
 	 *         this component-tree-node respectively.
 	 */
-	public static Pair< Integer, Integer > getTreeNodeInterval( final ComponentTreeNode< DoubleType, ? > node ) {
+	public static Pair< Integer, Integer > getTreeNodeInterval( final Component< ?, ? > node ) {
 		int min = Integer.MAX_VALUE;
 		int max = Integer.MIN_VALUE;
 		final Iterator< Localizable > componentIterator = node.iterator();
@@ -95,7 +96,7 @@ public class ComponentTreeUtils {
 		return new ValuePair< Integer, Integer >( new Integer( min ), new Integer( max ) );
 	}
 
-	// public static double[] getFunctionValues( final ComponentTreeNode<
+	// public static double[] getFunctionValues( final Component<
 	// DoubleType, ? > node ) {
 	// Pair< Integer, Integer > interval = getTreeNodeInterval( node );
 	//
@@ -115,10 +116,10 @@ public class ComponentTreeUtils {
 	 * @param to
 	 * @return
 	 */
-	public static List< ComponentTreeNode< DoubleType, ? >> getRightNeighbors( final ComponentTreeNode< DoubleType, ? > node ) {
-		final ArrayList< ComponentTreeNode< DoubleType, ? >> ret = new ArrayList< ComponentTreeNode< DoubleType, ? >>();
+	public static List< Component< DoubleType, ? >> getRightNeighbors( final Component< DoubleType, ? > node ) {
+		final ArrayList< Component< DoubleType, ? >> ret = new ArrayList< Component< DoubleType, ? >>();
 
-		ComponentTreeNode< DoubleType, ? > rightNeighbor = getRightNeighbor( node );
+		Component< DoubleType, ? > rightNeighbor = getRightNeighbor( node );
 		if ( rightNeighbor != null ) {
 			ret.add( rightNeighbor );
 			while ( rightNeighbor.getChildren().size() > 0 ) {
@@ -134,11 +135,11 @@ public class ComponentTreeUtils {
 	 * @param node
 	 * @return
 	 */
-	private static ComponentTreeNode< DoubleType, ? > getRightNeighbor( final ComponentTreeNode< DoubleType, ? > node ) {
+	private static Component< DoubleType, ? > getRightNeighbor( final Component< DoubleType, ? > node ) {
 		// TODO Note that we do not find the right neighbor in case the
 		// component tree has several roots and the
 		// right neighbor is somewhere down another root.
-		final ComponentTreeNode< DoubleType, ? > father = node.getParent();
+		final Component< DoubleType, ? > father = node.getParent();
 
 		if ( father != null ) {
 			final int idx = father.getChildren().indexOf( node );
@@ -155,9 +156,9 @@ public class ComponentTreeUtils {
 	 * @param ct
 	 * @return
 	 */
-	public static int countNodes( final ComponentTree< DoubleType, ? > ct ) {
+	public static < C extends Component< ?, C > > int countNodes( final ComponentForest< C > ct ) {
 		int nodeCount = ct.roots().size();;
-		for ( final ComponentTreeNode< DoubleType, ? > root : ct.roots() ) {
+		for ( final C root : ct.roots() ) {
 			nodeCount += countNodes( root );
 		}
 		return nodeCount;
@@ -167,9 +168,9 @@ public class ComponentTreeUtils {
 	 * @param root
 	 * @return
 	 */
-	public static int countNodes( final ComponentTreeNode< DoubleType, ? > ctn ) {
+	public static < C extends Component< ?, C > > int countNodes( final C ctn ) {
 		int nodeCount = ctn.getChildren().size();
-		for ( final ComponentTreeNode< DoubleType, ? > child : ctn.getChildren() ) {
+		for ( final C child : ctn.getChildren() ) {
 			nodeCount += countNodes( child );
 		}
 		return nodeCount;
@@ -179,9 +180,9 @@ public class ComponentTreeUtils {
 	 * @param ct
 	 * @return
 	 */
-	public static List< ComponentTreeNode< DoubleType, ? >> getListOfNodes( final ComponentTree< DoubleType, ? > ct ) {
-		final ArrayList< ComponentTreeNode< DoubleType, ? >> ret = new ArrayList< ComponentTreeNode< DoubleType, ? >>();
-		for ( final ComponentTreeNode< DoubleType, ? > root : ct.roots() ) {
+	public static < C extends Component< ?, C > > List< C > getListOfNodes( final ComponentForest< C > ct ) {
+		final ArrayList< C > ret = new ArrayList< C >();
+		for ( final C root : ct.roots() ) {
 			ret.add( root );
 			addListOfNodes( root, ret );
 		}
@@ -192,8 +193,8 @@ public class ComponentTreeUtils {
 	 * @param root
 	 * @param list
 	 */
-	private static void addListOfNodes( final ComponentTreeNode< DoubleType, ? > ctn, final ArrayList< ComponentTreeNode< DoubleType, ? >> list ) {
-		for ( final ComponentTreeNode< DoubleType, ? > child : ctn.getChildren() ) {
+	private static < C extends Component< ?, C > > void addListOfNodes( final C ctn, final ArrayList< C > list ) {
+		for ( final C child : ctn.getChildren() ) {
 			list.add( child );
 			addListOfNodes( child, list );
 		}
@@ -203,10 +204,10 @@ public class ComponentTreeUtils {
 	 * @param ctnLevel
 	 * @return
 	 */
-	public static ArrayList< ComponentTreeNode< DoubleType, ? >> getAllChildren( final ArrayList< ComponentTreeNode< DoubleType, ? >> ctnLevel ) {
-		final ArrayList< ComponentTreeNode< DoubleType, ? >> nextCtnLevel = new ArrayList< ComponentTreeNode< DoubleType, ? >>();
-		for ( final ComponentTreeNode< DoubleType, ? > ctn : ctnLevel ) {
-			for ( final ComponentTreeNode< DoubleType, ? > child : ctn.getChildren() ) {
+	public static < C extends Component< ?, C > > ArrayList< C > getAllChildren( final ArrayList< C > ctnLevel ) {
+		final ArrayList< C > nextCtnLevel = new ArrayList< C >();
+		for ( final C ctn : ctnLevel ) {
+			for ( final C child : ctn.getChildren() ) {
 				nextCtnLevel.add( child );
 			}
 		}
@@ -217,9 +218,9 @@ public class ComponentTreeUtils {
 	 * @param ctn
 	 * @return
 	 */
-	public static int getLevelInTree( final ComponentTreeNode< DoubleType, ? > ctn ) {
+	public static < C extends Component< ?, C > > int getLevelInTree( final C ctn ) {
 		int level = 0;
-		ComponentTreeNode< DoubleType, ? > runner = ctn;
+		C runner = ctn;
 		while ( runner.getParent() != null ) {
 			level++;
 			runner = runner.getParent();
