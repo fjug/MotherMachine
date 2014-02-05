@@ -10,6 +10,8 @@ import gurobi.GRBLinExpr;
 import gurobi.GRBModel;
 import gurobi.GRBVar;
 
+import java.util.List;
+
 
 /**
  * Partially implemented class for everything that wants to be an assignment.
@@ -146,7 +148,7 @@ public abstract class AbstractAssignment< H extends Hypothesis< ? > > {
 	 * This fkt and fac is used to save a FactorGraph describing the
 	 * optimization problem at hand.
 	 */
-	public abstract void addFunctionsAndFactors( FactorGraphFileBuilder fgFile );
+	public abstract void addFunctionsAndFactors( FactorGraphFileBuilder fgFile, final List< Integer > regionIds );
 
 	/**
 	 * @return

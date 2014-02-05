@@ -8,13 +8,13 @@
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-algorithms-legacy"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-ij"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-io"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-meta"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-ops"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-realtransform"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-scripting"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-tests"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-meta"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/imglib2-ui"/>
-	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/net/imagej/ij/1.47d/ij-1.47d.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/net/imagej/ij/1.47a/ij-1.47a.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/loci/loci-common/4.4-SNAPSHOT/loci-common-4.4-SNAPSHOT.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/loci/ome-xml/4.4-SNAPSHOT/ome-xml-4.4-SNAPSHOT.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/loci/scifio/4.4-SNAPSHOT/scifio-4.4-SNAPSHOT.jar"/>
@@ -23,7 +23,6 @@
 	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/log4j/log4j/1.2.14/log4j-1.2.14.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/org/slf4j/slf4j-api/1.5.10/slf4j-api-1.5.10.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/org/slf4j/slf4j-log4j12/1.5.10/slf4j-log4j12-1.5.10.jar"/>
-	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/mpicbg/mpicbg/20120621/mpicbg-20120621.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/edu/mines/mines-jtk/20100113/mines-jtk-20100113.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/com/jgoodies/forms/1.2.1/forms-1.2.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/xalan/serializer/2.7.1/serializer-2.7.1.jar"/>
@@ -38,5 +37,6 @@
 	<classpathentry exported="true" kind="lib" path="/Users/jug/JavaLibraries/jplot2d/externalForPDFandEPS/xmlgraphics-commons-1.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Users/jug/JavaLibraries/jmathplot/jmathplot.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Library/gurobi510/mac64/lib/gurobi.jar"/>
+	<classpathentry kind="lib" path="/Users/jug/Dropbox/WorkingData/Repositories/GIT/fiji/fiji/modules/mpicbg/mpicbg/target/mpicbg-0.6.1-SNAPSHOT.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

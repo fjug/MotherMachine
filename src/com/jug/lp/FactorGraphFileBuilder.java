@@ -186,7 +186,7 @@ public class FactorGraphFileBuilder {
 
 	/**
 	 * Builds a factor-string and adds it.
-	 * 
+	 *
 	 * @param functionId
 	 *            id of the function this factor utilizes.
 	 * @param varIds
@@ -196,8 +196,14 @@ public class FactorGraphFileBuilder {
 	public int addFactor( final int functionId, final List< Integer > varIds, final List< Integer > regionIds ) {
 
 		String str = Integer.toString( functionId ) + " ";
+		if ( varIds.size() == 0 ) {
+			System.err.println( "No varIds!!!!!!" );
+		}
 		for ( final int i : varIds ) {
 			str += i + " ";
+		}
+		if ( regionIds.size() == 0 ) {
+			System.err.println( "No regionIds!!!!!!" );
 		}
 		for ( final int i : regionIds ) {
 			str += i + " ";

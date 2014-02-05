@@ -82,7 +82,7 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< ComponentTre
 	 * @see com.jug.lp.AbstractAssignment#getConstraint()
 	 */
 	@Override
-	public void addFunctionsAndFactors( final FactorGraphFileBuilder fgFile ) {
+	public void addFunctionsAndFactors( final FactorGraphFileBuilder fgFile, final List< Integer > regionIds ) {
 		final List< Integer > varIds = new ArrayList< Integer >();
 		final List< Integer > coeffs = new ArrayList< Integer >();
 
@@ -106,7 +106,7 @@ public class ExitAssignment extends AbstractAssignment< Hypothesis< ComponentTre
 
 		// model.addConstr( expr, GRB.LESS_EQUAL, Hup.size(), "dc_" + dcId );
 		final int fkt_id = fgFile.addConstraintFkt( coeffs, "<=", Hup.size() );
-		fgFile.addFactor( fkt_id, varIds, 0 );
+		fgFile.addFactor( fkt_id, varIds, regionIds );
 	}
 
 	/**

@@ -189,14 +189,17 @@ public class GrowthLineTrackingILP {
 
 		// FIRST RUN: we export all variables and set varId's for second run...
 		for ( int t = 0; t < nodes.getNumberOfTimeSteps(); t++ ) {
-			fgFile.addVarComment( "# === VAR-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
-			fgFile.addVarComment( "# --- VAR-SECTION :: Assignment-variables ---------------" );
+			// TODO puke!
+			final int regionId = ( t + 1 ) / 2;
 
-			fgFile.addFktComment( "# === FKT-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
-			fgFile.addFktComment( "# --- FKT-SECTION :: Unary (Segmentation) Costs ---------" );
+			fgFile.addVarComment( "=== VAR-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
+			fgFile.addVarComment( "--- VAR-SECTION :: Assignment-variables ---------------" );
 
-			fgFile.addFactorComment( "# === FAC-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
-			fgFile.addFactorComment( "# --- FAC-SECTION :: Unary (Segmentation) Factors -------" );
+			fgFile.addFktComment( "=== FKT-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
+			fgFile.addFktComment( "--- FKT-SECTION :: Unary (Segmentation) Costs ---------" );
+
+			fgFile.addFactorComment( "=== FAC-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
+			fgFile.addFactorComment( "--- FAC-SECTION :: Unary (Segmentation) Factors -------" );
 
 			final List< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > assmts_t = nodes.getAssignmentsAt( t );
 			for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> assmt : assmts_t ) {
@@ -205,37 +208,51 @@ public class GrowthLineTrackingILP {
 
 				double cost = 0.0;
 				if (assmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_MAPPING) {
+					fgFile.addVarComment( "- - MAPPING (var: " + var_id + ") - - - - - " );
+					fgFile.addFktComment( "- - MAPPING (var: " + var_id + ") - - - - - " );
 					final MappingAssignment ma = ( MappingAssignment ) assmt;
 					cost = ma.getSourceHypothesis().getCosts() + ma.getDestinationHypothesis().getCosts();
 				} else
 				if (assmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_DIVISION) {
+					fgFile.addVarComment( "- - DIVISION (var: " + var_id + ") - - - - - " );
+					fgFile.addFktComment( "- - DIVISION (var: " + var_id + ") - - - - - " );
 					final DivisionAssignment da = ( DivisionAssignment ) assmt;
 					cost = da.getSourceHypothesis().getCosts() + da.getUpperDesinationHypothesis().getCosts() + da.getLowerDesinationHypothesis().getCosts();
 				} else
 				if (assmt.getType() == GrowthLineTrackingILP.ASSIGNMENT_EXIT) {
+					fgFile.addVarComment( "- - EXIT (var: " + var_id + ") - - - - - " );
+					fgFile.addFktComment( "- - EXIT (var: " + var_id + ") - - - - - " );
 					final ExitAssignment ea = ( ExitAssignment ) assmt;
 					cost = ea.getAssociatedHypothesis().getCosts();
 				}
 
 				final int fkt_id = fgFile.addFkt( String.format( "table 1 2 0 %f", cost ) );
-				fgFile.addFactor( fkt_id, var_id, 0 );
+				fgFile.addFactor( fkt_id, var_id, regionId );
 			}
 		}
 		// SECOND RUN: export all the rest (now that we have the right varId's).
 		for ( int t = 0; t < nodes.getNumberOfTimeSteps(); t++ ) {
-			fgFile.addFktComment( "# === FKT-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
-			fgFile.addFktComment( "# --- FKT-SECTION :: Assignment Constraints -------------" );
+			// TODO puke!
+			final int regionId = ( t + 1 ) / 2;
 
-			fgFile.addFactorComment( "# === FAC-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
-			fgFile.addFactorComment( "# --- FAC-SECTION :: Assignment Factors ----------------" );
+			fgFile.addFktComment( "=== FKT-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
+			fgFile.addFktComment( "--- FKT-SECTION :: Assignment Constraints (HUP-stuff for EXITs) -------------" );
+
+			fgFile.addFactorComment( "=== FAC-SECTION :: TimePoint t=" + ( t + 1 ) + " ================" );
+			fgFile.addFactorComment( "--- FAC-SECTION :: Assignment Factors ----------------" );
 
 			final List< AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> > assmts_t = nodes.getAssignmentsAt( t );
 			for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> assmt : assmts_t ) {
-				assmt.addFunctionsAndFactors( fgFile );
+				final List< Integer > regionIds = new ArrayList< Integer >();
+				regionIds.add( new Integer( regionId ) );
+				assmt.addFunctionsAndFactors( fgFile, regionIds );
 			}
 
-			fgFile.addFktComment( "# --- FKT-SECTION :: Path-Blocking Constraints ------------" );
-			fgFile.addFactorComment( "# --- FAC-SECTION :: Path-Blocking Constraints ------------" );
+			// NOTE: last time-point does not get Path-Blocking or Explanation-Continuity-Constraints!
+			if ( t == nodes.getNumberOfTimeSteps() - 1 ) continue;
+
+			fgFile.addFktComment( "--- FKT-SECTION :: Path-Blocking Constraints ------------" );
+			fgFile.addFactorComment( "--- FAC-SECTION :: Path-Blocking Constraints ------------" );
 
 			final ComponentTree< DoubleType, ? > ct = gl.get( t ).getComponentTree();
 			for ( final ComponentTreeNode< DoubleType, ? > ctRoot : ct.roots() ) {
@@ -243,32 +260,34 @@ public class GrowthLineTrackingILP {
 				recursivelyAddPathBlockingConstraints( ctRoot, t, fgFile );
 			}
 
-			fgFile.addFktComment( "# --- FKT-SECTION :: Explanation-Continuity Constraints ------" );
-			fgFile.addFactorComment( "# --- FAC-SECTION :: Explanation-Continuity Constraints ------" );
+			if ( t > 0 && t < nodes.getNumberOfTimeSteps() ) {
+				fgFile.addFktComment( "--- FKT-SECTION :: Explanation-Continuity Constraints ------" );
+				fgFile.addFactorComment( "--- FAC-SECTION :: Explanation-Continuity Constraints ------" );
 
-			for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : nodes.getHypothesesAt( t ) ) {
-				final List< Integer > varIds = new ArrayList< Integer >();
-				final List< Integer > coeffs = new ArrayList< Integer >();
+				for ( final Hypothesis< ComponentTreeNode< DoubleType, ? >> hyp : nodes.getHypothesesAt( t ) ) {
+					final List< Integer > varIds = new ArrayList< Integer >();
+					final List< Integer > coeffs = new ArrayList< Integer >();
 
-				if ( edgeSets.getLeftNeighborhood( hyp ) != null ) {
-					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a_j : edgeSets.getLeftNeighborhood( hyp ) ) {
-						//expr.addTerm( 1.0, a_j.getGRBVar() );
-						coeffs.add( new Integer( 1 ) );
-						varIds.add( new Integer( a_j.getVarIdx() ) );
+					if ( edgeSets.getLeftNeighborhood( hyp ) != null ) {
+						for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a_j : edgeSets.getLeftNeighborhood( hyp ) ) {
+							//expr.addTerm( 1.0, a_j.getGRBVar() );
+							coeffs.add( new Integer( 1 ) );
+							varIds.add( new Integer( a_j.getVarIdx() ) );
+						}
 					}
-				}
-				if ( edgeSets.getRightNeighborhood( hyp ) != null ) {
-					for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a_j : edgeSets.getRightNeighborhood( hyp ) ) {
-						//expr.addTerm( -1.0, a_j.getGRBVar() );
-						coeffs.add( new Integer( -1 ) );
-						varIds.add( new Integer( a_j.getVarIdx() ) );
+					if ( edgeSets.getRightNeighborhood( hyp ) != null ) {
+						for ( final AbstractAssignment< Hypothesis< ComponentTreeNode< DoubleType, ? >>> a_j : edgeSets.getRightNeighborhood( hyp ) ) {
+							//expr.addTerm( -1.0, a_j.getGRBVar() );
+							coeffs.add( new Integer( -1 ) );
+							varIds.add( new Integer( a_j.getVarIdx() ) );
+						}
 					}
-				}
 
-				// add the constraint for this hypothesis
-				//model.addConstr( expr, GRB.EQUAL, 0.0, "ecc_" + eccId );
-				final int fkt_id = fgFile.addConstraintFkt( coeffs, "==", 0 );
-				fgFile.addFactor( fkt_id, varIds, 0 );
+					// add the constraint for this hypothesis
+					//model.addConstr( expr, GRB.EQUAL, 0.0, "ecc_" + eccId );
+					final int fkt_id = fgFile.addConstraintFkt( coeffs, "==", 0 );
+					fgFile.addFactor( fkt_id, varIds, regionId );
+				}
 			}
 		}
 
@@ -660,7 +679,8 @@ public class GrowthLineTrackingILP {
 			}
 			// model.addConstr( exprR, GRB.LESS_EQUAL, 1.0, name );
 			final int fkt_id = fgFile.addConstraintFkt( coeffs, "<=", 1 );
-			fgFile.addFactor( fkt_id, varIds, 0 );
+			// TODO puke!
+			fgFile.addFactor( fkt_id, varIds, ( t + 1 ) / 2 );
 		} else {
 			// if ctNode is a inner node -> recursion
 			for ( final ComponentTreeNode< DoubleType, ? > ctChild : ctNode.getChildren() ) {
