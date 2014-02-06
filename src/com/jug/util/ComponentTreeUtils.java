@@ -218,9 +218,9 @@ public class ComponentTreeUtils {
 	 * @param ctn
 	 * @return
 	 */
-	public static < C extends Component< ?, C > > int getLevelInTree( final C ctn ) {
+	public static int getLevelInTree( final Component< ?, ? > ctn ) {
 		int level = 0;
-		C runner = ctn;
+		Component< ?, ? > runner = ctn;
 		while ( runner.getParent() != null ) {
 			level++;
 			runner = runner.getParent();

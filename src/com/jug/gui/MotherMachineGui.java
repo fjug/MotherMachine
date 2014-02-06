@@ -41,6 +41,8 @@ import net.imglib2.view.Views;
 
 import org.math.plot.Plot2DPanel;
 
+import weka.gui.ExtensionFileFilter;
+
 import com.jug.GrowthLine;
 import com.jug.GrowthLineFrame;
 import com.jug.MotherMachine;
@@ -389,12 +391,11 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 		// ComponentTreeNodes
 		// ------------------
 		if ( ilp != null ) {
-			final ComponentForest< ? > ct = model.getCurrentGLF().getComponentTree();
-			bla( ct, ySegmentationData, ilp );
+			bla( model.getCurrentGLF().getComponentTree(), ySegmentationData, ilp );
 		}
 	}
 
-	private < C extends Component< ?, C > > void bla( final ComponentForest< C > ct, final double[] ySegmentationData, final GrowthLineTrackingILP ilp )
+	private < C extends Component< DoubleType, C > > void bla( final ComponentForest< C > ct, final double[] ySegmentationData, final GrowthLineTrackingILP ilp )
 	{
 		final int numCTNs = ComponentTreeUtils.countNodes( ct );
 		final double[][] xydxdyCTNBorders = new double[ numCTNs ][ 4 ];
@@ -419,7 +420,7 @@ public class MotherMachineGui extends JPanel implements ChangeListener, ActionLi
 			}
 
 			i = 0;
-			for ( final C ctn : ilp.getOptimalSegmentation( t ) ) {
+			for ( final Component< DoubleType, ? > ctn : ilp.getOptimalSegmentation( t ) ) {
 				addBoxAtIndex( i, ctn, xydxdyCTNBordersActive, ySegmentationData, ComponentTreeUtils.getLevelInTree( ctn ) );
 				i++;
 			}

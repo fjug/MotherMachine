@@ -36,6 +36,16 @@
 	<classpathentry exported="true" kind="lib" path="/Users/jug/JavaLibraries/jplot2d/externalForPDFandEPS/xmlgraphics-commons-1.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Users/jug/JavaLibraries/jmathplot/jmathplot.jar"/>
 	<classpathentry exported="true" kind="lib" path="/Library/gurobi510/mac64/lib/gurobi.jar"/>
+	<classpathentry exported="true" kind="lib" path="/Users/jug/.m2/repository/edu/ucar/netcdf/4.0.03/netcdf-4.0.03.jar"/>
 	<classpathentry kind="lib" path="/Users/jug/Dropbox/WorkingData/Repositories/GIT/fiji/fiji/modules/mpicbg/mpicbg/target/mpicbg-0.6.1-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="/Users/jug/.m2/repository/nz/ac/waikato/cms/weka/weka-dev/3.7.6/weka-dev-3.7.6.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="nz.ac.waikato.cms.weka"/>
+			<attribute name="maven.artifactId" value="weka-dev"/>
+			<attribute name="maven.version" value="3.7.6"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
